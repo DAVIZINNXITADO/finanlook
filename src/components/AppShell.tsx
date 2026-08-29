@@ -1,0 +1,165 @@
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  ArrowLeftRight,
+  CalendarRange,
+  ChartPie,
+  Goal,
+  LayoutDashboard,
+  LifeBuoy,
+  LogOut,
+  Menu,
+  Settings,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { useProfile } from "@/lib/data";
+
+const NAV = [
+  { to: "/visao-geral", label: "Visão geral", icon: LayoutDashboard },
+  { to: "/movimentacoes", label: "Movimentações", icon: ArrowLeftRight },
+  { to: "/organizar-salario", label: "Organizar salário", icon: Wallet },
+  { to: "/reserva", label: "Reserva", icon: LifeBuoy },
+  { to: "/metas", label: "Metas", icon: Goal },
+  { to: "/investimentos", label: "Investimentos", icon: TrendingUp },
+  { to: "/planejamento", label: "Planejamento do mês", icon: CalendarRange },
+  { to: "/relatorios", label: "Relatórios", icon: ChartPie },
+  { to: "/configuracoes", label: "Configurações", icon: Settings },
+] as const;
+
+const MOBILE_MAIN = NAV.slice(0, 4);
+
+export function AppShell({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: profile } = useProfile();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+
+  return (
+    <div className="min-h-screen bg-background md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
+        <Link to="/visao-geral" className="mb-6 flex items-center gap-2 px-2">
+          <span className="hero-gradient flex size-9 items-center justify-center rounded-xl text-lg">
+            💚
+          </span>
+          <span className="font-display text-lg font-semibold">FinanFácil</span>
+        </Link>
+        <nav className="flex flex-1 flex-col gap-1">
+          {NAV.map((item) => (
+            <NavItem key={item.to} {...item} active={pathname === item.to} />
+          ))}
+        </nav>
+        <div className="mt-4 rounded-2xl bg-sidebar-accent/60 p-3">
+          <p className="truncate text-sm font-medium">{profile?.name || "Você"}</p>
+          <p className="truncate text-xs text-muted-foreground">@{profile?.username ?? ""}</p>
+          <Button variant="ghost" size="sm" className="mt-2 w-full justify-start" onClick={signOut}>
+            <LogOut className="size-4" /> Sair da conta
+          </Button>
+        </div>
+      </aside>
+
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur md:hidden">
+        <Link to="/visao-geral" className="flex items-center gap-2">
+          <span className="hero-gradient flex size-8 items-center justify-center rounded-lg text-base">
+            💚
+          </span>
+          <span className="font-display text-base font-semibold">FinanFácil</span>
+        </Link>
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Abrir menu">
+              <Menu className="size-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[85vw] max-w-xs p-4">
+            <SheetTitle className="font-display">Menu</SheetTitle>
+            <nav className="mt-4 flex flex-col gap-1">
+              {NAV.map((item) => (
+                <NavItem
+                  key={item.to}
+                  {...item}
+                  active={pathname === item.to}
+                  onNavigate={() => setMenuOpen(false)}
+                />
+              ))}
+            </nav>
+            <Button variant="outline" className="mt-4 w-full" onClick={signOut}>
+              <LogOut className="size-4" /> Sair da conta
+            </Button>
+          </SheetContent>
+        </Sheet>
+      </header>
+
+      <main className="w-full flex-1 px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8">
+        <div className="mx-auto w-full max-w-5xl space-y-6">{children}</div>
+      </main>
+
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 gap-1 border-t border-border bg-background/95 px-2 pb-2 pt-1.5 backdrop-blur md:hidden">
+        {MOBILE_MAIN.map(({ to, label, icon: Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            className={cn(
+              "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium",
+              pathname === to ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+            )}
+          >
+            <Icon className="size-5" />
+            <span className="truncate">{label.split(" ")[0]}</span>
+          </Link>
+        ))}
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium text-muted-foreground"
+        >
+          <Menu className="size-5" />
+          <span>Mais</span>
+        </button>
+      </nav>
+    </div>
+  );
+}
+
+function NavItem({
+  to,
+  label,
+  icon: Icon,
+  active,
+  onNavigate,
+}: {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  active: boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <Link
+      to={to}
+      onClick={onNavigate}
+      className={cn(
+        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+        active
+          ? "bg-sidebar-primary/12 text-sidebar-primary"
+          : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+      )}
+    >
+      <Icon className="size-[18px]" />
+      {label}
+    </Link>
+  );
+}
