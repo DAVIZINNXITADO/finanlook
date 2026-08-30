@@ -22,70 +22,60 @@ import {
 } from "./finance";
 
 /* =========================================================
-   AUTH
-========================================================= */
+   USUÁRIO
+   ========================================================= */
 
 export function useUser() {
   return useQuery({
     queryKey: ["auth-user"],
+
     queryFn: async () => {
       const { data } =
         await supabase.auth.getUser();
 
       return data.user ?? null;
     },
+
     staleTime: 30_000,
   });
 }
 
-async function requireUserId(): Promise<string> {
-  const { data } =
-    await supabase.auth.getUser();
-
-  if (!data.user) {
-    throw new Error(
-      "Sessão expirada. Entre novamente.",
-    );
-  }
-
-  return data.user.id;
-}
-
 /* =========================================================
-   PROFILE
-========================================================= */
+   PERFIL
+   ========================================================= */
 
 export function useProfile() {
   return useQuery({
     queryKey: ["profile"],
-    queryFn:
-      async (): Promise<Profile | null> => {
-        const { data: auth } =
-          await supabase.auth.getUser();
 
-        if (!auth.user) return null;
+    queryFn: async (): Promise<Profile | null> => {
+      const { data: auth } =
+        await supabase.auth.getUser();
 
-        const { data, error } =
-          await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", auth.user.id)
-            .maybeSingle();
+      if (!auth.user) return null;
 
-        if (error) throw error;
+      const { data, error } =
+        await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", auth.user.id)
+          .maybeSingle();
 
-        return data;
-      },
+      if (error) throw error;
+
+      return data;
+    },
   });
 }
 
 /* =========================================================
-   ACCOUNTS
-========================================================= */
+   CONTAS
+   ========================================================= */
 
 export function useAccounts() {
   return useQuery({
     queryKey: ["accounts"],
+
     queryFn: async (): Promise<Account[]> => {
       const { data, error } =
         await supabase
@@ -102,14 +92,206 @@ export function useAccounts() {
   });
 }
 
+/* =========================================================
+   MOVIMENTAÇÕES
+   ========================================================= */
+
+export function useTransactions() {
+  return useQuery({
+    queryKey: ["transactions"],
+
+    queryFn: async (): Promise<Transaction[]> => {
+      const { data, error } =
+        await supabase
+          .from("transactions")
+          .select("*")
+          .order("date", {
+            ascending: false,
+          })
+          .order("created_at", {
+            ascending: false,
+          });
+
+      if (error) throw error;
+
+      return data ?? [];
+    },
+  });
+}
+
+/* =========================================================
+   METAS
+   ========================================================= */
+
+export function useGoals() {
+  return useQuery({
+    queryKey: ["goals"],
+
+    queryFn: async (): Promise<Goal[]> => {
+      const { data, error } =
+        await supabase
+          .from("goals")
+          .select("*")
+          .order("created_at", {
+            ascending: false,
+          });
+
+      if (error) throw error;
+
+      return data ?? [];
+    },
+  });
+}
+
+/* =========================================================
+   INVESTIMENTOS
+   ========================================================= */
+
+export function useInvestments() {
+  return useQuery({
+    queryKey: ["investments"],
+
+    queryFn: async (): Promise<Investment[]> => {
+      const { data, error } =
+        await supabase
+          .from("investments")
+          .select("*")
+          .order("date", {
+            ascending: false,
+          });
+
+      if (error) throw error;
+
+      return data ?? [];
+    },
+  });
+}
+
+/* =========================================================
+   RESERVA
+   ========================================================= */
+
+export function useReserve() {
+  return useQuery({
+    queryKey: ["reserve"],
+
+    queryFn: async (): Promise<Reserve | null> => {
+      const { data, error } =
+        await supabase
+          .from("reserves")
+          .select("*")
+          .maybeSingle();
+
+      if (error) throw error;
+
+      return data;
+    },
+  });
+}
+
+/* =========================================================
+   PLANEJAMENTO MENSAL
+   ========================================================= */
+
+export function useMonthlyPlans(
+  month: string,
+) {
+  return useQuery({
+    queryKey: ["monthly-plans", month],
+
+    queryFn: async (): Promise<
+      MonthlyPlan[]
+    > => {
+      const { data, error } =
+        await supabase
+          .from("monthly_plans")
+          .select("*")
+          .eq("month", month)
+          .order("category");
+
+      if (error) throw error;
+
+      return data ?? [];
+    },
+  });
+}
+
+/* =========================================================
+   PLANO DE SALÁRIO
+   ========================================================= */
+
+export function useSalaryPlan(
+  month: string,
+) {
+  return useQuery({
+    queryKey: ["salary-plan", month],
+
+    queryFn: async (): Promise<
+      SalaryPlan | null
+    > => {
+      const { data, error } =
+        await supabase
+          .from("salary_plans")
+          .select("*")
+          .eq("month", month)
+          .maybeSingle();
+
+      if (error) throw error;
+
+      return data;
+    },
+  });
+}
+
+/* =========================================================
+   AUTENTICAÇÃO
+   ========================================================= */
+
+async function requireUserId(): Promise<string> {
+  const { data } =
+    await supabase.auth.getUser();
+
+  if (!data.user) {
+    throw new Error(
+      "Sessão expirada. Entre novamente.",
+    );
+  }
+
+  return data.user.id;
+}
+
+/* =========================================================
+   INVALIDAÇÃO CENTRAL
+   ========================================================= */
+
+export function useInvalidateFinance() {
+  const qc = useQueryClient();
+
+  return () => {
+    for (const key of [
+      "transactions",
+      "accounts",
+      "goals",
+      "investments",
+      "reserve",
+      "monthly-plans",
+      "salary-plan",
+      "profile",
+    ]) {
+      void qc.invalidateQueries({
+        queryKey: [key],
+      });
+    }
+  };
+}
+
+/* =========================================================
+   CONTAS
+   ========================================================= */
+
 export type AccountInput = {
   name: string;
-  type:
-    | "conta"
-    | "carteira"
-    | "poupanca"
-    | "investimento"
-    | "outro";
+  type: string;
   initial_balance: number;
   balance_adjustment: number;
 };
@@ -129,7 +311,10 @@ export function useSaveAccount() {
       const user_id =
         await requireUserId();
 
-      if (!values.name.trim()) {
+      const cleanedName =
+        values.name.trim();
+
+      if (!cleanedName) {
         throw new Error(
           "Informe o nome da conta.",
         );
@@ -139,7 +324,10 @@ export function useSaveAccount() {
         const { error } =
           await supabase
             .from("accounts")
-            .update(values)
+            .update({
+              ...values,
+              name: cleanedName,
+            })
             .eq("id", id)
             .eq("user_id", user_id);
 
@@ -153,6 +341,7 @@ export function useSaveAccount() {
           .from("accounts")
           .insert({
             ...values,
+            name: cleanedName,
             user_id,
           });
 
@@ -174,26 +363,6 @@ export function useDeleteAccount() {
       const user_id =
         await requireUserId();
 
-      const { count, error: countError } =
-        await supabase
-          .from("transactions")
-          .select("id", {
-            count: "exact",
-            head: true,
-          })
-          .eq("account_id", id)
-          .eq("user_id", user_id);
-
-      if (countError) {
-        throw countError;
-      }
-
-      if ((count ?? 0) > 0) {
-        throw new Error(
-          "Não é possível excluir uma conta que possui movimentações.",
-        );
-      }
-
       const { error } =
         await supabase
           .from("accounts")
@@ -209,40 +378,17 @@ export function useDeleteAccount() {
 }
 
 /* =========================================================
-   TRANSACTIONS
-========================================================= */
-
-export function useTransactions() {
-  return useQuery({
-    queryKey: ["transactions"],
-    queryFn:
-      async (): Promise<Transaction[]> => {
-        const { data, error } =
-          await supabase
-            .from("transactions")
-            .select("*")
-            .order("date", {
-              ascending: false,
-            })
-            .order("created_at", {
-              ascending: false,
-            });
-
-        if (error) throw error;
-
-        return data ?? [];
-      },
-  });
-}
+   MOVIMENTAÇÕES
+   ========================================================= */
 
 export type TransactionInput = {
+  account_id: string | null;
   type: "entrada" | "saida";
   description: string;
   amount: number;
   category: string;
   date: string;
   note: string | null;
-  account_id: string;
 };
 
 export function useSaveTransaction() {
@@ -260,9 +406,35 @@ export function useSaveTransaction() {
       const user_id =
         await requireUserId();
 
-      if (!values.account_id) {
+      const payload = {
+        account_id:
+          values.account_id ?? null,
+
+        type: values.type,
+
+        description:
+          values.description
+            .trim()
+            .slice(0, 120),
+
+        amount: Number(values.amount),
+
+        category:
+          values.category,
+
+        date: values.date,
+
+        note:
+          values.note
+            ? values.note
+                .trim()
+                .slice(0, 300)
+            : null,
+      };
+
+      if (payload.amount <= 0) {
         throw new Error(
-          "Escolha uma conta.",
+          "O valor precisa ser maior que zero.",
         );
       }
 
@@ -270,7 +442,7 @@ export function useSaveTransaction() {
         const { error } =
           await supabase
             .from("transactions")
-            .update(values)
+            .update(payload)
             .eq("id", id)
             .eq("user_id", user_id);
 
@@ -283,7 +455,7 @@ export function useSaveTransaction() {
         await supabase
           .from("transactions")
           .insert({
-            ...values,
+            ...payload,
             user_id,
           });
 
@@ -320,28 +492,8 @@ export function useDeleteTransaction() {
 }
 
 /* =========================================================
-   GOALS
-========================================================= */
-
-export function useGoals() {
-  return useQuery({
-    queryKey: ["goals"],
-    queryFn:
-      async (): Promise<Goal[]> => {
-        const { data, error } =
-          await supabase
-            .from("goals")
-            .select("*")
-            .order("created_at", {
-              ascending: false,
-            });
-
-        if (error) throw error;
-
-        return data ?? [];
-      },
-  });
-}
+   METAS
+   ========================================================= */
 
 export function useSaveGoal() {
   const invalidate =
@@ -353,6 +505,7 @@ export function useSaveGoal() {
       values,
     }: {
       id?: string;
+
       values: {
         name: string;
         target_amount: number;
@@ -399,11 +552,15 @@ export function useDeleteGoal() {
     mutationFn: async (
       id: string,
     ) => {
+      const user_id =
+        await requireUserId();
+
       const { error } =
         await supabase
           .from("goals")
           .delete()
-          .eq("id", id);
+          .eq("id", id)
+          .eq("user_id", user_id);
 
       if (error) throw error;
     },
@@ -413,28 +570,8 @@ export function useDeleteGoal() {
 }
 
 /* =========================================================
-   INVESTMENTS
-========================================================= */
-
-export function useInvestments() {
-  return useQuery({
-    queryKey: ["investments"],
-    queryFn:
-      async (): Promise<Investment[]> => {
-        const { data, error } =
-          await supabase
-            .from("investments")
-            .select("*")
-            .order("date", {
-              ascending: false,
-            });
-
-        if (error) throw error;
-
-        return data ?? [];
-      },
-  });
-}
+   INVESTIMENTOS
+   ========================================================= */
 
 export function useSaveInvestment() {
   const invalidate =
@@ -446,6 +583,7 @@ export function useSaveInvestment() {
       values,
     }: {
       id?: string;
+
       values: {
         name: string;
         amount: number;
@@ -492,11 +630,15 @@ export function useDeleteInvestment() {
     mutationFn: async (
       id: string,
     ) => {
+      const user_id =
+        await requireUserId();
+
       const { error } =
         await supabase
           .from("investments")
           .delete()
-          .eq("id", id);
+          .eq("id", id)
+          .eq("user_id", user_id);
 
       if (error) throw error;
     },
@@ -506,26 +648,8 @@ export function useDeleteInvestment() {
 }
 
 /* =========================================================
-   RESERVE
-========================================================= */
-
-export function useReserve() {
-  return useQuery({
-    queryKey: ["reserve"],
-    queryFn:
-      async (): Promise<Reserve | null> => {
-        const { data, error } =
-          await supabase
-            .from("reserves")
-            .select("*")
-            .maybeSingle();
-
-        if (error) throw error;
-
-        return data;
-      },
-  });
-}
+   RESERVA
+   ========================================================= */
 
 export function useSaveReserve() {
   const invalidate =
@@ -550,7 +674,8 @@ export function useSaveReserve() {
               user_id,
             },
             {
-              onConflict: "user_id",
+              onConflict:
+                "user_id",
             },
           );
 
@@ -562,34 +687,8 @@ export function useSaveReserve() {
 }
 
 /* =========================================================
-   MONTHLY PLANS
-========================================================= */
-
-export function useMonthlyPlans(
-  month: string,
-) {
-  return useQuery({
-    queryKey: [
-      "monthly-plans",
-      month,
-    ],
-    queryFn:
-      async (): Promise<
-        MonthlyPlan[]
-      > => {
-        const { data, error } =
-          await supabase
-            .from("monthly_plans")
-            .select("*")
-            .eq("month", month)
-            .order("category");
-
-        if (error) throw error;
-
-        return data ?? [];
-      },
-  });
-}
+   LIMITES MENSAIS
+   ========================================================= */
 
 export function useSaveMonthlyLimit(
   month: string,
@@ -613,9 +712,9 @@ export function useSaveMonthlyLimit(
           await supabase
             .from("monthly_plans")
             .delete()
+            .eq("user_id", user_id)
             .eq("month", month)
-            .eq("category", category)
-            .eq("user_id", user_id);
+            .eq("category", category);
 
         if (error) throw error;
 
@@ -646,34 +745,8 @@ export function useSaveMonthlyLimit(
 }
 
 /* =========================================================
-   SALARY PLAN
-========================================================= */
-
-export function useSalaryPlan(
-  month: string,
-) {
-  return useQuery({
-    queryKey: [
-      "salary-plan",
-      month,
-    ],
-    queryFn:
-      async (): Promise<
-        SalaryPlan | null
-      > => {
-        const { data, error } =
-          await supabase
-            .from("salary_plans")
-            .select("*")
-            .eq("month", month)
-            .maybeSingle();
-
-        if (error) throw error;
-
-        return data;
-      },
-  });
-}
+   PLANO DE SALÁRIO
+   ========================================================= */
 
 export function useSaveSalaryPlan(
   month: string,
@@ -732,8 +805,8 @@ export function useSaveSalaryPlan(
 }
 
 /* =========================================================
-   PROFILE UPDATE
-========================================================= */
+   ATUALIZAR PERFIL
+   ========================================================= */
 
 export function useUpdateProfile() {
   const invalidate =
@@ -768,36 +841,8 @@ export function useUpdateProfile() {
 }
 
 /* =========================================================
-   INVALIDATE
-========================================================= */
-
-export function useInvalidateFinance() {
-  const queryClient =
-    useQueryClient();
-
-  return () => {
-    for (const key of [
-      "transactions",
-      "accounts",
-      "goals",
-      "investments",
-      "reserve",
-      "monthly-plans",
-      "salary-plan",
-      "profile",
-    ]) {
-      void queryClient.invalidateQueries(
-        {
-          queryKey: [key],
-        },
-      );
-    }
-  };
-}
-
-/* =========================================================
-   DEMO DATA
-========================================================= */
+   DADOS DE DEMONSTRAÇÃO
+   ========================================================= */
 
 export function useDemoData() {
   const invalidate =
@@ -817,47 +862,74 @@ export function useDemoData() {
           "0",
         )}`;
 
+      /*
+       * Criamos uma conta de demonstração
+       * para que os dados também apareçam
+       * corretamente no sistema de contas.
+       */
+
+      const {
+        data: demoAccount,
+        error: accountError,
+      } = await supabase
+        .from("accounts")
+        .insert({
+          user_id,
+          name: "Conta principal",
+          type: "conta",
+          initial_balance: 0,
+          balance_adjustment: 0,
+        })
+        .select()
+        .single();
+
+      if (accountError) {
+        throw accountError;
+      }
+
       const rows = [
         {
-          type: "entrada",
+          type: "entrada" as const,
           description: "Salário",
           amount: 2500,
           category: "Salário",
           date: day(5),
         },
+
         {
-          type: "saida",
-          description:
-            "Mercado do mês",
+          type: "saida" as const,
+          description: "Mercado do mês",
           amount: 350,
           category: "Alimentação",
           date: day(6),
         },
+
         {
-          type: "saida",
+          type: "saida" as const,
           description: "Transporte",
           amount: 200,
           category: "Transporte",
           date: day(8),
         },
+
         {
-          type: "saida",
-          description:
-            "Cinema e passeios",
+          type: "saida" as const,
+          description: "Cinema e passeios",
           amount: 150,
           category: "Lazer",
           date: day(12),
         },
+
         {
-          type: "saida",
-          description:
-            "Contas de casa",
+          type: "saida" as const,
+          description: "Contas de casa",
           amount: 400,
           category: "Contas",
           date: day(10),
         },
+
         {
-          type: "saida",
+          type: "saida" as const,
           description:
             "Reserva de emergência",
           amount: 300,
@@ -865,15 +937,17 @@ export function useDemoData() {
             "Reserva de emergência",
           date: day(15),
         },
-      ] as const;
+      ];
 
       const {
-        error,
+        error: transactionError,
       } = await supabase
         .from("transactions")
         .insert(
           rows.map((row) => ({
             ...row,
+            account_id:
+              demoAccount.id,
             user_id,
             is_demo: true,
             note:
@@ -881,19 +955,20 @@ export function useDemoData() {
           })),
         );
 
-      if (error) throw error;
+      if (transactionError) {
+        throw transactionError;
+      }
 
-      const {
-        error: goalError,
-      } = await supabase
-        .from("goals")
-        .insert({
-          user_id,
-          name: "Comprar notebook",
-          target_amount: 3000,
-          saved_amount: 1200,
-          is_demo: true,
-        });
+      const { error: goalError } =
+        await supabase
+          .from("goals")
+          .insert({
+            user_id,
+            name: "Comprar notebook",
+            target_amount: 3000,
+            saved_amount: 1200,
+            is_demo: true,
+          });
 
       if (goalError) {
         throw goalError;
@@ -927,6 +1002,11 @@ export function useDemoData() {
     mutationFn: async () => {
       const user_id =
         await requireUserId();
+
+      /*
+       * Primeiro removemos as movimentações
+       * de demonstração.
+       */
 
       const {
         error: transactionError,
@@ -963,6 +1043,65 @@ export function useDemoData() {
       if (investError) {
         throw investError;
       }
+
+      /*
+       * Contas demo criadas pelo sistema:
+       * só removemos contas que ficaram
+       * sem movimentações.
+       */
+
+      const {
+        data: accounts,
+        error: accountsError,
+      } = await supabase
+        .from("accounts")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("name", "Conta principal");
+
+      if (accountsError) {
+        throw accountsError;
+      }
+
+      if (accounts?.length) {
+        for (const account of accounts) {
+          const {
+            data: linkedTransactions,
+            error: linkedError,
+          } = await supabase
+            .from("transactions")
+            .select("id")
+            .eq(
+              "account_id",
+              account.id,
+            )
+            .limit(1);
+
+          if (linkedError) {
+            throw linkedError;
+          }
+
+          if (
+            !linkedTransactions ||
+            linkedTransactions.length === 0
+          ) {
+            const {
+              error: deleteAccountError,
+            } = await supabase
+              .from("accounts")
+              .delete()
+              .eq("id", account.id)
+              .eq(
+                "user_id",
+                user_id,
+              );
+
+            if (deleteAccountError) {
+              throw deleteAccountError;
+            }
+          }
+        }
+      }
     },
 
     onSuccess: invalidate,
@@ -973,6 +1112,10 @@ export function useDemoData() {
     remove,
   };
 }
+
+/* =========================================================
+   DATA PADRÃO
+   ========================================================= */
 
 export const DEFAULT_DATE =
   todayISO;
