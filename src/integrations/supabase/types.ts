@@ -209,18 +209,19 @@ export type Database = {
         Insert: {
           created_at?: string;
           current_amount?: number;
-          id?: string;
           target_amount?: number;
+          id?: string;
           user_id: string;
+          updated_at?: string;
         };
 
         Update: {
           created_at?: string;
           current_amount?: number;
-          id?: string;
           target_amount?: number;
-          updated_at?: string;
+          id?: string;
           user_id?: string;
+          updated_at?: string;
         };
 
         Relationships: [];
@@ -262,6 +263,7 @@ export type Database = {
 
       transactions: {
         Row: {
+          account_id: string | null;
           amount: number;
           category: string;
           created_at: string;
@@ -276,6 +278,7 @@ export type Database = {
         };
 
         Insert: {
+          account_id?: string | null;
           amount: number;
           category: string;
           created_at?: string;
@@ -290,6 +293,7 @@ export type Database = {
         };
 
         Update: {
+          account_id?: string | null;
           amount?: number;
           category?: string;
           created_at?: string;
@@ -488,11 +492,11 @@ export type Enums<
     | {
         schema: keyof DatabaseWithoutInternals;
       },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[
-        DefaultSchemaEnumNameOrOptions["schema"]
+        DefaultSchemaTableNameOrOptions["schema"]
       ]["Enums"]
     : never = never,
 > =
@@ -527,7 +531,7 @@ export type CompositeTypes<
   }
     ? DatabaseWithoutInternals[
         PublicCompositeTypeNameOrOptions["schema"]
-      ]["CompositeTypes"][CompositeTypeName]
+      ]["Tables"][CompositeTypeName]
     : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
       ? DefaultSchema["CompositeTypes"][
           PublicCompositeTypeNameOrOptions
