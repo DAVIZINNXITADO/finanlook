@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
         <Link to="/visao-geral" className="mb-6 flex items-center gap-2 px-2">
           <span className="hero-gradient flex size-9 items-center justify-center rounded-xl text-lg">
-            💚
+            💸
           </span>
           <span className="font-display text-lg font-semibold">FinanFácil</span>
         </Link>
