@@ -130,9 +130,18 @@ function TransactionsPage() {
 
   async function submit() {
     const amount = parseAmount(form.amount);
-    if (!form.description.trim()) return toast.error("Informe uma descrição");
-    if (amount <= 0) return toast.error("Informe um valor maior que zero");
-    if (!form.category) return toast.error("Escolha uma categoria");
+    if (!form.description.trim()) {
+      toast.error("Informe uma descrição");
+      return;
+    }
+    if (amount <= 0) {
+      toast.error("Informe um valor maior que zero");
+      return;
+    }
+    if (!form.category) {
+      toast.error("Escolha uma categoria");
+      return;
+    }
 
     const values: TransactionInput = {
       type: form.type,
