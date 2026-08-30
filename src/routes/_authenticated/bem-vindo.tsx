@@ -1,20 +1,44 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowRight, CalendarRange, ChartPie, LifeBuoy, Target, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarRange,
+  ChartPie,
+  LifeBuoy,
+  Target,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDemoData, useProfile, useUpdateProfile } from "@/lib/data";
+import {
+  useDemoData,
+  useProfile,
+  useUpdateProfile,
+} from "@/lib/data";
 import { formatBRL, parseAmount } from "@/lib/finance";
 
 export const Route = createFileRoute("/_authenticated/bem-vindo")({
   head: () => ({
     meta: [
-      { title: "Bem-vindo ao FinanFácil" },
-      { name: "description", content: "Primeiros passos para organizar seu dinheiro no FinanFácil." },
-      { property: "og:title", content: "Bem-vindo ao FinanFácil" },
-      { property: "og:description", content: "Primeiros passos no FinanFácil." },
+      {
+        title: "Bem-vindo ao FinanLook",
+      },
+      {
+        name: "description",
+        content:
+          "Primeiros passos para organizar seu dinheiro no FinanLook.",
+      },
+      {
+        property: "og:title",
+        content: "Bem-vindo ao FinanLook",
+      },
+      {
+        property: "og:description",
+        content:
+          "Primeiros passos no FinanLook.",
+      },
     ],
   }),
   component: Welcome,
@@ -57,21 +81,34 @@ function Welcome() {
 
   async function finish(withIncome: boolean) {
     const value = withIncome ? parseAmount(income) : null;
+
     await updateProfile.mutateAsync({
       onboarded: true,
-      ...(value && value > 0 ? { monthly_income: value } : {}),
+      ...(value && value > 0
+        ? { monthly_income: value }
+        : {}),
     });
+
     navigate({ to: "/visao-geral" });
   }
 
   async function loadDemo() {
     try {
       await demo.create.mutateAsync();
-      await updateProfile.mutateAsync({ onboarded: true });
+
+      await updateProfile.mutateAsync({
+        onboarded: true,
+      });
+
       toast.success("Dados de demonstração adicionados!");
-      navigate({ to: "/visao-geral" });
+
+      navigate({
+        to: "/visao-geral",
+      });
     } catch {
-      toast.error("Não foi possível criar os dados de demonstração.");
+      toast.error(
+        "Não foi possível criar os dados de demonstração.",
+      );
     }
   }
 
@@ -79,20 +116,30 @@ function Welcome() {
     <div className="space-y-6">
       <section className="surface hero-gradient px-6 py-10 text-primary-foreground">
         <h1 className="font-display text-2xl font-semibold sm:text-3xl">
-          Bem-vindo ao FinanFácil, {profile?.name?.split(" ")[0] || "tudo bem"}! 👋
+          Bem-vindo ao FinanLook,{" "}
+          {profile?.name?.split(" ")[0] || "tudo bem"}! 👋
         </h1>
+
         <p className="mt-2 max-w-lg text-sm opacity-90">
           Vamos organizar seu dinheiro de forma simples.
         </p>
       </section>
 
       <section className="surface p-5 sm:p-6">
-        <h2 className="font-display text-lg font-semibold">Qual é sua renda mensal?</h2>
+        <h2 className="font-display text-lg font-semibold">
+          Qual é sua renda mensal?
+        </h2>
+
         <p className="mt-1 text-sm text-muted-foreground">
-          É opcional. Se você informar, usamos esse valor no Organizador de salário.
+          É opcional. Se você informar, usamos esse valor no
+          Organizador de salário.
         </p>
+
         <div className="mt-4 max-w-xs space-y-1.5">
-          <Label htmlFor="income">Renda mensal</Label>
+          <Label htmlFor="income">
+            Renda mensal
+          </Label>
+
           <Input
             id="income"
             inputMode="decimal"
@@ -101,31 +148,57 @@ function Welcome() {
             onChange={(e) => setIncome(e.target.value)}
             className="h-11"
           />
+
           {income ? (
-            <p className="text-xs text-muted-foreground">{formatBRL(parseAmount(income))}</p>
+            <p className="text-xs text-muted-foreground">
+              {formatBRL(parseAmount(income))}
+            </p>
           ) : null}
         </div>
+
         <div className="mt-5 flex flex-wrap gap-3">
-          <Button className="h-11" onClick={() => void finish(true)} disabled={updateProfile.isPending}>
-            Começar <ArrowRight className="size-4" />
+          <Button
+            className="h-11"
+            onClick={() => void finish(true)}
+            disabled={updateProfile.isPending}
+          >
+            Começar
+            <ArrowRight className="size-4" />
           </Button>
-          <Button variant="ghost" className="h-11" onClick={() => void finish(false)}>
+
+          <Button
+            variant="ghost"
+            className="h-11"
+            onClick={() => void finish(false)}
+          >
             Pular por enquanto
           </Button>
         </div>
       </section>
 
       <section className="surface p-5 sm:p-6">
-        <h2 className="font-display text-lg font-semibold">Como usar o FinanFácil</h2>
+        <h2 className="font-display text-lg font-semibold">
+          Como usar o FinanLook
+        </h2>
+
         <ul className="mt-4 space-y-4">
           {GUIDE.map(({ icon: Icon, title, text }) => (
-            <li key={title} className="flex gap-3">
+            <li
+              key={title}
+              className="flex gap-3"
+            >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
                 <Icon className="size-5" />
               </span>
+
               <div>
-                <p className="text-sm font-semibold">{title}</p>
-                <p className="text-sm text-muted-foreground">{text}</p>
+                <p className="text-sm font-semibold">
+                  {title}
+                </p>
+
+                <p className="text-sm text-muted-foreground">
+                  {text}
+                </p>
               </div>
             </li>
           ))}
@@ -133,11 +206,16 @@ function Welcome() {
       </section>
 
       <section className="surface p-5 sm:p-6">
-        <h2 className="font-display text-lg font-semibold">Quer ver o app com dados de exemplo?</h2>
+        <h2 className="font-display text-lg font-semibold">
+          Quer ver o app com dados de exemplo?
+        </h2>
+
         <p className="mt-1 text-sm text-muted-foreground">
-          Criamos algumas movimentações fictícias para você explorar. Estes são dados de
-          demonstração e podem ser apagados a qualquer momento em Configurações.
+          Criamos algumas movimentações fictícias para você
+          explorar. Estes são dados de demonstração e podem ser
+          apagados a qualquer momento em Configurações.
         </p>
+
         <Button
           variant="secondary"
           className="mt-4 h-11"
