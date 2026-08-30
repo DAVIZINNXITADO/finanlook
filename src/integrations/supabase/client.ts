@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { brokeredPreviewStorage } from "./previewAuthStorage";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return (
@@ -55,9 +56,9 @@ function createSupabaseClient() {
         : []),
     ];
 
-    const message = `Missing Supabase environment variable(s): ${missing.join(
-      ", ",
-    )}. Connect Supabase in Lovable Cloud.`;
+    const message =
+      `Missing Supabase environment variable(s): ${missing.join(", ")}. ` +
+      "Connect Supabase in Lovable Cloud.";
 
     console.error(`[Supabase] ${message}`);
 
@@ -73,9 +74,14 @@ function createSupabaseClient() {
       },
 
       auth: {
+        // No site normal, mantém a sessão no navegador.
+        // No preview do Lovable, usa o armazenamento compartilhado.
+        storage: brokeredPreviewStorage(),
+
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: "pkce",
       },
     },
   );
