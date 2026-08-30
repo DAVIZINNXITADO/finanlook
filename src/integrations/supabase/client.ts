@@ -1,38 +1,99 @@
-import {
-  createFileRoute,
-  Outlet,
-  redirect,
-} from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./types";
 
-export const Route = createFileRoute("/_authenticated")({
-  ssr: false,
+function isNewSupabaseApiKey(value: string): boolean {
+  return (
+    value.startsWith("sb_publishable_") ||
+    value.startsWith("sb_secret_")
+  );
+}
 
-  beforeLoad: async () => {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
+function createSupabaseFetch(supabaseKey: string): typeof fetch {
+  return (input, init) => {
+    const headers = new Headers(
+      typeof Request !== "undefined" && input instanceof Request
+        ? input.headers
+        : undefined,
+    );
 
-    if (error || !session?.user) {
-      throw redirect({
-        to: "/auth",
+    if (init?.headers) {
+      new Headers(init.headers).forEach((value, key) => {
+        headers.set(key, value);
       });
     }
 
-    return {
-      user: session.user,
-    };
-  },
+    if (
+      isNewSupabaseApiKey(supabaseKey) &&
+      headers.get("Authorization") === `Bearer ${supabaseKey}`
+    ) {
+      headers.delete("Authorization");
+    }
 
-  component: AuthenticatedLayout,
-});
+    headers.set("apikey", supabaseKey);
 
-function AuthenticatedLayout() {
-  return (
-    <AppShell>
-      <Outlet />
-    </AppShell>
+    return fetch(input, {
+      ...init,
+      headers,
+    });
+  };
+}
+
+function createSupabaseClient() {
+  const SUPABASE_URL =
+    import.meta.env["VITE_SUPABASE_URL"] ||
+    process.env["SUPABASE_URL"];
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    process.env["SUPABASE_PUBLISHABLE_KEY"];
+
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    const missing = [
+      ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY
+        ? ["SUPABASE_PUBLISHABLE_KEY"]
+        : []),
+    ];
+
+    const message = `Missing Supabase environment variable(s): ${missing.join(
+      ", ",
+    )}. Connect Supabase in Lovable Cloud.`;
+
+    console.error(`[Supabase] ${message}`);
+
+    throw new Error(message);
+  }
+
+  return createClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY,
+    {
+      global: {
+        fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
+      },
+
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    },
   );
 }
+
+let _supabase:
+  | ReturnType<typeof createSupabaseClient>
+  | undefined;
+
+export const supabase = new Proxy(
+  {} as ReturnType<typeof createSupabaseClient>,
+  {
+    get(_, prop, receiver) {
+      if (!_supabase) {
+        _supabase = createSupabaseClient();
+      }
+
+      return Reflect.get(_supabase, prop, receiver);
+    },
+  },
+);
