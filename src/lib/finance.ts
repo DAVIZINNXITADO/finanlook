@@ -1,18 +1,36 @@
 import type { Database } from "@/integrations/supabase/types";
 
+/* =========================================================
+   TIPOS
+   ========================================================= */
+
+export type Account =
+  Database["public"]["Tables"]["accounts"]["Row"];
+
 export type Transaction =
   Database["public"]["Tables"]["transactions"]["Row"];
-export type Goal = Database["public"]["Tables"]["goals"]["Row"];
+
+export type Goal =
+  Database["public"]["Tables"]["goals"]["Row"];
+
 export type Investment =
   Database["public"]["Tables"]["investments"]["Row"];
+
 export type Reserve =
   Database["public"]["Tables"]["reserves"]["Row"];
+
 export type MonthlyPlan =
   Database["public"]["Tables"]["monthly_plans"]["Row"];
+
 export type SalaryPlan =
   Database["public"]["Tables"]["salary_plans"]["Row"];
+
 export type Profile =
   Database["public"]["Tables"]["profiles"]["Row"];
+
+/* =========================================================
+   CATEGORIAS
+   ========================================================= */
 
 export const INCOME_CATEGORIES = [
   "Salário",
@@ -38,10 +56,6 @@ export const EXPENSE_CATEGORIES = [
   "Outros",
 ] as const;
 
-/**
- * Categorias que representam dinheiro separado/guardado,
- * e não consumo real.
- */
 export const SAVING_CATEGORIES = [
   "Reserva de emergência",
   "Investimentos",
@@ -50,9 +64,9 @@ export const SAVING_CATEGORIES = [
 
 export const SPENDING_CATEGORIES =
   EXPENSE_CATEGORIES.filter(
-    (c) =>
+    (category) =>
       !SAVING_CATEGORIES.includes(
-        c as (typeof SAVING_CATEGORIES)[number],
+        category as (typeof SAVING_CATEGORIES)[number],
       ),
   );
 
@@ -76,6 +90,65 @@ export const CATEGORY_EMOJI: Record<string, string> = {
   Vendas: "🏷️",
   "Dinheiro livre": "💰",
 };
+
+/* =========================================================
+   CONTAS
+   ========================================================= */
+
+export const ACCOUNT_TYPES = [
+  {
+    key: "conta",
+    label: "Conta bancária",
+    emoji: "🏦",
+  },
+  {
+    key: "carteira",
+    label: "Carteira",
+    emoji: "👛",
+  },
+  {
+    key: "poupanca",
+    label: "Poupança",
+    emoji: "🐷",
+  },
+  {
+    key: "investimento",
+    label: "Investimentos",
+    emoji: "📈",
+  },
+  {
+    key: "outro",
+    label: "Outro",
+    emoji: "💰",
+  },
+] as const;
+
+export type AccountType =
+  (typeof ACCOUNT_TYPES)[number]["key"];
+
+export function accountTypeLabel(
+  type: string,
+): string {
+  return (
+    ACCOUNT_TYPES.find(
+      (item) => item.key === type,
+    )?.label ?? "Outro"
+  );
+}
+
+export function accountTypeEmoji(
+  type: string,
+): string {
+  return (
+    ACCOUNT_TYPES.find(
+      (item) => item.key === type,
+    )?.emoji ?? "💰"
+  );
+}
+
+/* =========================================================
+   SALÁRIO
+   ========================================================= */
 
 export const SALARY_BUCKETS = [
   {
@@ -115,6 +188,10 @@ export const SALARY_BUCKETS = [
   },
 ] as const;
 
+/* =========================================================
+   FORMATAÇÃO
+   ========================================================= */
+
 export function formatBRL(
   value: number | string | null | undefined,
 ): string {
@@ -134,20 +211,13 @@ export function formatBRL(
 export function formatDateBR(
   isoDate: string,
 ): string {
-  const [y, m, d] = isoDate
+  const [year, month, day] = isoDate
     .slice(0, 10)
     .split("-");
 
-  return `${d}/${m}/${y}`;
+  return `${day}/${month}/${year}`;
 }
 
-/**
- * Converte:
- * 1.250,90
- * 1250,90
- * 1250.90
- * R$ 1.250,90
- */
 export function parseAmount(
   input: string,
 ): number {
@@ -164,38 +234,29 @@ export function parseAmount(
   return Number.isFinite(n) ? n : 0;
 }
 
-/**
- * Retorna a data local do dispositivo.
- *
- * Não usamos toISOString(), pois ele usa UTC e pode
- * fazer o sistema mostrar o dia/mês anterior em alguns
- * fusos horários.
- */
-export function todayISO(): string {
-  const d = new Date();
+/* =========================================================
+   DATAS
+   ========================================================= */
 
-  const year = d.getFullYear();
+export function todayISO(): string {
+  const date = new Date();
+
+  const year = date.getFullYear();
   const month = String(
-    d.getMonth() + 1,
+    date.getMonth() + 1,
   ).padStart(2, "0");
   const day = String(
-    d.getDate(),
+    date.getDate(),
   ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Mês atual baseado no calendário local do usuário.
- *
- * Exemplo:
- * agosto de 2026 -> 2026-08
- */
 export function currentMonthKey(): string {
-  const d = new Date();
+  const date = new Date();
 
-  return `${d.getFullYear()}-${String(
-    d.getMonth() + 1,
+  return `${date.getFullYear()}-${String(
+    date.getMonth() + 1,
   ).padStart(2, "0")}`;
 }
 
@@ -236,8 +297,7 @@ export function monthLabel(
     return "Período inválido";
   }
 
-  const name =
-    MONTH_NAMES[month - 1];
+  const name = MONTH_NAMES[month - 1];
 
   return `${name.charAt(0).toUpperCase()}${name.slice(
     1,
@@ -265,9 +325,6 @@ export function shortMonthLabel(
   );
 }
 
-/**
- * Adiciona ou remove meses sem depender do horário atual.
- */
 export function addMonths(
   key: string,
   delta: number,
@@ -294,6 +351,10 @@ export function addMonths(
   ).padStart(2, "0")}`;
 }
 
+/* =========================================================
+   CLASSIFICAÇÃO
+   ========================================================= */
+
 export function isSaving(
   category: string,
 ): boolean {
@@ -301,6 +362,10 @@ export function isSaving(
     SAVING_CATEGORIES as readonly string[]
   ).includes(category);
 }
+
+/* =========================================================
+   RESUMO MENSAL
+   ========================================================= */
 
 export type MonthSummary = {
   income: number;
@@ -320,17 +385,15 @@ export function summarizeMonth(
   month: string,
 ): MonthSummary {
   const rows = transactions.filter(
-    (t) => monthKeyOf(t.date) === month,
+    (transaction) =>
+      monthKeyOf(transaction.date) === month,
   );
 
   let income = 0;
   let expenses = 0;
   let saved = 0;
 
-  const map = new Map<
-    string,
-    number
-  >();
+  const map = new Map<string, number>();
 
   for (const transaction of rows) {
     const amount = Number(
@@ -371,19 +434,12 @@ export function summarizeMonth(
     income,
     expenses,
     saved,
-
-    /*
-     * Resultado real do mês:
-     * entradas - gastos - dinheiro guardado.
-     */
     balance:
       income - expenses - saved,
-
     savingRate:
       income > 0
         ? (saved / income) * 100
         : 0,
-
     byCategory: [
       ...map.entries(),
     ]
@@ -397,24 +453,19 @@ export function summarizeMonth(
         (a, b) =>
           b.total - a.total,
       ),
-
     count: rows.length,
   };
 }
 
-/**
- * Saldo acumulado das movimentações.
- *
- * Importante:
- * Este continua representando o saldo calculado pelas
- * movimentações. Quando a tabela "accounts" estiver ligada,
- * a Visão Geral poderá usar o saldo real das contas.
- */
+/* =========================================================
+   SALDO DAS TRANSAÇÕES
+   ========================================================= */
+
 export function totalBalance(
   transactions: Transaction[],
 ): number {
   return transactions.reduce(
-    (acc, transaction) => {
+    (balance, transaction) => {
       const amount = Number(
         transaction.amount,
       );
@@ -422,11 +473,11 @@ export function totalBalance(
       if (
         !Number.isFinite(amount)
       ) {
-        return acc;
+        return balance;
       }
 
       return (
-        acc +
+        balance +
         (transaction.type ===
         "entrada"
           ? amount
@@ -437,9 +488,100 @@ export function totalBalance(
   );
 }
 
+/* =========================================================
+   SALDO DAS CONTAS
+   ========================================================= */
+
 /**
- * Últimos meses, incluindo o mês informado.
+ * Calcula o saldo inicial configurado para cada conta.
  */
+export function totalInitialBalance(
+  accounts: Account[],
+): number {
+  return accounts.reduce(
+    (total, account) => {
+      const value = Number(
+        account.initial_balance,
+      );
+
+      return Number.isFinite(value)
+        ? total + value
+        : total;
+    },
+    0,
+  );
+}
+
+/**
+ * Soma os ajustes manuais das contas.
+ *
+ * O ajuste serve justamente para quando o usuário
+ * percebe que o saldo calculado não bate com o saldo
+ * real do banco/carteira.
+ */
+export function totalBalanceAdjustment(
+  accounts: Account[],
+): number {
+  return accounts.reduce(
+    (total, account) => {
+      const value = Number(
+        account.balance_adjustment,
+      );
+
+      return Number.isFinite(value)
+        ? total + value
+        : total;
+    },
+    0,
+  );
+}
+
+/**
+ * Saldo real consolidado:
+ *
+ * saldo inicial
+ * + movimentações
+ * + ajustes manuais
+ */
+export function totalAccountsBalance(
+  accounts: Account[],
+  transactions: Transaction[],
+): number {
+  return (
+    totalInitialBalance(accounts) +
+    totalBalance(transactions) +
+    totalBalanceAdjustment(accounts)
+  );
+}
+
+/**
+ * Saldo calculado de uma conta específica.
+ *
+ * Se as transações ainda não estiverem vinculadas
+ * a uma conta, elas não entram neste cálculo.
+ */
+export function accountBalance(
+  account: Account,
+  transactions: Transaction[],
+): number {
+  const accountTransactions =
+    transactions.filter(
+      (transaction) =>
+        transaction.account_id ===
+        account.id,
+    );
+
+  return (
+    Number(account.initial_balance) +
+    totalBalance(accountTransactions) +
+    Number(account.balance_adjustment)
+  );
+}
+
+/* =========================================================
+   MESES
+   ========================================================= */
+
 export function lastMonths(
   count: number,
   from = currentMonthKey(),
@@ -456,10 +598,6 @@ export function lastMonths(
   );
 }
 
-/**
- * Todos os meses que possuem movimentações,
- * além do mês atual.
- */
 export function availableMonths(
   transactions: Transaction[],
 ): string[] {
@@ -469,7 +607,9 @@ export function availableMonths(
     const month =
       monthKeyOf(transaction.date);
 
-    if (/^\d{4}-\d{2}$/.test(month)) {
+    if (
+      /^\d{4}-\d{2}$/.test(month)
+    ) {
       set.add(month);
     }
   }
@@ -478,6 +618,10 @@ export function availableMonths(
 
   return [...set].sort().reverse();
 }
+
+/* =========================================================
+   INSIGHTS
+   ========================================================= */
 
 function percentageChange(
   current: number,
@@ -494,12 +638,6 @@ function percentageChange(
   );
 }
 
-/**
- * Insights financeiros.
- *
- * Eles só aparecem quando existe informação suficiente,
- * evitando frases estranhas em meses vazios.
- */
 export function buildInsights(
   transactions: Transaction[],
   month = currentMonthKey(),
@@ -545,9 +683,6 @@ export function buildInsights(
     }
   }
 
-  /*
-   * Comparação com o mês anterior.
-   */
   if (previous.count > 0) {
     const expenseDiff =
       current.expenses -
@@ -626,9 +761,6 @@ export function buildInsights(
     }
   }
 
-  /*
-   * Sequência de meses guardando dinheiro.
-   */
   if (current.saved > 0) {
     let streak = 0;
 
@@ -660,9 +792,6 @@ export function buildInsights(
     }
   }
 
-  /*
-   * Taxa de economia.
-   */
   if (
     current.income > 0 &&
     current.savingRate >= 10
@@ -683,9 +812,6 @@ export function buildInsights(
     );
   }
 
-  /*
-   * Alerta de gastos.
-   */
   if (
     current.income > 0 &&
     current.expenses >
@@ -696,9 +822,6 @@ export function buildInsights(
     );
   }
 
-  /*
-   * Mês positivo.
-   */
   if (
     current.income > 0 &&
     current.balance > 0 &&
@@ -711,13 +834,14 @@ export function buildInsights(
     );
   }
 
-  /*
-   * Evita repetir exatamente a mesma mensagem.
-   */
   return [
     ...new Set(insights),
   ].slice(0, 8);
 }
+
+/* =========================================================
+   GRÁFICOS
+   ========================================================= */
 
 export const CHART_COLORS = [
   "var(--color-chart-1)",
@@ -729,3 +853,9 @@ export const CHART_COLORS = [
   "var(--color-chart-7)",
   "var(--color-chart-8)",
 ];
+
+/* =========================================================
+   DATA PADRÃO
+   ========================================================= */
+
+export const DEFAULT_DATE = todayISO;
