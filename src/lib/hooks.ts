@@ -28,7 +28,6 @@ export function useProfile() {
     queryKey: ["profile"],
     queryFn: async (): Promise<Profile | null> => {
       const { data: auth } = await supabase.auth.getUser();
-
       if (!auth.user) return null;
 
       const { data, error } = await supabase
@@ -38,7 +37,6 @@ export function useProfile() {
         .maybeSingle();
 
       if (error) throw error;
-
       return data;
     },
   });
@@ -58,7 +56,6 @@ export function useAccounts() {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-
       return data ?? [];
     },
   });
@@ -68,7 +65,7 @@ export type AccountInput = {
   name: string;
   type: string;
   initial_balance: number;
-  balance_adjustment: number;
+  balance_adjustment?: number;
 };
 
 export function useSaveAccount() {
@@ -92,7 +89,6 @@ export function useSaveAccount() {
           .eq("user_id", user_id);
 
         if (error) throw error;
-
         return;
       }
 
@@ -101,11 +97,11 @@ export function useSaveAccount() {
         .insert({
           ...values,
           user_id,
+          balance_adjustment: values.balance_adjustment ?? 0,
         });
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -118,22 +114,23 @@ export function useDeleteAccount() {
       const user_id = await requireUserId();
 
       /*
-       * Não permite apagar uma conta que ainda possui
+       * Não deixa apagar uma conta que ainda possui
        * movimentações vinculadas.
        */
-      const { data: transactions, error: transactionError } =
-        await supabase
-          .from("transactions")
-          .select("id")
-          .eq("account_id", id)
-          .eq("user_id", user_id)
-          .limit(1);
+      const { count, error: countError } = await supabase
+        .from("transactions")
+        .select("id", {
+          count: "exact",
+          head: true,
+        })
+        .eq("account_id", id)
+        .eq("user_id", user_id);
 
-      if (transactionError) throw transactionError;
+      if (countError) throw countError;
 
-      if (transactions && transactions.length > 0) {
+      if ((count ?? 0) > 0) {
         throw new Error(
-          "Esta conta possui movimentações. Remova ou transfira as movimentações antes de apagar a conta.",
+          "Esta conta possui movimentações. Remova ou transfira as movimentações antes de excluir a conta.",
         );
       }
 
@@ -145,7 +142,6 @@ export function useDeleteAccount() {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -165,20 +161,19 @@ export function useTransactions() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
       return data ?? [];
     },
   });
 }
 
 export type TransactionInput = {
-  account_id: string | null;
   type: "entrada" | "saida";
   description: string;
   amount: number;
   category: string;
   date: string;
   note: string | null;
+  account_id: string;
 };
 
 export function useSaveTransaction() {
@@ -194,10 +189,6 @@ export function useSaveTransaction() {
     }) => {
       const user_id = await requireUserId();
 
-      if (values.amount <= 0) {
-        throw new Error("O valor da movimentação deve ser maior que zero.");
-      }
-
       if (id) {
         const { error } = await supabase
           .from("transactions")
@@ -206,7 +197,6 @@ export function useSaveTransaction() {
           .eq("user_id", user_id);
 
         if (error) throw error;
-
         return;
       }
 
@@ -219,7 +209,6 @@ export function useSaveTransaction() {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -239,7 +228,6 @@ export function useDeleteTransaction() {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -258,7 +246,6 @@ export function useGoals() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
       return data ?? [];
     },
   });
@@ -290,7 +277,6 @@ export function useSaveGoal() {
           .eq("user_id", user_id);
 
         if (error) throw error;
-
         return;
       }
 
@@ -303,7 +289,6 @@ export function useSaveGoal() {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -323,7 +308,6 @@ export function useDeleteGoal() {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -342,7 +326,6 @@ export function useInvestments() {
         .order("date", { ascending: false });
 
       if (error) throw error;
-
       return data ?? [];
     },
   });
@@ -366,10 +349,6 @@ export function useSaveInvestment() {
     }) => {
       const user_id = await requireUserId();
 
-      if (values.amount <= 0) {
-        throw new Error("O valor do investimento deve ser maior que zero.");
-      }
-
       if (id) {
         const { error } = await supabase
           .from("investments")
@@ -378,7 +357,6 @@ export function useSaveInvestment() {
           .eq("user_id", user_id);
 
         if (error) throw error;
-
         return;
       }
 
@@ -391,7 +369,6 @@ export function useSaveInvestment() {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -411,7 +388,6 @@ export function useDeleteInvestment() {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -430,7 +406,6 @@ export function useReserve() {
         .maybeSingle();
 
       if (error) throw error;
-
       return data;
     },
   });
@@ -460,7 +435,6 @@ export function useSaveReserve() {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -480,7 +454,6 @@ export function useMonthlyPlans(month: string) {
         .order("category");
 
       if (error) throw error;
-
       return data ?? [];
     },
   });
@@ -508,7 +481,6 @@ export function useSaveMonthlyLimit(month: string) {
           .eq("user_id", user_id);
 
         if (error) throw error;
-
         return;
       }
 
@@ -528,7 +500,6 @@ export function useSaveMonthlyLimit(month: string) {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -548,7 +519,6 @@ export function useSalaryPlan(month: string) {
         .maybeSingle();
 
       if (error) throw error;
-
       return data;
     },
   });
@@ -592,7 +562,6 @@ export function useSaveSalaryPlan(month: string) {
 
       if (profileError) throw profileError;
     },
-
     onSuccess: invalidate,
   });
 }
@@ -622,9 +591,49 @@ export function useUpdateProfile() {
 
       if (error) throw error;
     },
-
     onSuccess: invalidate,
   });
+}
+
+/* =========================================================
+   INVALIDAÇÃO
+   ========================================================= */
+
+export function useInvalidateFinance() {
+  const qc = useQueryClient();
+
+  return () => {
+    for (const key of [
+      "accounts",
+      "transactions",
+      "goals",
+      "investments",
+      "reserve",
+      "monthly-plans",
+      "salary-plan",
+      "profile",
+    ]) {
+      void qc.invalidateQueries({
+        queryKey: [key],
+      });
+    }
+  };
+}
+
+/* =========================================================
+   USUÁRIO
+   ========================================================= */
+
+async function requireUserId(): Promise<string> {
+  const { data } = await supabase.auth.getUser();
+
+  if (!data.user) {
+    throw new Error(
+      "Sessão expirada. Entre novamente.",
+    );
+  }
+
+  return data.user.id;
 }
 
 /* =========================================================
@@ -642,6 +651,9 @@ export function useDemoData() {
       const day = (d: number) =>
         `${month}-${String(d).padStart(2, "0")}`;
 
+      /*
+       * Primeiro cria uma conta de demonstração.
+       */
       const { data: account, error: accountError } =
         await supabase
           .from("accounts")
@@ -728,18 +740,19 @@ export function useDemoData() {
 
       if (goalError) throw goalError;
 
-      const { error: reserveError } = await supabase
-        .from("reserves")
-        .upsert(
-          {
-            user_id,
-            target_amount: 3000,
-            current_amount: 300,
-          },
-          {
-            onConflict: "user_id",
-          },
-        );
+      const { error: reserveError } =
+        await supabase
+          .from("reserves")
+          .upsert(
+            {
+              user_id,
+              target_amount: 3000,
+              current_amount: 300,
+            },
+            {
+              onConflict: "user_id",
+            },
+          );
 
       if (reserveError) throw reserveError;
     },
@@ -759,52 +772,36 @@ export function useDemoData() {
 
       if (error) throw error;
 
-      const { error: goalError } = await supabase
-        .from("goals")
-        .delete()
-        .eq("user_id", user_id)
-        .eq("is_demo", true);
+      const { error: goalError } =
+        await supabase
+          .from("goals")
+          .delete()
+          .eq("user_id", user_id)
+          .eq("is_demo", true);
 
       if (goalError) throw goalError;
 
-      const { error: investError } = await supabase
-        .from("investments")
-        .delete()
-        .eq("user_id", user_id)
-        .eq("is_demo", true);
+      const { error: investError } =
+        await supabase
+          .from("investments")
+          .delete()
+          .eq("user_id", user_id)
+          .eq("is_demo", true);
 
       if (investError) throw investError;
 
       /*
-       * Remove somente contas de demonstração que ficaram
-       * sem movimentações.
+       * Remove contas de demonstração somente quando
+       * não houver mais transações vinculadas.
        */
-      const { data: accounts } = await supabase
-        .from("accounts")
-        .select("id")
-        .eq("user_id", user_id)
-        .eq("name", "Conta principal");
+      const { error: accountError } =
+        await supabase
+          .from("accounts")
+          .delete()
+          .eq("user_id", user_id)
+          .eq("name", "Conta principal");
 
-      if (accounts) {
-        for (const account of accounts) {
-          const { count } = await supabase
-            .from("transactions")
-            .select("id", {
-              count: "exact",
-              head: true,
-            })
-            .eq("account_id", account.id)
-            .eq("user_id", user_id);
-
-          if (!count) {
-            await supabase
-              .from("accounts")
-              .delete()
-              .eq("id", account.id)
-              .eq("user_id", user_id);
-          }
-        }
-      }
+      if (accountError) throw accountError;
     },
 
     onSuccess: invalidate,
@@ -816,39 +813,4 @@ export function useDemoData() {
   };
 }
 
-/* =========================================================
-   AUXILIARES
-   ========================================================= */
-
-async function requireUserId(): Promise<string> {
-  const { data } = await supabase.auth.getUser();
-
-  if (!data.user) {
-    throw new Error("Sessão expirada. Entre novamente.");
-  }
-
-  return data.user.id;
-}
-
-export function useInvalidateFinance() {
-  const qc = useQueryClient();
-
-  return () => {
-    for (const key of [
-      "accounts",
-      "transactions",
-      "goals",
-      "investments",
-      "reserve",
-      "monthly-plans",
-      "salary-plan",
-      "profile",
-    ]) {
-      void qc.invalidateQueries({
-        queryKey: [key],
-      });
-    }
-  };
-}
-
-export const DEFAULT_DATE = todayISO;
+export const DEFAULT_DATE = todayISO();
