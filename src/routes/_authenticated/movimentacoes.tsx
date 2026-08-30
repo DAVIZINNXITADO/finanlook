@@ -53,13 +53,20 @@ import {
 export const Route = createFileRoute("/_authenticated/movimentacoes")({
   head: () => ({
     meta: [
-      { title: "Movimentações — FinanFácil" },
+      { title: "Movimentações — FinanLook" },
       {
         name: "description",
-        content: "Registre, edite, filtre e pesquise suas entradas e saídas de dinheiro.",
+        content:
+          "Registre, edite, filtre e pesquise suas entradas e saídas de dinheiro no FinanLook.",
       },
-      { property: "og:title", content: "Movimentações — FinanFácil" },
-      { property: "og:description", content: "Suas entradas e saídas organizadas." },
+      {
+        property: "og:title",
+        content: "Movimentações — FinanLook",
+      },
+      {
+        property: "og:description",
+        content: "Suas entradas e saídas organizadas no FinanLook.",
+      },
     ],
   }),
   component: TransactionsPage,
@@ -96,15 +103,33 @@ function TransactionsPage() {
   const [filterType, setFilterType] = useState("todos");
   const [filterCategory, setFilterCategory] = useState("todas");
 
-  const categories = form.type === "entrada" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const categories =
+    form.type === "entrada" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
+
     return transactions.filter((t) => {
-      if (filterType !== "todos" && t.type !== filterType) return false;
-      if (filterCategory !== "todas" && t.category !== filterCategory) return false;
-      if (term && !`${t.description} ${t.category} ${t.note ?? ""}`.toLowerCase().includes(term))
+      if (filterType !== "todos" && t.type !== filterType) {
         return false;
+      }
+
+      if (
+        filterCategory !== "todas" &&
+        t.category !== filterCategory
+      ) {
+        return false;
+      }
+
+      if (
+        term &&
+        !`${t.description} ${t.category} ${t.note ?? ""}`
+          .toLowerCase()
+          .includes(term)
+      ) {
+        return false;
+      }
+
       return true;
     });
   }, [transactions, search, filterType, filterCategory]);
@@ -117,6 +142,7 @@ function TransactionsPage() {
 
   function openEdit(t: Transaction) {
     setEditing(t);
+
     setForm({
       type: t.type === "entrada" ? "entrada" : "saida",
       description: t.description,
@@ -125,19 +151,23 @@ function TransactionsPage() {
       date: t.date.slice(0, 10),
       note: t.note ?? "",
     });
+
     setOpen(true);
   }
 
   async function submit() {
     const amount = parseAmount(form.amount);
+
     if (!form.description.trim()) {
       toast.error("Informe uma descrição");
       return;
     }
+
     if (amount <= 0) {
       toast.error("Informe um valor maior que zero");
       return;
     }
+
     if (!form.category) {
       toast.error("Escolha uma categoria");
       return;
@@ -149,26 +179,47 @@ function TransactionsPage() {
       amount,
       category: form.category,
       date: form.date,
-      note: form.note.trim() ? form.note.trim().slice(0, 300) : null,
+      note: form.note.trim()
+        ? form.note.trim().slice(0, 300)
+        : null,
     };
 
     try {
-      await save.mutateAsync(editing ? { id: editing.id, values } : { values });
-      toast.success(editing ? "Movimentação atualizada" : "Movimentação adicionada");
+      await save.mutateAsync(
+        editing
+          ? {
+              id: editing.id,
+              values,
+            }
+          : {
+              values,
+            },
+      );
+
+      toast.success(
+        editing
+          ? "Movimentação atualizada"
+          : "Movimentação adicionada",
+      );
+
       setOpen(false);
     } catch {
-      toast.error("Não foi possível salvar. Tente novamente.");
+      toast.error(
+        "Não foi possível salvar. Tente novamente.",
+      );
     }
   }
 
   async function confirmDelete() {
     if (!deleting) return;
+
     try {
       await remove.mutateAsync(deleting.id);
       toast.success("Movimentação excluída");
     } catch {
       toast.error("Não foi possível excluir.");
     }
+
     setDeleting(null);
   }
 
@@ -178,8 +229,12 @@ function TransactionsPage() {
         title="Movimentações"
         subtitle="Tudo que entrou e saiu, do mais recente para o mais antigo."
         action={
-          <Button className="h-11" onClick={openNew}>
-            <Plus className="size-4" /> Nova movimentação
+          <Button
+            className="h-11"
+            onClick={openNew}
+          >
+            <Plus className="size-4" />
+            Nova movimentação
           </Button>
         }
       />
@@ -187,6 +242,7 @@ function TransactionsPage() {
       <div className="surface flex flex-col gap-3 p-4 sm:flex-row">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
           <Input
             className="h-11 pl-9"
             placeholder="Pesquisar por descrição ou categoria"
@@ -194,23 +250,49 @@ function TransactionsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Select value={filterType} onValueChange={setFilterType}>
+
+        <Select
+          value={filterType}
+          onValueChange={setFilterType}
+        >
           <SelectTrigger className="h-11 sm:w-40">
             <SelectValue />
           </SelectTrigger>
+
           <SelectContent>
-            <SelectItem value="todos">Todos os tipos</SelectItem>
-            <SelectItem value="entrada">Entradas</SelectItem>
-            <SelectItem value="saida">Saídas</SelectItem>
+            <SelectItem value="todos">
+              Todos os tipos
+            </SelectItem>
+
+            <SelectItem value="entrada">
+              Entradas
+            </SelectItem>
+
+            <SelectItem value="saida">
+              Saídas
+            </SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
+
+        <Select
+          value={filterCategory}
+          onValueChange={setFilterCategory}
+        >
           <SelectTrigger className="h-11 sm:w-48">
             <SelectValue />
           </SelectTrigger>
+
           <SelectContent>
-            <SelectItem value="todas">Todas as categorias</SelectItem>
-            {[...new Set([...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES])].map((c) => (
+            <SelectItem value="todas">
+              Todas as categorias
+            </SelectItem>
+
+            {[
+              ...new Set([
+                ...INCOME_CATEGORIES,
+                ...EXPENSE_CATEGORIES,
+              ]),
+            ].map((c) => (
               <SelectItem key={c} value={c}>
                 {CATEGORY_EMOJI[c] ?? "•"} {c}
               </SelectItem>
@@ -220,15 +302,21 @@ function TransactionsPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <p className="text-sm text-muted-foreground">
+          Carregando...
+        </p>
       ) : transactions.length === 0 ? (
         <EmptyState
           emoji="💳"
           title="Você ainda não possui movimentações."
           description="Adicione sua primeira entrada ou saída para começar."
           action={
-            <Button className="mt-2" onClick={openNew}>
-              <Plus className="size-4" /> Nova movimentação
+            <Button
+              className="mt-2"
+              onClick={openNew}
+            >
+              <Plus className="size-4" />
+              Nova movimentação
             </Button>
           }
         />
@@ -241,20 +329,31 @@ function TransactionsPage() {
       ) : (
         <ul className="space-y-3">
           {filtered.map((t) => (
-            <li key={t.id} className="surface flex items-center gap-3 p-4">
+            <li
+              key={t.id}
+              className="surface flex items-center gap-3 p-4"
+            >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-lg">
                 {CATEGORY_EMOJI[t.category] ?? "•"}
               </span>
+
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{t.description}</p>
+                <p className="truncate text-sm font-semibold">
+                  {t.description}
+                </p>
+
                 <p className="truncate text-xs text-muted-foreground">
                   {t.category} · {formatDateBR(t.date)}
                   {t.is_demo ? " · demonstração" : ""}
                 </p>
+
                 {t.note ? (
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{t.note}</p>
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {t.note}
+                  </p>
                 ) : null}
               </div>
+
               <div className="flex shrink-0 flex-col items-end gap-1">
                 <span
                   className={
@@ -263,8 +362,10 @@ function TransactionsPage() {
                       : "text-sm font-semibold text-destructive"
                   }
                 >
-                  {t.type === "entrada" ? "+" : "−"} {formatBRL(t.amount)}
+                  {t.type === "entrada" ? "+" : "−"}{" "}
+                  {formatBRL(t.amount)}
                 </span>
+
                 <div className="flex gap-1">
                   <Button
                     variant="ghost"
@@ -274,6 +375,7 @@ function TransactionsPage() {
                   >
                     <Pencil className="size-4" />
                   </Button>
+
                   <Button
                     variant="ghost"
                     size="icon"
@@ -289,10 +391,18 @@ function TransactionsPage() {
         </ul>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+      >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar movimentação" : "Nova movimentação"}</DialogTitle>
+            <DialogTitle>
+              {editing
+                ? "Editar movimentação"
+                : "Nova movimentação"}
+            </DialogTitle>
+
             <DialogDescription>
               Preencha os dados abaixo. Você pode editar depois.
             </DialogDescription>
@@ -301,59 +411,105 @@ function TransactionsPage() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Tipo</Label>
+
               <div className="grid grid-cols-2 gap-2">
-                {(["entrada", "saida"] as const).map((type) => (
-                  <Button
-                    key={type}
-                    type="button"
-                    variant={form.type === type ? "default" : "outline"}
-                    className="h-11"
-                    onClick={() => setForm((p) => ({ ...p, type, category: "" }))}
-                  >
-                    {type === "entrada" ? "Entrada" : "Saída"}
-                  </Button>
-                ))}
+                {(["entrada", "saida"] as const).map(
+                  (type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant={
+                        form.type === type
+                          ? "default"
+                          : "outline"
+                      }
+                      className="h-11"
+                      onClick={() =>
+                        setForm((p) => ({
+                          ...p,
+                          type,
+                          category: "",
+                        }))
+                      }
+                    >
+                      {type === "entrada"
+                        ? "Entrada"
+                        : "Saída"}
+                    </Button>
+                  ),
+                )}
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="descricao">Descrição</Label>
+              <Label htmlFor="descricao">
+                Descrição
+              </Label>
+
               <Input
                 id="descricao"
                 className="h-11"
                 placeholder="Salário"
                 value={form.description}
-                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    description: e.target.value,
+                  }))
+                }
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="valor">Valor</Label>
+              <Label htmlFor="valor">
+                Valor
+              </Label>
+
               <Input
                 id="valor"
                 className="h-11"
                 inputMode="decimal"
                 placeholder="2500,00"
                 value={form.amount}
-                onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    amount: e.target.value,
+                  }))
+                }
               />
+
               {form.amount ? (
-                <p className="text-xs text-muted-foreground">{formatBRL(parseAmount(form.amount))}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatBRL(
+                    parseAmount(form.amount),
+                  )}
+                </p>
               ) : null}
             </div>
 
             <div className="space-y-1.5">
               <Label>Categoria</Label>
+
               <Select
                 value={form.category}
-                onValueChange={(category) => setForm((p) => ({ ...p, category }))}
+                onValueChange={(category) =>
+                  setForm((p) => ({
+                    ...p,
+                    category,
+                  }))
+                }
               >
                 <SelectTrigger className="h-11">
                   <SelectValue placeholder="Escolha uma categoria" />
                 </SelectTrigger>
+
                 <SelectContent>
                   {categories.map((c) => (
-                    <SelectItem key={c} value={c}>
+                    <SelectItem
+                      key={c}
+                      value={c}
+                    >
                       {CATEGORY_EMOJI[c] ?? "•"} {c}
                     </SelectItem>
                   ))}
@@ -362,48 +518,88 @@ function TransactionsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="data">Data</Label>
+              <Label htmlFor="data">
+                Data
+              </Label>
+
               <Input
                 id="data"
                 type="date"
                 className="h-11"
                 value={form.date}
-                onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    date: e.target.value,
+                  }))
+                }
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="obs">Observação</Label>
+              <Label htmlFor="obs">
+                Observação
+              </Label>
+
               <Textarea
                 id="obs"
                 placeholder="Opcional"
                 value={form.note}
-                onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    note: e.target.value,
+                  }))
+                }
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button className="h-11 w-full" onClick={() => void submit()} disabled={save.isPending}>
-              {editing ? "Salvar alterações" : "Adicionar movimentação"}
+            <Button
+              className="h-11 w-full"
+              onClick={() => void submit()}
+              disabled={save.isPending}
+            >
+              {editing
+                ? "Salvar alterações"
+                : "Adicionar movimentação"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(o) => !o && setDeleting(null)}>
+      <AlertDialog
+        open={Boolean(deleting)}
+        onOpenChange={(o) =>
+          !o && setDeleting(null)
+        }
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir movimentação?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Excluir movimentação?
+            </AlertDialogTitle>
+
             <AlertDialogDescription>
               {deleting
-                ? `"${deleting.description}" de ${formatBRL(deleting.amount)} será removida. Essa ação não pode ser desfeita.`
+                ? `"${deleting.description}" de ${formatBRL(
+                    deleting.amount,
+                  )} será removida. Essa ação não pode ser desfeita.`
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void confirmDelete()}>Excluir</AlertDialogAction>
+            <AlertDialogCancel>
+              Cancelar
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={() => void confirmDelete()}
+            >
+              Excluir
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
