@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedBemVindoRouteImport } from './routes/_authenticated/bem-vindo'
+import { Route as AuthenticatedInvestimentosRouteImport } from './routes/_authenticated/investimentos'
+import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
 import { Route as AuthenticatedOrganizarSalarioRouteImport } from './routes/_authenticated/organizar-salario'
 import { Route as AuthenticatedReservaRouteImport } from './routes/_authenticated/reserva'
@@ -35,6 +37,17 @@ const AuthRoute = AuthRouteImport.update({
 const AuthenticatedBemVindoRoute = AuthenticatedBemVindoRouteImport.update({
   id: '/bem-vindo',
   path: '/bem-vindo',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInvestimentosRoute =
+  AuthenticatedInvestimentosRouteImport.update({
+    id: '/investimentos',
+    path: '/investimentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
+  id: '/metas',
+  path: '/metas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMovimentacoesRoute =
@@ -64,6 +77,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
+  '/investimentos': typeof AuthenticatedInvestimentosRoute
+  '/metas': typeof AuthenticatedMetasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
   '/reserva': typeof AuthenticatedReservaRoute
@@ -73,6 +88,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
+  '/investimentos': typeof AuthenticatedInvestimentosRoute
+  '/metas': typeof AuthenticatedMetasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
   '/reserva': typeof AuthenticatedReservaRoute
@@ -84,6 +101,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/bem-vindo': typeof AuthenticatedBemVindoRoute
+  '/_authenticated/investimentos': typeof AuthenticatedInvestimentosRoute
+  '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/_authenticated/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
   '/_authenticated/reserva': typeof AuthenticatedReservaRoute
@@ -95,6 +114,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/bem-vindo'
+    | '/investimentos'
+    | '/metas'
     | '/movimentacoes'
     | '/organizar-salario'
     | '/reserva'
@@ -104,6 +125,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/bem-vindo'
+    | '/investimentos'
+    | '/metas'
     | '/movimentacoes'
     | '/organizar-salario'
     | '/reserva'
@@ -114,6 +137,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/bem-vindo'
+    | '/_authenticated/investimentos'
+    | '/_authenticated/metas'
     | '/_authenticated/movimentacoes'
     | '/_authenticated/organizar-salario'
     | '/_authenticated/reserva'
@@ -156,6 +181,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBemVindoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/investimentos': {
+      id: '/_authenticated/investimentos'
+      path: '/investimentos'
+      fullPath: '/investimentos'
+      preLoaderRoute: typeof AuthenticatedInvestimentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/metas': {
+      id: '/_authenticated/metas'
+      path: '/metas'
+      fullPath: '/metas'
+      preLoaderRoute: typeof AuthenticatedMetasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/movimentacoes': {
       id: '/_authenticated/movimentacoes'
       path: '/movimentacoes'
@@ -189,6 +228,8 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBemVindoRoute: typeof AuthenticatedBemVindoRoute
+  AuthenticatedInvestimentosRoute: typeof AuthenticatedInvestimentosRoute
+  AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
   AuthenticatedOrganizarSalarioRoute: typeof AuthenticatedOrganizarSalarioRoute
   AuthenticatedReservaRoute: typeof AuthenticatedReservaRoute
@@ -197,6 +238,8 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBemVindoRoute: AuthenticatedBemVindoRoute,
+  AuthenticatedInvestimentosRoute: AuthenticatedInvestimentosRoute,
+  AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
   AuthenticatedOrganizarSalarioRoute: AuthenticatedOrganizarSalarioRoute,
   AuthenticatedReservaRoute: AuthenticatedReservaRoute,
