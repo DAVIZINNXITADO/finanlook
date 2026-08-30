@@ -1,0 +1,45 @@
+-- FinanLook
+-- Parte 3: Vincular movimentações às contas
+
+alter table public.transactions
+add column if not exists account_id uuid
+references public.accounts(id)
+on delete set null;
+
+create index if not exists transactions_account_id_idx
+on public.transactions(account_id);
+
+create index if not exists transactions_user_id_account_id_idx
+on public.transactions(user_id, account_id);
+
+-- Garante que a conta usada na movimentação
+-- pertença ao mesmo usuário da movimentação.
+create or replace function public.check_transaction_account_owner()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.account_id is not null
+     and not exists (
+       select 1
+       from public.accounts a
+       where a.id = new.account_id
+         and a.user_id = new.user_id
+     )
+  then
+    raise exception 'A conta selecionada não pertence ao usuário.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists transactions_check_account_owner
+on public.transactions;
+
+create trigger transactions_check_account_owner
+before insert or update on public.transactions
+for each row
+execute function public.check_transaction_account_owner();
