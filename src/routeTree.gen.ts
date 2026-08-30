@@ -14,6 +14,8 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedBemVindoRouteImport } from './routes/_authenticated/bem-vindo'
 import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
+import { Route as AuthenticatedOrganizarSalarioRouteImport } from './routes/_authenticated/organizar-salario'
+import { Route as AuthenticatedReservaRouteImport } from './routes/_authenticated/reserva'
 import { Route as AuthenticatedVisaoGeralRouteImport } from './routes/_authenticated/visao-geral'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +43,17 @@ const AuthenticatedMovimentacoesRoute =
     path: '/movimentacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOrganizarSalarioRoute =
+  AuthenticatedOrganizarSalarioRouteImport.update({
+    id: '/organizar-salario',
+    path: '/organizar-salario',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReservaRoute = AuthenticatedReservaRouteImport.update({
+  id: '/reserva',
+  path: '/reserva',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedVisaoGeralRoute = AuthenticatedVisaoGeralRouteImport.update({
   id: '/visao-geral',
   path: '/visao-geral',
@@ -52,6 +65,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
+  '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
+  '/reserva': typeof AuthenticatedReservaRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
 export interface FileRoutesByTo {
@@ -59,6 +74,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
+  '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
+  '/reserva': typeof AuthenticatedReservaRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
 export interface FileRoutesById {
@@ -68,13 +85,29 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/bem-vindo': typeof AuthenticatedBemVindoRoute
   '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
+  '/_authenticated/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
+  '/_authenticated/reserva': typeof AuthenticatedReservaRoute
   '/_authenticated/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/bem-vindo' | '/movimentacoes' | '/visao-geral'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/bem-vindo'
+    | '/movimentacoes'
+    | '/organizar-salario'
+    | '/reserva'
+    | '/visao-geral'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/bem-vindo' | '/movimentacoes' | '/visao-geral'
+  to:
+    | '/'
+    | '/auth'
+    | '/bem-vindo'
+    | '/movimentacoes'
+    | '/organizar-salario'
+    | '/reserva'
+    | '/visao-geral'
   id:
     | '__root__'
     | '/'
@@ -82,6 +115,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/bem-vindo'
     | '/_authenticated/movimentacoes'
+    | '/_authenticated/organizar-salario'
+    | '/_authenticated/reserva'
     | '/_authenticated/visao-geral'
   fileRoutesById: FileRoutesById
 }
@@ -128,6 +163,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMovimentacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/organizar-salario': {
+      id: '/_authenticated/organizar-salario'
+      path: '/organizar-salario'
+      fullPath: '/organizar-salario'
+      preLoaderRoute: typeof AuthenticatedOrganizarSalarioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reserva': {
+      id: '/_authenticated/reserva'
+      path: '/reserva'
+      fullPath: '/reserva'
+      preLoaderRoute: typeof AuthenticatedReservaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/visao-geral': {
       id: '/_authenticated/visao-geral'
       path: '/visao-geral'
@@ -141,12 +190,16 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBemVindoRoute: typeof AuthenticatedBemVindoRoute
   AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
+  AuthenticatedOrganizarSalarioRoute: typeof AuthenticatedOrganizarSalarioRoute
+  AuthenticatedReservaRoute: typeof AuthenticatedReservaRoute
   AuthenticatedVisaoGeralRoute: typeof AuthenticatedVisaoGeralRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBemVindoRoute: AuthenticatedBemVindoRoute,
   AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
+  AuthenticatedOrganizarSalarioRoute: AuthenticatedOrganizarSalarioRoute,
+  AuthenticatedReservaRoute: AuthenticatedReservaRoute,
   AuthenticatedVisaoGeralRoute: AuthenticatedVisaoGeralRoute,
 }
 
