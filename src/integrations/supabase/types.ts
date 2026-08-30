@@ -47,7 +47,15 @@ export type Database = {
           updated_at?: string;
         };
 
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "accounts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
 
       goals: {
@@ -209,19 +217,18 @@ export type Database = {
         Insert: {
           created_at?: string;
           current_amount?: number;
-          target_amount?: number;
           id?: string;
-          user_id: string;
-          updated_at?: string;
+          target_amount?: number;
+          user_id?: string;
         };
 
         Update: {
           created_at?: string;
           current_amount?: number;
-          target_amount?: number;
           id?: string;
-          user_id?: string;
+          target_amount?: number;
           updated_at?: string;
+          user_id?: string;
         };
 
         Relationships: [];
@@ -263,51 +270,59 @@ export type Database = {
 
       transactions: {
         Row: {
+          id: string;
+          user_id: string;
           account_id: string | null;
+          type: string;
+          description: string;
           amount: number;
           category: string;
-          created_at: string;
           date: string;
-          description: string;
-          id: string;
-          is_demo: boolean;
           note: string | null;
-          type: string;
+          is_demo: boolean;
+          created_at: string;
           updated_at: string;
-          user_id: string;
         };
 
         Insert: {
+          id?: string;
+          user_id: string;
           account_id?: string | null;
+          type: string;
+          description: string;
           amount: number;
           category: string;
-          created_at?: string;
           date?: string;
-          description: string;
-          id?: string;
-          is_demo?: boolean;
           note?: string | null;
-          type: string;
+          is_demo?: boolean;
+          created_at?: string;
           updated_at?: string;
-          user_id: string;
         };
 
         Update: {
+          id?: string;
+          user_id?: string;
           account_id?: string | null;
+          type?: string;
+          description?: string;
           amount?: number;
           category?: string;
-          created_at?: string;
           date?: string;
-          description?: string;
-          id?: string;
-          is_demo?: boolean;
           note?: string | null;
-          type?: string;
+          is_demo?: boolean;
+          created_at?: string;
           updated_at?: string;
-          user_id?: string;
         };
 
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "accounts";
+            referencedColumns: ["id"];
+          },
+        ];
       };
 
       user_settings: {
@@ -324,7 +339,7 @@ export type Database = {
           id?: string;
           preferences?: Json;
           updated_at?: string;
-          user_id: string;
+          user_id?: string;
         };
 
         Update: {
