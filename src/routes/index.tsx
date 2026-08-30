@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import {
   ArrowRight,
   ChartPie,
@@ -8,8 +8,21 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      throw redirect({
+        to: "/visao-geral",
+      });
+    }
+  },
+
   head: () => ({
     meta: [
       {
@@ -31,6 +44,7 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+
   component: Landing,
 });
 
