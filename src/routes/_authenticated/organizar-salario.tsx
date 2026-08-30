@@ -1,226 +1,608 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PageHeader } from "@/components/PageHeader";
-import { useProfile, useSalaryPlan, useSaveSalaryPlan } from "@/lib/data";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  CHART_COLORS,
-  SALARY_BUCKETS,
-  currentMonthKey,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import {
+  useDeleteTransaction,
+  useSaveTransaction,
+  useTransactions,
+  type TransactionInput,
+} from "@/lib/data";
+import {
+  CATEGORY_EMOJI,
+  EXPENSE_CATEGORIES,
+  INCOME_CATEGORIES,
   formatBRL,
-  monthLabel,
+  formatDateBR,
   parseAmount,
+  todayISO,
+  type Transaction,
 } from "@/lib/finance";
 
-export const Route = createFileRoute("/_authenticated/organizar-salario")({
+export const Route = createFileRoute("/_authenticated/movimentacoes")({
   head: () => ({
     meta: [
-      { title: "Organizar meu salário — FinanFácil" },
+      { title: "Movimentações — FinanLook" },
       {
         name: "description",
         content:
-          "Distribua sua renda mensal entre necessidades, alimentação, lazer, reserva, investimentos e metas.",
+          "Registre, edite, filtre e pesquise suas entradas e saídas de dinheiro no FinanLook.",
       },
-      { property: "og:title", content: "Organizar meu salário — FinanFácil" },
-      { property: "og:description", content: "Uma sugestão simples para dividir sua renda." },
+      {
+        property: "og:title",
+        content: "Movimentações — FinanLook",
+      },
+      {
+        property: "og:description",
+        content: "Suas entradas e saídas organizadas no FinanLook.",
+      },
     ],
   }),
-  component: SalaryPage,
+  component: TransactionsPage,
 });
 
-type Allocations = Record<string, number>;
+type FormState = {
+  type: "entrada" | "saida";
+  description: string;
+  amount: string;
+  category: string;
+  date: string;
+  note: string;
+};
 
-function SalaryPage() {
-  const month = currentMonthKey();
-  const { data: profile } = useProfile();
-  const { data: plan, isLoading } = useSalaryPlan(month);
-  const savePlan = useSaveSalaryPlan(month);
+const emptyForm = (): FormState => ({
+  type: "saida",
+  description: "",
+  amount: "",
+  category: "",
+  date: todayISO(),
+  note: "",
+});
 
-  const [income, setIncome] = useState("");
-  const [allocations, setAllocations] = useState<Allocations>({});
-  const [ready, setReady] = useState(false);
+function TransactionsPage() {
+  const { data: transactions = [], isLoading } = useTransactions();
+  const save = useSaveTransaction();
+  const remove = useDeleteTransaction();
 
-  useEffect(() => {
-    if (isLoading || ready) return;
-    const baseIncome = Number(plan?.income ?? profile?.monthly_income ?? 0);
-    setIncome(baseIncome > 0 ? String(baseIncome).replace(".", ",") : "");
-    const stored = (plan?.allocations ?? {}) as Allocations;
-    if (Object.keys(stored).length > 0) {
-      setAllocations(stored);
-    } else if (baseIncome > 0) {
-      setAllocations(suggest(baseIncome));
-    }
-    setReady(true);
-  }, [isLoading, plan, profile, ready]);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Transaction | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [deleting, setDeleting] = useState<Transaction | null>(null);
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("todos");
+  const [filterCategory, setFilterCategory] = useState("todas");
 
-  const incomeValue = parseAmount(income);
-  const distributed = Object.values(allocations).reduce((a, b) => a + (Number(b) || 0), 0);
-  const remaining = incomeValue - distributed;
+  const categories =
+    form.type === "entrada" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
-  function suggest(value: number): Allocations {
-    return Object.fromEntries(
-      SALARY_BUCKETS.map((b) => [b.key, Math.round(value * b.suggestion * 100) / 100]),
-    );
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+
+    return transactions.filter((t) => {
+      if (filterType !== "todos" && t.type !== filterType) {
+        return false;
+      }
+
+      if (
+        filterCategory !== "todas" &&
+        t.category !== filterCategory
+      ) {
+        return false;
+      }
+
+      if (
+        term &&
+        !`${t.description} ${t.category} ${t.note ?? ""}`
+          .toLowerCase()
+          .includes(term)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [transactions, search, filterType, filterCategory]);
+
+  function openNew() {
+    setEditing(null);
+    setForm(emptyForm());
+    setOpen(true);
   }
 
-  const chartData = [
-    ...SALARY_BUCKETS.map((b) => ({ name: b.key, value: Number(allocations[b.key] ?? 0) })),
-    { name: "Dinheiro livre", value: Math.max(remaining, 0) },
-  ].filter((d) => d.value > 0);
+  function openEdit(t: Transaction) {
+    setEditing(t);
 
-  async function handleSave() {
-    if (incomeValue <= 0) {
-      toast.error("Informe quanto você recebe por mês");
+    setForm({
+      type: t.type === "entrada" ? "entrada" : "saida",
+      description: t.description,
+      amount: String(Number(t.amount)).replace(".", ","),
+      category: t.category,
+      date: t.date.slice(0, 10),
+      note: t.note ?? "",
+    });
+
+    setOpen(true);
+  }
+
+  async function submit() {
+    const amount = parseAmount(form.amount);
+
+    if (!form.description.trim()) {
+      toast.error("Informe uma descrição");
       return;
     }
-    try {
-      await savePlan.mutateAsync({ income: incomeValue, allocations });
-      toast.success("Organização salva!");
-    } catch {
-      toast.error("Não foi possível salvar.");
+
+    if (amount <= 0) {
+      toast.error("Informe um valor maior que zero");
+      return;
     }
+
+    if (!form.category) {
+      toast.error("Escolha uma categoria");
+      return;
+    }
+
+    const values: TransactionInput = {
+      type: form.type,
+      description: form.description.trim().slice(0, 120),
+      amount,
+      category: form.category,
+      date: form.date,
+      note: form.note.trim()
+        ? form.note.trim().slice(0, 300)
+        : null,
+    };
+
+    try {
+      await save.mutateAsync(
+        editing
+          ? {
+              id: editing.id,
+              values,
+            }
+          : {
+              values,
+            },
+      );
+
+      toast.success(
+        editing
+          ? "Movimentação atualizada"
+          : "Movimentação adicionada",
+      );
+
+      setOpen(false);
+    } catch {
+      toast.error(
+        "Não foi possível salvar. Tente novamente.",
+      );
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleting) return;
+
+    try {
+      await remove.mutateAsync(deleting.id);
+      toast.success("Movimentação excluída");
+    } catch {
+      toast.error("Não foi possível excluir.");
+    }
+
+    setDeleting(null);
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Organizar meu salário"
-        subtitle={`Uma sugestão inicial para ${monthLabel(month)}. Você pode mudar tudo.`}
+        title="Movimentações"
+        subtitle="Tudo que entrou e saiu, do mais recente para o mais antigo."
+        action={
+          <Button
+            className="h-11"
+            onClick={openNew}
+          >
+            <Plus className="size-4" />
+            Nova movimentação
+          </Button>
+        }
       />
 
-      <section className="surface p-5">
-        <Label htmlFor="renda" className="text-base font-semibold">
-          Quanto você recebe por mês?
-        </Label>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <div className="w-full max-w-xs space-y-1.5">
-            <Input
-              id="renda"
-              inputMode="decimal"
-              className="h-12 text-lg"
-              placeholder="2500,00"
-              value={income}
-              onChange={(e) => setIncome(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">{formatBRL(incomeValue)}</p>
-          </div>
-          <Button
-            variant="secondary"
-            className="h-11"
-            onClick={() => setAllocations(suggest(incomeValue))}
-            disabled={incomeValue <= 0}
-          >
-            Usar sugestão
-          </Button>
+      <div className="surface flex flex-col gap-3 p-4 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+          <Input
+            className="h-11 pl-9"
+            placeholder="Pesquisar por descrição ou categoria"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          A divisão é apenas uma sugestão. Nenhuma porcentagem é obrigatória.
-        </p>
-      </section>
 
-      <section className="surface p-5">
-        <h2 className="font-display text-lg font-semibold">Distribuição</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Renda mensal: <strong>{formatBRL(incomeValue)}</strong>
-        </p>
+        <Select
+          value={filterType}
+          onValueChange={setFilterType}
+        >
+          <SelectTrigger className="h-11 sm:w-40">
+            <SelectValue />
+          </SelectTrigger>
 
-        <div className="mt-4 space-y-3">
-          {SALARY_BUCKETS.map((bucket) => (
-            <div key={bucket.key} className="flex items-center gap-3">
-              <span className="w-44 shrink-0 truncate text-sm font-medium">
-                {bucket.emoji} {bucket.key}
+          <SelectContent>
+            <SelectItem value="todos">
+              Todos os tipos
+            </SelectItem>
+
+            <SelectItem value="entrada">
+              Entradas
+            </SelectItem>
+
+            <SelectItem value="saida">
+              Saídas
+            </SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filterCategory}
+          onValueChange={setFilterCategory}
+        >
+          <SelectTrigger className="h-11 sm:w-48">
+            <SelectValue />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="todas">
+              Todas as categorias
+            </SelectItem>
+
+            {[
+              ...new Set([
+                ...INCOME_CATEGORIES,
+                ...EXPENSE_CATEGORIES,
+              ]),
+            ].map((c) => (
+              <SelectItem key={c} value={c}>
+                {CATEGORY_EMOJI[c] ?? "•"} {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">
+          Carregando...
+        </p>
+      ) : transactions.length === 0 ? (
+        <EmptyState
+          emoji="💳"
+          title="Você ainda não possui movimentações."
+          description="Adicione sua primeira entrada ou saída para começar."
+          action={
+            <Button
+              className="mt-2"
+              onClick={openNew}
+            >
+              <Plus className="size-4" />
+              Nova movimentação
+            </Button>
+          }
+        />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          emoji="🔍"
+          title="Nenhuma movimentação encontrada"
+          description="Tente outro termo de pesquisa ou mude os filtros."
+        />
+      ) : (
+        <ul className="space-y-3">
+          {filtered.map((t) => (
+            <li
+              key={t.id}
+              className="surface flex items-center gap-3 p-4"
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-lg">
+                {CATEGORY_EMOJI[t.category] ?? "•"}
               </span>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">
+                  {t.description}
+                </p>
+
+                <p className="truncate text-xs text-muted-foreground">
+                  {t.category} · {formatDateBR(t.date)}
+                  {t.is_demo ? " · demonstração" : ""}
+                </p>
+
+                {t.note ? (
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {t.note}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span
+                  className={
+                    t.type === "entrada"
+                      ? "text-sm font-semibold text-success"
+                      : "text-sm font-semibold text-destructive"
+                  }
+                >
+                  {t.type === "entrada" ? "+" : "−"}{" "}
+                  {formatBRL(t.amount)}
+                </span>
+
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Editar"
+                    onClick={() => openEdit(t)}
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Excluir"
+                    onClick={() => setDeleting(t)}
+                  >
+                    <Trash2 className="size-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editing
+                ? "Editar movimentação"
+                : "Nova movimentação"}
+            </DialogTitle>
+
+            <DialogDescription>
+              Preencha os dados abaixo. Você pode editar depois.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Tipo</Label>
+
+              <div className="grid grid-cols-2 gap-2">
+                {(["entrada", "saida"] as const).map(
+                  (type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant={
+                        form.type === type
+                          ? "default"
+                          : "outline"
+                      }
+                      className="h-11"
+                      onClick={() =>
+                        setForm((p) => ({
+                          ...p,
+                          type,
+                          category: "",
+                        }))
+                      }
+                    >
+                      {type === "entrada"
+                        ? "Entrada"
+                        : "Saída"}
+                    </Button>
+                  ),
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="descricao">
+                Descrição
+              </Label>
+
               <Input
-                inputMode="decimal"
-                className="h-11 max-w-[10rem]"
-                value={allocations[bucket.key] ? String(allocations[bucket.key]).replace(".", ",") : ""}
-                placeholder="0,00"
+                id="descricao"
+                className="h-11"
+                placeholder="Salário"
+                value={form.description}
                 onChange={(e) =>
-                  setAllocations((prev) => ({ ...prev, [bucket.key]: parseAmount(e.target.value) }))
+                  setForm((p) => ({
+                    ...p,
+                    description: e.target.value,
+                  }))
                 }
               />
-              <span className="hidden text-xs text-muted-foreground sm:inline">
-                {incomeValue > 0
-                  ? `${Math.round(((Number(allocations[bucket.key]) || 0) / incomeValue) * 100)}%`
-                  : ""}
-              </span>
             </div>
-          ))}
-        </div>
 
-        <div className="mt-5 rounded-2xl bg-secondary p-4">
-          <p className="text-sm">
-            💰 Dinheiro restante: <strong>{formatBRL(remaining)}</strong>
-          </p>
-          {remaining < 0 ? (
-            <p className="mt-1 text-sm font-medium text-destructive">
-              A distribuição ultrapassou sua renda mensal.
-            </p>
-          ) : remaining > 0 ? (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Você ainda tem {formatBRL(remaining)} para distribuir.
-            </p>
-          ) : (
-            <p className="mt-1 text-sm text-success">Sua renda está totalmente distribuída.</p>
-          )}
-        </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="valor">
+                Valor
+              </Label>
 
-        <Button className="mt-4 h-11 w-full sm:w-auto" onClick={() => void handleSave()}>
-          Salvar organização
-        </Button>
-      </section>
+              <Input
+                id="valor"
+                className="h-11"
+                inputMode="decimal"
+                placeholder="2500,00"
+                value={form.amount}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    amount: e.target.value,
+                  }))
+                }
+              />
 
-      {chartData.length > 0 ? (
-        <section className="surface p-5">
-          <h2 className="font-display text-lg font-semibold">Como seu salário foi distribuído</h2>
-          <div className="mt-4 grid gap-6 md:grid-cols-2">
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={50}
-                    outerRadius={86}
-                    paddingAngle={2}
-                    stroke="none"
-                  >
-                    {chartData.map((entry, i) => (
-                      <Cell key={entry.name} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number | string) => formatBRL(Number(value))}
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-card)",
-                      fontSize: 13,
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {form.amount ? (
+                <p className="text-xs text-muted-foreground">
+                  {formatBRL(
+                    parseAmount(form.amount),
+                  )}
+                </p>
+              ) : null}
             </div>
-            <ul className="space-y-2">
-              {chartData.map((item, i) => (
-                <li key={item.name} className="flex items-center gap-3 text-sm">
-                  <span
-                    className="size-2.5 rounded-full"
-                    style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
-                  />
-                  <span className="flex-1 truncate">{item.name}</span>
-                  <span className="font-medium">{formatBRL(item.value)}</span>
-                </li>
-              ))}
-            </ul>
+
+            <div className="space-y-1.5">
+              <Label>Categoria</Label>
+
+              <Select
+                value={form.category}
+                onValueChange={(category) =>
+                  setForm((p) => ({
+                    ...p,
+                    category,
+                  }))
+                }
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Escolha uma categoria" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem
+                      key={c}
+                      value={c}
+                    >
+                      {CATEGORY_EMOJI[c] ?? "•"} {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="data">
+                Data
+              </Label>
+
+              <Input
+                id="data"
+                type="date"
+                className="h-11"
+                value={form.date}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    date: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="obs">
+                Observação
+              </Label>
+
+              <Textarea
+                id="obs"
+                placeholder="Opcional"
+                value={form.note}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    note: e.target.value,
+                  }))
+                }
+              />
+            </div>
           </div>
-        </section>
-      ) : null}
+
+          <DialogFooter>
+            <Button
+              className="h-11 w-full"
+              onClick={() => void submit()}
+              disabled={save.isPending}
+            >
+              {editing
+                ? "Salvar alterações"
+                : "Adicionar movimentação"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={Boolean(deleting)}
+        onOpenChange={(o) =>
+          !o && setDeleting(null)
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Excluir movimentação?
+            </AlertDialogTitle>
+
+            <AlertDialogDescription>
+              {deleting
+                ? `"${deleting.description}" de ${formatBRL(
+                    deleting.amount,
+                  )} será removida. Essa ação não pode ser desfeita.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Cancelar
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={() => void confirmDelete()}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
