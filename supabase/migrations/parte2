@@ -1,0 +1,10 @@
+-- FinanLook
+-- Parte 2: ligar movimentações às contas
+
+alter table public.transactions
+add column if not exists account_id uuid null
+references public.accounts(id)
+on delete set null;
+
+create index if not exists transactions_account_id_idx
+on public.transactions(account_id);
