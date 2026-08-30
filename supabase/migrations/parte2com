@@ -1,0 +1,19 @@
+-- =========================================================
+-- FinanLook — Parte 2
+-- Ligação entre movimentações e contas
+-- =========================================================
+
+alter table public.transactions
+add column if not exists account_id uuid null
+references public.accounts(id)
+on delete set null;
+
+create index if not exists transactions_account_id_idx
+on public.transactions(account_id);
+
+-- =========================================================
+-- RLS
+-- =========================================================
+
+-- A movimentação continua pertencendo ao usuário.
+-- O account_id apenas aponta para uma conta do mesmo usuário.
