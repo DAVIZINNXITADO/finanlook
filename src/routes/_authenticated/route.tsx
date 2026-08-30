@@ -10,8 +10,6 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
 
   beforeLoad: async () => {
-    // O Supabase restaura automaticamente a sessão
-    // persistida no navegador.
     const {
       data: { session },
       error,
