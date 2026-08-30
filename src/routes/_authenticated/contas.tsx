@@ -1,15 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Eye,
-  EyeOff,
+  createFileRoute,
+} from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  Landmark,
   Pencil,
   Plus,
   Trash2,
   Wallet,
+  CreditCard,
+  Banknote,
 } from "lucide-react";
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,288 +37,177 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 
-import { supabase } from "@/integrations/supabase/client";
-import { formatBRL, parseAmount } from "@/lib/finance";
-import type { Database } from "@/integrations/supabase/types";
+import {
+  useAccountsWithBalances,
+  useDeleteAccount,
+  useSaveAccount,
+  type Account,
+  type AccountInput,
+} from "@/lib/data";
 
-export const Route = createFileRoute("/_authenticated/contas")({
+import {
+  formatBRL,
+  parseAmount,
+} from "@/lib/finance";
+
+export const Route = createFileRoute(
+  "/_authenticated/contas",
+)({
   head: () => ({
     meta: [
-      { title: "Minhas contas — FinanLook" },
+      {
+        title: "Contas — FinanLook",
+      },
       {
         name: "description",
         content:
-          "Organize suas contas, acompanhe seus saldos e veja onde seu dinheiro está.",
+          "Gerencie suas contas e acompanhe seus saldos no FinanLook.",
       },
       {
         property: "og:title",
-        content: "Minhas contas — FinanLook",
+        content:
+          "Contas — FinanLook",
       },
       {
         property: "og:description",
         content:
-          "Organize suas contas e acompanhe seus saldos no FinanLook.",
+          "Gerencie suas contas e acompanhe seus saldos no FinanLook.",
       },
     ],
   }),
+
   component: AccountsPage,
 });
 
-type Account = Database["public"]["Tables"]["accounts"]["Row"];
-
-type AccountForm = {
+type FormState = {
   name: string;
   type: string;
-  initialBalance: string;
+  initial_balance: string;
+  balance_adjustment: string;
 };
+
+const emptyForm = (): FormState => ({
+  name: "",
+  type: "conta",
+  initial_balance: "",
+  balance_adjustment: "",
+});
 
 const ACCOUNT_TYPES = [
   {
     value: "conta",
-    label: "Conta corrente",
-  },
-  {
-    value: "poupanca",
-    label: "Poupança",
+    label: "Conta bancária",
+    icon: Landmark,
   },
   {
     value: "carteira",
     label: "Carteira",
+    icon: Wallet,
   },
   {
-    value: "outro",
-    label: "Conta digital",
+    value: "cartao",
+    label: "Cartão",
+    icon: CreditCard,
   },
   {
-    value: "outro",
-    label: "Outro",
+    value: "dinheiro",
+    label: "Dinheiro",
+    icon: Banknote,
   },
 ] as const;
 
-async function requireUserId(): Promise<string> {
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error) {
-    throw error;
-  }
-
-  if (!data.user) {
-    throw new Error("Sessão expirada. Entre novamente.");
-  }
-
-  return data.user.id;
-}
-
-function getAccountTypeLabel(type: string): string {
-  const found = ACCOUNT_TYPES.find(
-    (accountType) => accountType.value === type,
+function getAccountTypeLabel(
+  type: string,
+) {
+  return (
+    ACCOUNT_TYPES.find(
+      (item) => item.value === type,
+    )?.label ?? type
   );
-
-  return found?.label ?? "Outro";
 }
 
 function AccountsPage() {
-  const queryClient = useQueryClient();
-
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Account | null>(null);
-  const [deleting, setDeleting] = useState<Account | null>(null);
-  const [showBalances, setShowBalances] = useState(true);
-
-  const [form, setForm] = useState<AccountForm>({
-    name: "",
-    type: "conta",
-    initialBalance: "",
-  });
-
-  /*
-   * =========================================================
-   * CONTAS
-   * =========================================================
-   */
-
   const {
     data: accounts = [],
     isLoading,
     isError,
-  } = useQuery({
-    queryKey: ["accounts"],
-    queryFn: async (): Promise<Account[]> => {
-      const user_id = await requireUserId();
+  } = useAccountsWithBalances();
 
-      const { data, error } = await supabase
-        .from("accounts")
-        .select("*")
-        .eq("user_id", user_id)
-        .order("created_at", {
-          ascending: false,
-        });
+  const save = useSaveAccount();
+  const remove = useDeleteAccount();
 
-      if (error) {
-        throw error;
-      }
+  const [open, setOpen] =
+    useState(false);
 
-      return data ?? [];
-    },
-  });
+  const [editing, setEditing] =
+    useState<Account | null>(null);
 
-  /*
-   * =========================================================
-   * ADICIONAR / EDITAR
-   * =========================================================
-   */
+  const [deleting, setDeleting] =
+    useState<Account | null>(null);
 
-  const saveAccount = useMutation({
-    mutationFn: async ({
-      id,
-      name,
-      type,
-      initialBalance,
-    }: {
-      id?: string;
-      name: string;
-      type: string;
-      initialBalance: number;
-    }) => {
-      const user_id = await requireUserId();
+  const [form, setForm] =
+    useState<FormState>(
+      emptyForm(),
+    );
 
-      if (id) {
-        const { error } = await supabase
-          .from("accounts")
-          .update({
-            name,
-            type,
-            initial_balance: initialBalance,
-          })
-          .eq("id", id)
-          .eq("user_id", user_id);
-
-        if (error) {
-          throw error;
-        }
-
-        return;
-      }
-
-      const { error } = await supabase
-        .from("accounts")
-        .insert({
-          user_id,
-          name,
-          type,
-          initial_balance: initialBalance,
-          balance_adjustment: 0,
-        });
-
-      if (error) {
-        throw error;
-      }
-    },
-
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: ["accounts"],
-      });
-
-      toast.success(
-        variables.id
-          ? "Conta atualizada."
-          : "Conta adicionada.",
-      );
-
-      setOpen(false);
-      setEditing(null);
-    },
-
-    onError: (error) => {
-      console.error(error);
-
-      toast.error(
-        "Não foi possível salvar a conta.",
-      );
-    },
-  });
-
-  /*
-   * =========================================================
-   * EXCLUIR
-   * =========================================================
-   */
-
-  const deleteAccount = useMutation({
-    mutationFn: async (id: string) => {
-      const user_id = await requireUserId();
-
-      const { error } = await supabase
-        .from("accounts")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user_id);
-
-      if (error) {
-        throw error;
-      }
-    },
-
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["accounts"],
-      });
-
-      toast.success("Conta removida.");
-
-      setDeleting(null);
-    },
-
-    onError: (error) => {
-      console.error(error);
-
-      toast.error(
-        "Não foi possível remover a conta.",
-      );
-    },
-  });
-
-  /*
-   * =========================================================
-   * FORMULÁRIO
-   * =========================================================
-   */
+  const totalBalance =
+    accounts.reduce(
+      (total, account) =>
+        total +
+        account.calculatedBalance,
+      0,
+    );
 
   function openNew() {
     setEditing(null);
-
-    setForm({
-      name: "",
-      type: "conta",
-      initialBalance: "",
-    });
-
+    setForm(emptyForm());
     setOpen(true);
   }
 
-  function openEdit(account: Account) {
+  function openEdit(
+    account: Account,
+  ) {
     setEditing(account);
 
     setForm({
       name: account.name,
-      type: account.type,
-      initialBalance: String(
-        account.initial_balance,
+      type:
+        account.type || "conta",
+      initial_balance: String(
+        Number(
+          account.initial_balance,
+        ),
+      ).replace(".", ","),
+      balance_adjustment: String(
+        Number(
+          account.balance_adjustment,
+        ),
       ).replace(".", ","),
     });
 
     setOpen(true);
   }
 
-  function handleSave() {
-    const name = form.name.trim();
-    const balance = parseAmount(
-      form.initialBalance,
-    );
+  function closeDialog() {
+    setOpen(false);
+    setEditing(null);
+    setForm(emptyForm());
+  }
+
+  async function submit() {
+    const name =
+      form.name.trim();
 
     if (!name) {
       toast.error(
@@ -325,126 +216,99 @@ function AccountsPage() {
       return;
     }
 
-    if (balance < 0) {
+    const initialBalance =
+      parseAmount(
+        form.initial_balance,
+      );
+
+    const balanceAdjustment =
+      parseAmount(
+        form.balance_adjustment,
+      );
+
+    if (
+      !Number.isFinite(
+        initialBalance,
+      )
+    ) {
       toast.error(
-        "O saldo não pode ser negativo.",
+        "Informe um saldo inicial válido.",
       );
       return;
     }
 
-    saveAccount.mutate({
-      id: editing?.id,
-      name,
-      type: form.type,
-      initialBalance: balance,
-    });
+    if (
+      !Number.isFinite(
+        balanceAdjustment,
+      )
+    ) {
+      toast.error(
+        "Informe um ajuste de saldo válido.",
+      );
+      return;
+    }
+
+    const values: AccountInput = {
+      name: name.slice(0, 100),
+      type:
+        form.type || "conta",
+      initial_balance:
+        initialBalance,
+      balance_adjustment:
+        balanceAdjustment,
+    };
+
+    try {
+      await save.mutateAsync({
+        id: editing?.id,
+        values,
+      });
+
+      toast.success(
+        editing
+          ? "Conta atualizada."
+          : "Conta adicionada.",
+      );
+
+      closeDialog();
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        "Não foi possível salvar a conta. Tente novamente.",
+      );
+    }
   }
 
-  /*
-   * =========================================================
-   * SALDOS
-   * =========================================================
-   *
-   * Por enquanto:
-   *
-   * saldo = saldo inicial + ajuste manual
-   *
-   * Na próxima etapa vamos ligar movimentações à conta
-   * através de account_id.
-   *
-   * Aí ficará:
-   *
-   * saldo =
-   * saldo inicial
-   * + entradas
-   * - saídas
-   * + ajuste manual
-   *
-   * Isso permite corrigir o saldo quando houver diferença
-   * entre o cálculo do sistema e o saldo real.
-   */
+  async function confirmDelete() {
+    if (!deleting) {
+      return;
+    }
 
-  const accountBalances = accounts.map(
-    (account) => ({
-      ...account,
-      balance:
-        Number(account.initial_balance) +
-        Number(account.balance_adjustment),
-    }),
-  );
+    try {
+      await remove.mutateAsync(
+        deleting.id,
+      );
 
-  const totalBalance = accountBalances.reduce(
-    (total, account) =>
-      total + account.balance,
-    0,
-  );
+      toast.success(
+        "Conta excluída. As movimentações vinculadas foram mantidas.",
+      );
+    } catch (error) {
+      console.error(error);
 
-  /*
-   * =========================================================
-   * CARREGANDO
-   * =========================================================
-   */
+      toast.error(
+        "Não foi possível excluir a conta.",
+      );
+    }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Minhas contas"
-          subtitle="Veja onde seu dinheiro está e organize seus saldos."
-        />
-
-        <section className="surface p-6">
-          <p className="text-sm text-muted-foreground">
-            Carregando suas contas...
-          </p>
-        </section>
-      </div>
-    );
-  }
-
-  /*
-   * =========================================================
-   * ERRO
-   * =========================================================
-   */
-
-  if (isError) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Minhas contas"
-          subtitle="Veja onde seu dinheiro está e organize seus saldos."
-        />
-
-        <section className="surface p-6">
-          <p className="font-medium">
-            Não foi possível carregar suas contas.
-          </p>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Verifique sua sessão e tente novamente.
-          </p>
-
-          <Button
-            className="mt-4"
-            onClick={() =>
-              queryClient.invalidateQueries({
-                queryKey: ["accounts"],
-              })
-            }
-          >
-            Tentar novamente
-          </Button>
-        </section>
-      </div>
-    );
+    setDeleting(null);
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Minhas contas"
-        subtitle="Veja onde seu dinheiro está e organize seus saldos."
+        title="Contas"
+        subtitle="Gerencie suas contas e acompanhe o saldo calculado automaticamente."
         action={
           <Button
             className="h-11"
@@ -457,221 +321,243 @@ function AccountsPage() {
       />
 
       {/* =====================================================
-          SALDO TOTAL
+          RESUMO
           ===================================================== */}
 
-      <section className="surface overflow-hidden p-5">
-        <div className="flex items-start justify-between gap-4">
+      <div className="surface p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
               Saldo total
             </p>
 
-            <p className="mt-1 font-display text-3xl font-semibold">
-              {showBalances
-                ? formatBRL(totalBalance)
-                : "R$ •••••"}
-            </p>
-
-            <p className="mt-1 text-xs text-muted-foreground">
-              Soma dos saldos das suas contas
+            <p
+              className={`mt-1 text-3xl font-bold tracking-tight ${
+                totalBalance >= 0
+                  ? "text-success"
+                  : "text-destructive"
+              }`}
+            >
+              {formatBRL(
+                totalBalance,
+              )}
             </p>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={
-              showBalances
-                ? "Ocultar saldos"
-                : "Mostrar saldos"
-            }
-            onClick={() =>
-              setShowBalances(
-                (value) => !value,
-              )
-            }
-          >
-            {showBalances ? (
-              <EyeOff className="size-5" />
-            ) : (
-              <Eye className="size-5" />
-            )}
-          </Button>
+          <p className="text-xs text-muted-foreground">
+            {accounts.length === 1
+              ? "1 conta cadastrada"
+              : `${accounts.length} contas cadastradas`}
+          </p>
         </div>
-      </section>
+      </div>
 
       {/* =====================================================
-          LISTA DE CONTAS
+          ESTADOS
           ===================================================== */}
 
-      {accountBalances.length === 0 ? (
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">
+          Carregando contas...
+        </p>
+      ) : isError ? (
+        <EmptyState
+          emoji="⚠️"
+          title="Não foi possível carregar suas contas"
+          description="Tente atualizar a página novamente."
+        />
+      ) : accounts.length ===
+        0 ? (
         <EmptyState
           emoji="🏦"
-          title="Você ainda não adicionou nenhuma conta"
-          description="Cadastre suas contas para acompanhar seus saldos em um só lugar."
+          title="Você ainda não possui contas."
+          description="Cadastre uma conta para acompanhar seus saldos e vincular movimentações."
           action={
             <Button
-              className="mt-2"
               onClick={openNew}
             >
               <Plus className="size-4" />
-              Adicionar minha primeira conta
+              Adicionar conta
             </Button>
           }
         />
       ) : (
-        <section className="grid gap-4 sm:grid-cols-2">
-          {accountBalances.map(
-            (account) => (
-              <article
-                key={account.id}
-                className="surface p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                      <Wallet className="size-5" />
-                    </span>
+        <div className="grid gap-4 md:grid-cols-2">
+          {accounts.map(
+            (account) => {
+              const Icon =
+                ACCOUNT_TYPES.find(
+                  (item) =>
+                    item.value ===
+                    account.type,
+                )?.icon ??
+                Landmark;
 
-                    <div className="min-w-0">
-                      <h2 className="truncate font-display text-base font-semibold">
-                        {account.name}
-                      </h2>
+              const balance =
+                account.calculatedBalance;
 
+              return (
+                <div
+                  key={account.id}
+                  className="surface overflow-hidden"
+                >
+                  <div className="p-5">
+                    <div className="flex items-start gap-3">
+                      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
+                        <Icon className="size-5" />
+                      </span>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold">
+                              {account.name}
+                            </p>
+
+                            <p className="text-xs text-muted-foreground">
+                              {getAccountTypeLabel(
+                                account.type,
+                              )}
+                            </p>
+                          </div>
+
+                          <div className="flex shrink-0 gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Editar ${account.name}`}
+                              onClick={() =>
+                                openEdit(
+                                  account,
+                                )
+                              }
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Excluir ${account.name}`}
+                              onClick={() =>
+                                setDeleting(
+                                  account,
+                                )
+                              }
+                            >
+                              <Trash2 className="size-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6">
                       <p className="text-xs text-muted-foreground">
-                        {getAccountTypeLabel(
-                          account.type,
+                        Saldo atual
+                      </p>
+
+                      <p
+                        className={`mt-1 text-2xl font-bold ${
+                          balance >= 0
+                            ? "text-success"
+                            : "text-destructive"
+                        }`}
+                      >
+                        {formatBRL(
+                          balance,
                         )}
                       </p>
                     </div>
-                  </div>
 
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Editar conta"
-                      onClick={() =>
-                        openEdit(account)
-                      }
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
+                    <div className="mt-5 grid grid-cols-2 gap-3 border-t pt-4">
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Saldo inicial
+                        </p>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Excluir conta"
-                      onClick={() =>
-                        setDeleting(account)
-                      }
-                    >
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
+                        <p className="mt-1 text-sm font-medium">
+                          {formatBRL(
+                            account.initial_balance,
+                          )}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Movimentações
+                        </p>
+
+                        <p
+                          className={`mt-1 text-sm font-medium ${
+                            account.transactionBalance >=
+                            0
+                              ? "text-success"
+                              : "text-destructive"
+                          }`}
+                        >
+                          {account.transactionBalance >=
+                          0
+                            ? "+"
+                            : "−"}
+                          {formatBRL(
+                            Math.abs(
+                              account.transactionBalance,
+                            ),
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {Number(
+                      account.balance_adjustment,
+                    ) !== 0 ? (
+                      <div className="mt-3 rounded-lg bg-secondary/60 px-3 py-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs text-muted-foreground">
+                            Ajuste manual
+                          </span>
+
+                          <span className="text-xs font-medium">
+                            {Number(
+                              account.balance_adjustment,
+                            ) >= 0
+                              ? "+"
+                              : "−"}
+                            {formatBRL(
+                              Math.abs(
+                                Number(
+                                  account.balance_adjustment,
+                                ),
+                              ),
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-
-                <div className="mt-6">
-                  <p className="text-xs text-muted-foreground">
-                    Saldo
-                  </p>
-
-                  <p className="mt-1 font-display text-2xl font-semibold">
-                    {showBalances
-                      ? formatBRL(
-                          account.balance,
-                        )
-                      : "R$ •••••"}
-                  </p>
-
-                  {Number(
-                    account.balance_adjustment,
-                  ) !== 0 && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Inclui ajuste manual de{" "}
-                      {formatBRL(
-                        account.balance_adjustment,
-                      )}
-                    </p>
-                  )}
-                </div>
-              </article>
-            ),
+              );
+            },
           )}
-        </section>
+        </div>
       )}
 
       {/* =====================================================
-          CONECTAR BANCO
-          ===================================================== */}
-
-      <section className="surface p-5">
-        <div>
-          <h2 className="font-display text-lg font-semibold">
-            Conectar banco
-          </h2>
-
-          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Em breve você poderá conectar uma conta
-            bancária usando Open Finance e importar
-            suas informações automaticamente.
-          </p>
-        </div>
-
-        <Button
-          variant="secondary"
-          className="mt-4"
-          disabled
-        >
-          🏦 Conectar banco
-        </Button>
-
-        <p className="mt-2 text-xs text-muted-foreground">
-          Essa função será ativada quando a
-          integração bancária estiver configurada.
-        </p>
-      </section>
-
-      {/* =====================================================
-          DICA
-          ===================================================== */}
-
-      <section className="rounded-2xl bg-accent/50 p-5">
-        <h2 className="font-display text-base font-semibold">
-          💡 Dica
-        </h2>
-
-        <p className="mt-1 text-sm text-muted-foreground">
-          Cadastre suas contas com o saldo que elas
-          têm atualmente. Depois, cada movimentação
-          poderá ser vinculada à conta correspondente
-          para atualizar o saldo automaticamente.
-        </p>
-
-        <Button
-          asChild
-          variant="link"
-          className="mt-2 h-auto p-0"
-        >
-          <Link to="/movimentacoes">
-            Ir para movimentações →
-          </Link>
-        </Button>
-      </section>
-
-      {/* =====================================================
-          DIALOG — ADICIONAR / EDITAR
+          DIALOG — NOVA / EDITAR CONTA
           ===================================================== */}
 
       <Dialog
         open={open}
         onOpenChange={(value) => {
-          if (saveAccount.isPending) return;
-          setOpen(value);
+          if (value) {
+            setOpen(true);
+          } else {
+            closeDialog();
+          }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editing
@@ -680,8 +566,9 @@ function AccountsPage() {
             </DialogTitle>
 
             <DialogDescription>
-              Cadastre uma conta para acompanhar seu
-              saldo no FinanLook.
+              {editing
+                ? "Atualize os dados da conta. O saldo das movimentações é calculado automaticamente."
+                : "Cadastre uma conta para acompanhar seu saldo e vincular suas movimentações."}
             </DialogDescription>
           </DialogHeader>
 
@@ -689,20 +576,23 @@ function AccountsPage() {
             {/* NOME */}
 
             <div className="space-y-1.5">
-              <Label htmlFor="nome-conta">
-                Nome da conta
+              <Label htmlFor="account-name">
+                Nome
               </Label>
 
               <Input
-                id="nome-conta"
+                id="account-name"
                 className="h-11"
-                placeholder="Ex.: Nubank"
+                placeholder="Nubank, Carteira, Banco..."
                 value={form.name}
                 onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    name: event.target.value,
-                  }))
+                  setForm(
+                    (previous) => ({
+                      ...previous,
+                      name: event.target
+                        .value,
+                    }),
+                  )
                 }
               />
             </div>
@@ -710,59 +600,121 @@ function AccountsPage() {
             {/* TIPO */}
 
             <div className="space-y-1.5">
-              <Label htmlFor="tipo-conta">
+              <Label>
                 Tipo
               </Label>
 
-              <select
-                id="tipo-conta"
-                className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
-                value={form.type}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    type: event.target.value,
-                  }))
+              <Select
+                value={
+                  form.type ||
+                  "conta"
+                }
+                onValueChange={(
+                  type,
+                ) =>
+                  setForm(
+                    (previous) => ({
+                      ...previous,
+                      type,
+                    }),
+                  )
                 }
               >
-                {ACCOUNT_TYPES.map(
-                  (type, index) => (
-                    <option
-                      key={`${type.value}-${type.label}-${index}`}
-                      value={type.value}
-                    >
-                      {type.label}
-                    </option>
-                  ),
-                )}
-              </select>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Escolha o tipo" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {ACCOUNT_TYPES.map(
+                    ({
+                      value,
+                      label,
+                    }) => (
+                      <SelectItem
+                        key={value}
+                        value={value}
+                      >
+                        {label}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* SALDO */}
+            {/* SALDO INICIAL */}
 
             <div className="space-y-1.5">
-              <Label htmlFor="saldo-inicial">
-                Saldo atual
+              <Label htmlFor="initial-balance">
+                Saldo inicial
               </Label>
 
               <Input
-                id="saldo-inicial"
+                id="initial-balance"
                 className="h-11"
                 inputMode="decimal"
-                placeholder="1.500,00"
-                value={form.initialBalance}
+                placeholder="0,00"
+                value={
+                  form.initial_balance
+                }
                 onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    initialBalance:
-                      event.target.value,
-                  }))
+                  setForm(
+                    (previous) => ({
+                      ...previous,
+                      initial_balance:
+                        event.target
+                          .value,
+                    }),
+                  )
                 }
               />
 
               <p className="text-xs text-muted-foreground">
-                Informe quanto você tem nessa conta
-                agora.
+                O valor que a conta tinha antes das movimentações cadastradas.
+              </p>
+            </div>
+
+            {/* AJUSTE */}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="balance-adjustment">
+                Ajuste manual
+              </Label>
+
+              <Input
+                id="balance-adjustment"
+                className="h-11"
+                inputMode="decimal"
+                placeholder="0,00"
+                value={
+                  form.balance_adjustment
+                }
+                onChange={(event) =>
+                  setForm(
+                    (previous) => ({
+                      ...previous,
+                      balance_adjustment:
+                        event.target
+                          .value,
+                    }),
+                  )
+                }
+              />
+
+              <p className="text-xs text-muted-foreground">
+                Use apenas se o saldo real da conta precisar de uma correção. Movimentações continuam sendo calculadas separadamente.
+              </p>
+            </div>
+
+            {/* PREVISÃO */}
+
+            <div className="rounded-xl border bg-secondary/50 p-3">
+              <p className="text-xs text-muted-foreground">
+                O saldo atual será calculado como:
+              </p>
+
+              <p className="mt-1 text-sm font-medium">
+                Saldo inicial + ajuste + movimentações
               </p>
             </div>
           </div>
@@ -770,12 +722,14 @@ function AccountsPage() {
           <DialogFooter>
             <Button
               className="h-11 w-full"
-              onClick={handleSave}
+              onClick={() =>
+                void submit()
+              }
               disabled={
-                saveAccount.isPending
+                save.isPending
               }
             >
-              {saveAccount.isPending
+              {save.isPending
                 ? "Salvando..."
                 : editing
                   ? "Salvar alterações"
@@ -786,11 +740,13 @@ function AccountsPage() {
       </Dialog>
 
       {/* =====================================================
-          CONFIRMAR EXCLUSÃO
+          CONFIRMAÇÃO DE EXCLUSÃO
           ===================================================== */}
 
       <AlertDialog
-        open={Boolean(deleting)}
+        open={Boolean(
+          deleting,
+        )}
         onOpenChange={(value) => {
           if (!value) {
             setDeleting(null);
@@ -800,42 +756,32 @@ function AccountsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Remover conta?
+              Excluir conta?
             </AlertDialogTitle>
 
             <AlertDialogDescription>
               {deleting
-                ? `A conta "${deleting.name}" será removida permanentemente.`
+                ? `"${deleting.name}" será excluída. As movimentações vinculadas serão mantidas, mas ficarão sem conta.`
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel
-              disabled={
-                deleteAccount.isPending
-              }
-            >
+            <AlertDialogCancel>
               Cancelar
             </AlertDialogCancel>
 
             <AlertDialogAction
-              disabled={
-                deleteAccount.isPending
+              onClick={() =>
+                void confirmDelete()
               }
-              onClick={(event) => {
-                event.preventDefault();
-
-                if (!deleting) return;
-
-                deleteAccount.mutate(
-                  deleting.id,
-                );
-              }}
+              disabled={
+                remove.isPending
+              }
             >
-              {deleteAccount.isPending
-                ? "Removendo..."
-                : "Remover"}
+              {remove.isPending
+                ? "Excluindo..."
+                : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
