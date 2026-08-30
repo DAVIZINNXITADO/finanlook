@@ -1,0 +1,47 @@
+-- FinanLook
+-- Parte 2: Vincular transações às contas
+
+alter table public.transactions
+add column if not exists account_id uuid
+references public.accounts(id)
+on delete set null;
+
+create index if not exists transactions_account_id_idx
+on public.transactions(account_id);
+
+-- RLS: o usuário só pode vincular uma transação
+-- a uma conta que também pertence a ele.
+create policy "Users can link transactions to own accounts"
+on public.transactions
+for insert
+to authenticated
+with check (
+  auth.uid() = user_id
+  and (
+    account_id is null
+    or exists (
+      select 1
+      from public.accounts
+      where accounts.id = account_id
+      and accounts.user_id = auth.uid()
+    )
+  )
+);
+
+create policy "Users can update transactions linked to own accounts"
+on public.transactions
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (
+  auth.uid() = user_id
+  and (
+    account_id is null
+    or exists (
+      select 1
+      from public.accounts
+      where accounts.id = account_id
+      and accounts.user_id = auth.uid()
+    )
+  )
+);
