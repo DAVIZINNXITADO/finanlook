@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+
 import {
   Outlet,
   Link,
@@ -7,13 +11,33 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+
+import {
+  useEffect,
+  type ReactNode,
+} from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
-import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { ThemeProvider } from "@/components/theme-provider";
+
+import {
+  reportLovableError,
+} from "../lib/lovable-error-reporting";
+
+import {
+  Toaster,
+} from "@/components/ui/sonner";
+
+import {
+  supabase,
+} from "@/integrations/supabase/client";
+
+import {
+  ThemeProvider,
+} from "@/components/theme-provider";
+
+/* =========================================================
+   NOT FOUND
+   ========================================================= */
 
 function NotFoundComponent() {
   return (
@@ -44,6 +68,10 @@ function NotFoundComponent() {
   );
 }
 
+/* =========================================================
+   ERROR COMPONENT
+   ========================================================= */
+
 function ErrorComponent({
   error,
   reset,
@@ -51,50 +79,120 @@ function ErrorComponent({
   error: Error;
   reset: () => void;
 }) {
-  console.error(error);
+  const router =
+    useRouter();
 
-  const router = useRouter();
+  console.error(
+    "ERRO COMPLETO DA APLICAÇÃO:",
+    error,
+  );
 
   useEffect(() => {
-    reportLovableError(error, {
-      boundary: "tanstack_root_error_component",
-    });
-  }, [error]);
+    try {
+      reportLovableError(
+        error,
+        {
+          boundary:
+            "tanstack_root_error_component",
+        },
+      );
+    } catch (
+      reportError,
+    ) {
+      console.error(
+        "Erro ao reportar erro:",
+        reportError,
+      );
+    }
+  }, [
+    error,
+  ]);
+
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : String(error);
+
+  const errorStack =
+    error instanceof Error
+      ? error.stack ||
+        "Stack não disponível."
+      : String(error);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Esta página não carregou
-        </h1>
+    <div className="min-h-screen bg-background p-4 text-foreground">
+      <div className="mx-auto w-full max-w-4xl">
+        <div className="rounded-2xl border border-destructive/30 bg-card p-5 shadow-sm sm:p-8">
+          <h1 className="text-2xl font-bold text-destructive">
+            Erro da aplicação
+          </h1>
 
-        <p className="mt-2 text-sm text-muted-foreground">
-          Algo deu errado. Tente novamente ou volte para o início.
-        </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Ocorreu um erro ao carregar esta página.
+            A mensagem completa está abaixo.
+          </p>
 
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Tentar novamente
-          </button>
+          {/* =============================================
+              MENSAGEM
+             ============================================= */}
 
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Ir para o início
-          </a>
+          <div className="mt-6">
+            <h2 className="mb-2 font-semibold">
+              Mensagem do erro
+            </h2>
+
+            <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-left text-xs text-destructive sm:text-sm">
+              {errorMessage}
+            </pre>
+          </div>
+
+          {/* =============================================
+              STACK
+             ============================================= */}
+
+          <div className="mt-6">
+            <h2 className="mb-2 font-semibold">
+              Stack completo
+            </h2>
+
+            <pre className="max-h-[50vh] overflow-auto whitespace-pre-wrap break-words rounded-xl border bg-muted p-4 text-left text-[11px] leading-relaxed text-foreground sm:text-xs">
+              {errorStack}
+            </pre>
+          </div>
+
+          {/* =============================================
+              AÇÕES
+             ============================================= */}
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                void router.invalidate();
+
+                reset();
+              }}
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Tentar novamente
+            </button>
+
+            <a
+              href="/"
+              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              Ir para o início
+            </a>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+/* =========================================================
+   ROOT ROUTE
+   ========================================================= */
 
 export const Route =
   createRootRouteWithContext<{
@@ -105,26 +203,33 @@ export const Route =
         {
           charSet: "utf-8",
         },
+
         {
           name: "viewport",
-          content: "width=device-width, initial-scale=1",
+          content:
+            "width=device-width, initial-scale=1",
         },
+
         {
           title:
             "FinanLook — organize seu dinheiro de forma simples",
         },
+
         {
           name: "description",
           content:
             "Controle entradas, gastos, reserva de emergência e metas em um app simples de organização financeira pessoal.",
         },
+
         {
           property: "og:type",
           content: "website",
         },
+
         {
           name: "twitter:card",
-          content: "summary_large_image",
+          content:
+            "summary_large_image",
         },
       ],
 
@@ -133,33 +238,53 @@ export const Route =
           rel: "stylesheet",
           href: appCss,
         },
+
         {
           rel: "preconnect",
-          href: "https://fonts.googleapis.com",
+          href:
+            "https://fonts.googleapis.com",
         },
+
         {
           rel: "preconnect",
-          href: "https://fonts.gstatic.com",
-          crossOrigin: "anonymous",
+          href:
+            "https://fonts.gstatic.com",
+          crossOrigin:
+            "anonymous",
         },
+
         {
           rel: "stylesheet",
           href:
             "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
         },
+
         {
           rel: "icon",
-          href: "/favicon.png",
-          type: "image/png",
+          href:
+            "/favicon.png",
+          type:
+            "image/png",
         },
       ],
     }),
 
-    shellComponent: RootShell,
-    component: RootComponent,
-    notFoundComponent: NotFoundComponent,
-    errorComponent: ErrorComponent,
+    shellComponent:
+      RootShell,
+
+    component:
+      RootComponent,
+
+    notFoundComponent:
+      NotFoundComponent,
+
+    errorComponent:
+      ErrorComponent,
   });
+
+/* =========================================================
+   HTML SHELL
+   ========================================================= */
 
 function RootShell({
   children,
@@ -173,31 +298,58 @@ function RootShell({
     >
       <head>
         <HeadContent />
-        {/* Script para aplicar tema imediatamente sem flash */}
+
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              (function() {
-                try {
-                  const storageKey = 'finanlook-theme';
-                  const savedTheme = localStorage.getItem(storageKey) || 'system';
-                  const html = document.documentElement;
-                  
-                  // Remove ambas as classes antes de aplicar
-                  html.classList.remove('light', 'dark');
-                  
-                  if (savedTheme === 'system') {
-                    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    html.classList.add(isDark ? 'dark' : 'light');
-                    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-                  } else {
-                    html.classList.add(savedTheme);
-                    document.documentElement.style.colorScheme = savedTheme;
-                  }
-                } catch (e) {
-                  console.error('Error loading theme:', e);
-                }
-              })();
+(function() {
+  try {
+    var storageKey = "finanlook-theme";
+
+    var savedTheme =
+      localStorage.getItem(
+        storageKey,
+      ) || "system";
+
+    var html =
+      document.documentElement;
+
+    html.classList.remove(
+      "light",
+      "dark",
+    );
+
+    var resolvedTheme =
+      savedTheme;
+
+    if (
+      savedTheme === "system"
+    ) {
+      var isDark =
+        window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+
+      resolvedTheme =
+        isDark
+          ? "dark"
+          : "light";
+    }
+
+    html.classList.add(
+      resolvedTheme,
+    );
+
+    html.style.colorScheme =
+      resolvedTheme;
+
+  } catch (error) {
+    console.error(
+      "Erro ao carregar tema:",
+      error,
+    );
+  }
+})();
             `,
           }}
         />
@@ -212,21 +364,34 @@ function RootShell({
   );
 }
 
+/* =========================================================
+   ROOT COMPONENT
+   ========================================================= */
+
 function RootComponent() {
-  const { queryClient } =
+  const {
+    queryClient,
+  } =
     Route.useRouteContext();
 
   const router =
     useRouter();
 
   useEffect(() => {
-    const { data } =
+    const {
+      data,
+    } =
       supabase.auth.onAuthStateChange(
-        (event) => {
+        (
+          event,
+        ) => {
           if (
-            event !== "SIGNED_IN" &&
-            event !== "SIGNED_OUT" &&
-            event !== "USER_UPDATED"
+            event !==
+              "SIGNED_IN" &&
+            event !==
+              "SIGNED_OUT" &&
+            event !==
+              "USER_UPDATED"
           ) {
             return;
           }
@@ -234,7 +399,8 @@ function RootComponent() {
           void router.invalidate();
 
           if (
-            event !== "SIGNED_OUT"
+            event !==
+            "SIGNED_OUT"
           ) {
             void queryClient.invalidateQueries();
           }
