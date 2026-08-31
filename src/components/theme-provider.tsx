@@ -1,66 +1,179 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
-type Theme = 'light' | 'dark' | 'system'
+export type Theme =
+  | "light"
+  | "dark"
+  | "system";
 
-interface ThemeContextType {
-  theme: Theme
-  setTheme: (theme: Theme) => void
+type ThemeProviderProps = {
+  children: ReactNode;
+  defaultTheme?: Theme;
+  storageKey?: string;
+};
+
+type ThemeProviderState = {
+  theme: Theme;
+  setTheme: (
+    theme: Theme,
+  ) => void;
+};
+
+const ThemeProviderContext =
+  createContext<
+    ThemeProviderState | undefined
+  >(undefined);
+
+function getSystemTheme() {
+  if (
+    typeof window === "undefined"
+  ) {
+    return "light";
+  }
+
+  return window.matchMedia(
+    "(prefers-color-scheme: dark)",
+  ).matches
+    ? "dark"
+    : "light";
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+function getStoredTheme(
+  storageKey: string,
+  defaultTheme: Theme,
+): Theme {
+  if (
+    typeof window === "undefined"
+  ) {
+    return defaultTheme;
+  }
 
-interface ThemeProviderProps {
-  children: ReactNode
-  defaultTheme?: Theme
-  storageKey?: string
+  const savedTheme =
+    window.localStorage.getItem(
+      storageKey,
+    );
+
+  if (
+    savedTheme === "light" ||
+    savedTheme === "dark" ||
+    savedTheme === "system"
+  ) {
+    return savedTheme;
+  }
+
+  return defaultTheme;
 }
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'system',
-  storageKey = 'theme',
+  defaultTheme = "system",
+  storageKey = "finanlook-theme",
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') {
-      return defaultTheme
-    }
-
-    const stored = localStorage.getItem(storageKey) as Theme | null
-    return stored || defaultTheme
-  })
+  const [theme, setThemeState] =
+    useState<Theme>(() =>
+      getStoredTheme(
+        storageKey,
+        defaultTheme,
+      ),
+    );
 
   useEffect(() => {
-    const root = document.documentElement
+    const root =
+      window.document.documentElement;
 
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-      root.classList.remove('light', 'dark')
-      root.classList.add(systemTheme)
-    } else {
-      root.classList.remove('light', 'dark')
-      root.classList.add(theme)
+    function applyTheme(
+      selectedTheme: Theme,
+    ) {
+      root.classList.remove(
+        "light",
+        "dark",
+      );
+
+      const resolvedTheme =
+        selectedTheme === "system"
+          ? getSystemTheme()
+          : selectedTheme;
+
+      root.classList.add(
+        resolvedTheme,
+      );
     }
 
-    localStorage.setItem(storageKey, theme)
-  }, [theme, storageKey])
+    applyTheme(theme);
 
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme)
+    if (
+      theme !== "system"
+    ) {
+      return;
+    }
+
+    const mediaQuery =
+      window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      );
+
+    function handleChange() {
+      applyTheme("system");
+    }
+
+    mediaQuery.addEventListener(
+      "change",
+      handleChange,
+    );
+
+    return () => {
+      mediaQuery.removeEventListener(
+        "change",
+        handleChange,
+      );
+    };
+  }, [theme]);
+
+  function setTheme(
+    newTheme: Theme,
+  ) {
+    if (
+      typeof window !== "undefined"
+    ) {
+      window.localStorage.setItem(
+        storageKey,
+        newTheme,
+      );
+    }
+
+    setThemeState(newTheme);
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeProviderContext.Provider
+      value={{
+        theme,
+        setTheme,
+      }}
+    >
       {children}
-    </ThemeContext.Provider>
-  )
+    </ThemeProviderContext.Provider>
+  );
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (context === undefined) {
-    throw new Error('useTheme deve ser usado dentro de um ThemeProvider')
+  const context =
+    useContext(
+      ThemeProviderContext,
+    );
+
+  if (
+    context === undefined
+  ) {
+    throw new Error(
+      "useTheme must be used inside ThemeProvider.",
+    );
   }
-  return context
+
+  return context;
 }
