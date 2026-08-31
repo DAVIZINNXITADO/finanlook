@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function NotFoundComponent() {
   return (
@@ -83,12 +84,12 @@ function ErrorComponent({
             Tentar novamente
           </button>
 
-          <a
-            href="/"
+          <Link
+            to="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Ir para o início
-          </a>
+          </Link>
         </div>
       </div>
     </div>
@@ -166,13 +167,17 @@ function RootShell({
   children: ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+    >
       <head>
         <HeadContent />
       </head>
 
       <body>
         {children}
+
         <Scripts />
       </body>
     </html>
@@ -183,39 +188,51 @@ function RootComponent() {
   const { queryClient } =
     Route.useRouteContext();
 
-  const router =
-    useRouter();
+  const router = useRouter();
 
   useEffect(() => {
     const { data } =
-      supabase.auth.onAuthStateChange((event) => {
-        if (
-          event !== "SIGNED_IN" &&
-          event !== "SIGNED_OUT" &&
-          event !== "USER_UPDATED"
-        ) {
-          return;
-        }
+      supabase.auth.onAuthStateChange(
+        (event) => {
+          if (
+            event !== "SIGNED_IN" &&
+            event !== "SIGNED_OUT" &&
+            event !== "USER_UPDATED"
+          ) {
+            return;
+          }
 
-        void router.invalidate();
+          void router.invalidate();
 
-        if (event !== "SIGNED_OUT") {
-          void queryClient.invalidateQueries();
-        }
-      });
+          if (event !== "SIGNED_OUT") {
+            void queryClient.invalidateQueries();
+          }
+        },
+      );
 
-    return () =>
+    return () => {
       data.subscription.unsubscribe();
-  }, [router, queryClient]);
+    };
+  }, [
+    router,
+    queryClient,
+  ]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Outlet />
+    <ThemeProvider
+      defaultTheme="system"
+      storageKey="finanlook-theme"
+    >
+      <QueryClientProvider
+        client={queryClient}
+      >
+        <Outlet />
 
-      <Toaster
-        position="top-center"
-        richColors
-      />
-    </QueryClientProvider>
+        <Toaster
+          position="top-center"
+          richColors
+        />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
