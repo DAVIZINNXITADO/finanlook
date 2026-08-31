@@ -106,8 +106,7 @@ export const Route =
         },
         {
           name: "viewport",
-          content:
-            "width=device-width, initial-scale=1",
+          content: "width=device-width, initial-scale=1",
         },
         {
           title:
@@ -124,8 +123,7 @@ export const Route =
         },
         {
           name: "twitter:card",
-          content:
-            "summary_large_image",
+          content: "summary_large_image",
         },
       ],
 
@@ -136,42 +134,32 @@ export const Route =
         },
         {
           rel: "preconnect",
-          href:
-            "https://fonts.googleapis.com",
+          href: "https://fonts.googleapis.com",
         },
         {
           rel: "preconnect",
-          href:
-            "https://fonts.gstatic.com",
-          crossOrigin:
-            "anonymous",
+          href: "https://fonts.gstatic.com",
+          crossOrigin: "anonymous",
         },
         {
           rel: "stylesheet",
-          href:
-            "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
+          href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
         },
         {
           rel: "icon",
-          href:
-            "/favicon.png",
-          type:
-            "image/png",
+          href: "/favicon.png",
+          type: "image/png",
         },
       ],
     }),
 
-    shellComponent:
-      RootShell,
+    shellComponent: RootShell,
 
-    component:
-      RootComponent,
+    component: RootComponent,
 
-    notFoundComponent:
-      NotFoundComponent,
+    notFoundComponent: NotFoundComponent,
 
-    errorComponent:
-      ErrorComponent,
+    errorComponent: ErrorComponent,
   });
 
 function RootShell({
@@ -198,46 +186,34 @@ function RootShell({
 }
 
 function RootComponent() {
-  const {
-    queryClient,
-  } =
+  const { queryClient } =
     Route.useRouteContext();
 
-  const router =
-    useRouter();
+  const router = useRouter();
 
   useEffect(() => {
-    const {
-      data,
-    } =
+    const { data } =
       supabase.auth.onAuthStateChange(
-        (
-          event,
-        ) => {
+        (event) => {
           if (
-            event !==
-              "SIGNED_IN" &&
-            event !==
-              "SIGNED_OUT" &&
-            event !==
-              "USER_UPDATED"
+            event !== "SIGNED_IN" &&
+            event !== "SIGNED_OUT" &&
+            event !== "USER_UPDATED"
           ) {
             return;
           }
 
           void router.invalidate();
 
-          if (
-            event !==
-            "SIGNED_OUT"
-          ) {
+          if (event !== "SIGNED_OUT") {
             void queryClient.invalidateQueries();
           }
         },
       );
 
-    return () =>
+    return () => {
       data.subscription.unsubscribe();
+    };
   }, [
     router,
     queryClient,
