@@ -93,7 +93,7 @@ export function useSaveTransaction() {
       id,
       values,
     }: {
-      id?: string;
+      id?: string | undefined;
       values: TransactionInput;
     }) => {
       const userId =
@@ -236,7 +236,7 @@ export function useSaveAccount() {
       id,
       values,
     }: {
-      id?: string;
+      id?: string | undefined;
       values: AccountInput;
     }) => {
       const userId =
@@ -676,3 +676,22 @@ export function useUserSettings() {
     },
   });
 }
+/* =========================================================
+   REEXPORTS — hooks compartilhados (fonte única de acesso)
+   ========================================================= */
+
+export {
+  useUser,
+  useUpdateProfile,
+  useInvalidateFinance,
+  useSaveGoal,
+  useDeleteGoal,
+  useSaveInvestment,
+  useDeleteInvestment,
+  useReserve,
+  useSaveReserve,
+  useSaveMonthlyLimit,
+  useSalaryPlan,
+  useSaveSalaryPlan,
+  useDemoData,
+} from "./hooks";

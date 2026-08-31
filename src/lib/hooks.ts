@@ -76,7 +76,7 @@ export function useSaveAccount() {
       id,
       values,
     }: {
-      id?: string;
+      id?: string | undefined;
       values: AccountInput;
     }) => {
       const user_id = await requireUserId();
@@ -184,7 +184,7 @@ export function useSaveTransaction() {
       id,
       values,
     }: {
-      id?: string;
+      id?: string | undefined;
       values: TransactionInput;
     }) => {
       const user_id = await requireUserId();
@@ -259,7 +259,7 @@ export function useSaveGoal() {
       id,
       values,
     }: {
-      id?: string;
+      id?: string | undefined;
       values: {
         name: string;
         target_amount: number;
@@ -339,7 +339,7 @@ export function useSaveInvestment() {
       id,
       values,
     }: {
-      id?: string;
+      id?: string | undefined;
       values: {
         name: string;
         amount: number;

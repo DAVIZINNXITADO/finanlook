@@ -50,7 +50,7 @@ import {
   type Transaction,
 } from "@/lib/finance";
 
-export const Route = createFileRoute("/_authenticated/movimentacoes")({
+export const Route = createFileRoute("/_authenticated/organizar-salario")({
   head: () => ({
     meta: [
       { title: "Movimentações — FinanLook" },
