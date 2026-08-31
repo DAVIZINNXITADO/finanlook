@@ -173,6 +173,34 @@ function RootShell({
     >
       <head>
         <HeadContent />
+        {/* Script para aplicar tema imediatamente sem flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const storageKey = 'finanlook-theme';
+                  const savedTheme = localStorage.getItem(storageKey) || 'system';
+                  const html = document.documentElement;
+                  
+                  // Remove ambas as classes antes de aplicar
+                  html.classList.remove('light', 'dark');
+                  
+                  if (savedTheme === 'system') {
+                    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    html.classList.add(isDark ? 'dark' : 'light');
+                    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+                  } else {
+                    html.classList.add(savedTheme);
+                    document.documentElement.style.colorScheme = savedTheme;
+                  }
+                } catch (e) {
+                  console.error('Error loading theme:', e);
+                }
+              })();
+            `,
+          }}
+        />
       </head>
 
       <body>
