@@ -61,46 +61,55 @@ const NAV = [
     label: "Visão geral",
     icon: LayoutDashboard,
   },
+
   {
     to: "/movimentacoes",
     label: "Movimentações",
     icon: ArrowLeftRight,
   },
+
   {
     to: "/organizar-salario",
     label: "Organizar salário",
     icon: Landmark,
   },
+
   {
     to: "/contas",
     label: "Contas",
     icon: WalletCards,
   },
+
   {
     to: "/reserva",
     label: "Reserva",
     icon: LifeBuoy,
   },
+
   {
     to: "/metas",
     label: "Metas",
     icon: Goal,
   },
+
   {
     to: "/investimentos",
     label: "Investimentos",
     icon: TrendingUp,
   },
+
   {
     to: "/planejamento",
     label: "Planejamento do mês",
     icon: CalendarRange,
   },
+
   {
     to: "/relatorios",
     label: "Relatórios",
     icon: ChartPie,
   },
+
   {
     to: "/configuracoes",
     label: "Configurações",
@@ -109,14 +118,19 @@ const NAV = [
 ] as const;
 
 /*
- * Itens principais exibidos
- * na navegação inferior do mobile.
+ * Os 4 principais ficam sempre
+ * visíveis na barra inferior.
+ *
+ * O restante aparece em "Mais".
  */
 const MOBILE_MAIN =
-  NAV.slice(0, 4);
+  NAV.slice(
+    0,
+    4,
+  );
 
 /* =========================================================
-   APP SHELL
+   APPSHELL
    ========================================================= */
 
 export function AppShell({
@@ -143,9 +157,7 @@ export function AppShell({
 
   const pathname =
     useRouterState({
-      select: (
-        state,
-      ) =>
+      select: (state) =>
         state.location.pathname,
     });
 
@@ -154,52 +166,60 @@ export function AppShell({
      ======================================================= */
 
   async function signOut() {
-    /*
-     * Cancela requisições
-     * ainda em andamento.
-     */
     await queryClient.cancelQueries();
 
-    /*
-     * Limpa o cache do usuário.
-     *
-     * Isso evita que dados
-     * da sessão anterior apareçam
-     * após outro login.
-     */
     queryClient.clear();
 
-    /*
-     * Encerra sessão
-     * no Supabase.
-     */
-    await supabase.auth.signOut();
+    const {
+      error,
+    } =
+      await supabase.auth.signOut();
 
-    /*
-     * Redireciona
-     * para autenticação.
-     */
+    if (error) {
+      return;
+    }
+
     navigate({
       to: "/auth",
       replace: true,
     });
   }
 
+  /* =======================================================
+     VERIFICA SE ROTA ESTÁ NO MENU MAIS
+     ======================================================= */
+
+  const isMoreActive =
+    !MOBILE_MAIN.some(
+      (item) =>
+        pathname === item.to,
+    );
+
+  /* =======================================================
+     RENDER
+     ======================================================= */
+
   return (
     <div className="min-h-screen bg-background md:flex">
-
-      {/* ===================================================
+      {/* =================================================
           MENU DESKTOP
-          =================================================== */}
+         ================================================= */}
 
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
-
         {/* LOGO */}
 
         <Link
           to="/visao-geral"
           className="mb-6 flex items-center gap-2 px-2"
         >
+          {/*
+           * favicon.png
+           *
+           * Coloque o arquivo em:
+           *
+           * public/favicon.png
+           */}
+
           <img
             src="/favicon.png"
             alt="FinanLook"
@@ -215,13 +235,9 @@ export function AppShell({
 
         <nav className="flex flex-1 flex-col gap-1">
           {NAV.map(
-            (
-              item,
-            ) => (
+            (item) => (
               <NavItem
-                key={
-                  item.to
-                }
+                key={item.to}
                 {...item}
                 active={
                   pathname ===
@@ -235,20 +251,15 @@ export function AppShell({
         {/* USUÁRIO */}
 
         <div className="mt-4 rounded-2xl bg-sidebar-accent/60 p-3">
-
           <p className="truncate text-sm font-medium">
-            {
-              profile?.name ||
-              "Você"
-            }
+            {profile?.name ||
+              "Você"}
           </p>
 
           <p className="truncate text-xs text-muted-foreground">
-            @
-            {
-              profile?.username ??
-              ""
-            }
+            {profile?.username
+              ? `@${profile.username}`
+              : ""}
           </p>
 
           <Button
@@ -263,47 +274,38 @@ export function AppShell({
 
             Sair da conta
           </Button>
-
         </div>
-
       </aside>
 
-      {/* ===================================================
+      {/* =================================================
           HEADER MOBILE
-          =================================================== */}
+         ================================================= */}
 
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur md:hidden">
-
-        {/* LOGO */}
-
         <Link
           to="/visao-geral"
-          className="flex items-center gap-2"
+          className="flex min-w-0 items-center gap-2"
         >
           <img
             src="/favicon.png"
             alt="FinanLook"
-            className="size-8 rounded-lg object-contain"
+            className="size-8 shrink-0 rounded-lg object-contain"
           />
 
-          <span className="font-display text-base font-semibold">
+          <span className="truncate font-display text-base font-semibold">
             FinanLook
           </span>
         </Link>
 
-        {/* MENU MOBILE */}
+        {/* MENU */}
 
         <Sheet
-          open={
-            menuOpen
-          }
+          open={menuOpen}
           onOpenChange={
             setMenuOpen
           }
         >
-
           <SheetTrigger asChild>
-
             <Button
               variant="ghost"
               size="icon"
@@ -311,28 +313,38 @@ export function AppShell({
             >
               <Menu className="size-5" />
             </Button>
-
           </SheetTrigger>
 
           <SheetContent
             side="right"
-            className="w-[85vw] max-w-xs p-4"
+            className="flex w-[85vw] max-w-xs flex-col p-4"
           >
-
             <SheetTitle className="font-display">
               Menu
             </SheetTitle>
 
-            <nav className="mt-4 flex flex-col gap-1">
+            {/* USUÁRIO */}
 
+            <div className="mt-4 rounded-xl bg-secondary p-3">
+              <p className="truncate text-sm font-medium">
+                {profile?.name ||
+                  "Você"}
+              </p>
+
+              <p className="truncate text-xs text-muted-foreground">
+                {profile?.username
+                  ? `@${profile.username}`
+                  : ""}
+              </p>
+            </div>
+
+            {/* NAVEGAÇÃO */}
+
+            <nav className="mt-4 flex flex-1 flex-col gap-1 overflow-y-auto">
               {NAV.map(
-                (
-                  item,
-                ) => (
+                (item) => (
                   <NavItem
-                    key={
-                      item.to
-                    }
+                    key={item.to}
                     {...item}
                     active={
                       pathname ===
@@ -346,8 +358,9 @@ export function AppShell({
                   />
                 ),
               )}
-
             </nav>
+
+            {/* LOGOUT */}
 
             <Button
               variant="outline"
@@ -360,32 +373,26 @@ export function AppShell({
 
               Sair da conta
             </Button>
-
           </SheetContent>
-
         </Sheet>
-
       </header>
 
-      {/* ===================================================
+      {/* =================================================
           CONTEÚDO PRINCIPAL
-          =================================================== */}
+         ================================================= */}
 
-      <main className="w-full flex-1 px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8">
-
+      <main className="w-full min-w-0 flex-1 px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8">
         <div className="mx-auto w-full max-w-5xl space-y-6">
-
           {children}
-
         </div>
-
       </main>
 
-      {/* ===================================================
+      {/* =================================================
           NAVEGAÇÃO MOBILE
-          =================================================== */}
+         ================================================= */}
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 gap-1 border-t border-border bg-background/95 px-2 pb-2 pt-1.5 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 gap-1 border-t border-border bg-background/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-1.5 backdrop-blur md:hidden">
+        {/* 4 PRINCIPAIS */}
 
         {MOBILE_MAIN.map(
           ({
@@ -393,12 +400,11 @@ export function AppShell({
             label,
             icon: Icon,
           }) => (
-
             <Link
               key={to}
               to={to}
               className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium",
+                "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-medium transition-colors sm:text-[11px]",
 
                 pathname ===
                   to
@@ -406,26 +412,19 @@ export function AppShell({
                   : "text-muted-foreground",
               )}
             >
+              <Icon className="size-5 shrink-0" />
 
-              <Icon className="size-5" />
-
-              <span className="truncate">
-
-                {
-                  label ===
-                  "Organizar salário"
-                    ? "Organizar"
-                    : label
-                }
-
+              <span className="w-full truncate text-center">
+                {label ===
+                "Organizar salário"
+                  ? "Organizar"
+                  : label}
               </span>
-
             </Link>
-
           ),
         )}
 
-        {/* BOTÃO MAIS */}
+        {/* MAIS */}
 
         <button
           type="button"
@@ -434,19 +433,21 @@ export function AppShell({
               true,
             )
           }
-          className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium text-muted-foreground"
+          className={cn(
+            "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-medium transition-colors sm:text-[11px]",
+
+            isMoreActive
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground",
+          )}
         >
+          <Menu className="size-5 shrink-0" />
 
-          <Menu className="size-5" />
-
-          <span>
+          <span className="w-full truncate text-center">
             Mais
           </span>
-
         </button>
-
       </nav>
-
     </div>
   );
 }
@@ -463,9 +464,14 @@ function NavItem({
   onNavigate,
 }: {
   to: string;
+
   label: string;
-  icon: typeof LayoutDashboard;
+
+  icon:
+    typeof LayoutDashboard;
+
   active: boolean;
+
   onNavigate?: () => void;
 }) {
   return (
@@ -475,18 +481,18 @@ function NavItem({
         onNavigate
       }
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+        "flex min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
 
         active
           ? "bg-sidebar-primary/12 text-sidebar-primary"
           : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       )}
     >
+      <Icon className="size-[18px] shrink-0" />
 
-      <Icon className="size-[18px]" />
-
-      {label}
-
+      <span className="truncate">
+        {label}
+      </span>
     </Link>
   );
 }
