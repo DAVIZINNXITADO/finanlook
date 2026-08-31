@@ -1,0 +1,145 @@
+-- =========================================================
+-- TABELA DE INVESTIMENTOS
+-- =========================================================
+
+create table if not exists public.investments (
+  id uuid primary key default gen_random_uuid(),
+
+  user_id uuid not null
+    references auth.users(id)
+    on delete cascade,
+
+  name text not null,
+
+  category text not null,
+
+  institution text,
+
+  invested_amount numeric not null default 0,
+
+  current_amount numeric not null default 0,
+
+  investment_date date,
+
+  created_at timestamptz not null default now(),
+
+  updated_at timestamptz not null default now(),
+
+  constraint investments_category_check
+    check (
+      category in (
+        'renda_fixa',
+        'renda_variavel',
+        'fundos',
+        'cripto',
+        'outros'
+      )
+    )
+);
+
+-- =========================================================
+-- ROW LEVEL SECURITY
+-- =========================================================
+
+alter table public.investments
+enable row level security;
+
+-- =========================================================
+-- SELECT
+-- =========================================================
+
+drop policy if exists
+"Usuários podem visualizar seus investimentos"
+on public.investments;
+
+create policy
+"Usuários podem visualizar seus investimentos"
+on public.investments
+for select
+to authenticated
+using (
+  auth.uid() = user_id
+);
+
+-- =========================================================
+-- INSERT
+-- =========================================================
+
+drop policy if exists
+"Usuários podem criar seus investimentos"
+on public.investments;
+
+create policy
+"Usuários podem criar seus investimentos"
+on public.investments
+for insert
+to authenticated
+with check (
+  auth.uid() = user_id
+);
+
+-- =========================================================
+-- UPDATE
+-- =========================================================
+
+drop policy if exists
+"Usuários podem atualizar seus investimentos"
+on public.investments;
+
+create policy
+"Usuários podem atualizar seus investimentos"
+on public.investments
+for update
+to authenticated
+using (
+  auth.uid() = user_id
+)
+with check (
+  auth.uid() = user_id
+);
+
+-- =========================================================
+-- DELETE
+-- =========================================================
+
+drop policy if exists
+"Usuários podem excluir seus investimentos"
+on public.investments;
+
+create policy
+"Usuários podem excluir seus investimentos"
+on public.investments
+for delete
+to authenticated
+using (
+  auth.uid() = user_id
+);
+
+-- =========================================================
+-- ATUALIZAR updated_at AUTOMATICAMENTE
+-- =========================================================
+
+create or replace function
+public.update_updated_at_column()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists
+update_investments_updated_at
+on public.investments;
+
+create trigger
+update_investments_updated_at
+before update
+on public.investments
+for each row
+execute function
+public.update_updated_at_column();
