@@ -1,308 +1,253 @@
-import {
-  Link,
-  useNavigate,
-  useRouterState,
-} from "@tanstack/react-router";
+import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
-  CalendarRange,
-  ChartPie,
-  Goal,
+  ChevronLeft,
   Landmark,
   LayoutDashboard,
-  LifeBuoy,
-  LogOut,
   Menu,
-  Settings,
+  ShieldCheck,
+  Target,
   TrendingUp,
   WalletCards,
+  X,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
-import { useProfile } from "@/lib/data";
 
-const NAV = [
+type NavItem = {
+  title: string;
+  to: string;
+  icon: React.ComponentType<{
+    className?: string;
+  }>;
+};
+
+const navigation: NavItem[] = [
   {
-    to: "/visao-geral",
-    label: "Visão geral",
+    title: "Visão Geral",
+    to: "/",
     icon: LayoutDashboard,
   },
   {
+    title: "Movimentações",
     to: "/movimentacoes",
-    label: "Movimentações",
     icon: ArrowLeftRight,
   },
   {
-    to: "/organizar-salario",
-    label: "Organizar salário",
+    title: "Contas",
+    to: "/contas",
     icon: Landmark,
   },
   {
-    to: "/contas",
-    label: "Contas",
+    title: "Organizar salário",
+    to: "/organizar-salario",
     icon: WalletCards,
   },
   {
+    title: "Reserva",
     to: "/reserva",
-    label: "Reserva",
-    icon: LifeBuoy,
+    icon: ShieldCheck,
   },
   {
+    title: "Metas",
     to: "/metas",
-    label: "Metas",
-    icon: Goal,
+    icon: Target,
   },
   {
+    title: "Investimentos",
     to: "/investimentos",
-    label: "Investimentos",
     icon: TrendingUp,
   },
-  {
-    to: "/planejamento",
-    label: "Planejamento do mês",
-    icon: CalendarRange,
-  },
-  {
-    to: "/relatorios",
-    label: "Relatórios",
-    icon: ChartPie,
-  },
-  {
-    to: "/configuracoes",
-    label: "Configurações",
-    icon: Settings,
-  },
-] as const;
+];
 
-const MOBILE_MAIN = NAV.slice(0, 4);
+function AppShell() {
+  const location = useLocation();
 
-export function AppShell({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
+  const [mobileOpen, setMobileOpen] =
+    useState(false);
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const isActive = (to: string) => {
+    if (to === "/") {
+      return location.pathname === "/";
+    }
 
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  });
-
-  async function signOut() {
-    await queryClient.cancelQueries();
-
-    queryClient.clear();
-
-    await supabase.auth.signOut();
-
-    navigate({
-      to: "/auth",
-      replace: true,
-    });
-  }
+    return (
+      location.pathname === to ||
+      location.pathname.startsWith(
+        `${to}/`,
+      )
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-background md:flex">
-      {/* MENU DESKTOP */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
-        {/* LOGO */}
+    <div className="min-h-screen bg-background">
+      {/* MOBILE HEADER */}
+
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background px-4 lg:hidden">
         <Link
-          to="/visao-geral"
-          className="mb-6 flex items-center gap-2 px-2"
+          to="/"
+          className="flex items-center gap-2 font-bold"
         >
-          <span className="hero-gradient flex size-9 items-center justify-center rounded-xl text-lg">
-            💸
+          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+            F
           </span>
 
-          <span className="font-display text-lg font-semibold">
+          <span>
             FinanLook
           </span>
         </Link>
 
-        {/* NAVEGAÇÃO */}
-        <nav className="flex flex-1 flex-col gap-1">
-          {NAV.map((item) => (
-            <NavItem
-              key={item.to}
-              {...item}
-              active={pathname === item.to}
-            />
-          ))}
-        </nav>
-
-        {/* USUÁRIO */}
-        <div className="mt-4 rounded-2xl bg-sidebar-accent/60 p-3">
-          <p className="truncate text-sm font-medium">
-            {profile?.name || "Você"}
-          </p>
-
-          <p className="truncate text-xs text-muted-foreground">
-            @{profile?.username ?? ""}
-          </p>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2 w-full justify-start"
-            onClick={() => void signOut()}
-          >
-            <LogOut className="size-4" />
-            Sair da conta
-          </Button>
-        </div>
-      </aside>
-
-      {/* HEADER MOBILE */}
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur md:hidden">
-        <Link
-          to="/visao-geral"
-          className="flex items-center gap-2"
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() =>
+            setMobileOpen(
+              (value) =>
+                !value,
+            )
+          }
+          aria-label="Abrir menu"
         >
-          <span className="hero-gradient flex size-8 items-center justify-center rounded-lg text-base">
-            💸
-          </span>
+          {mobileOpen ? (
+            <X className="size-5" />
+          ) : (
+            <Menu className="size-5" />
+          )}
+        </Button>
+      </header>
 
-          <span className="font-display text-base font-semibold">
-            FinanLook
-          </span>
-        </Link>
+      <div className="flex">
+        {/* SIDEBAR */}
 
-        <Sheet
-          open={menuOpen}
-          onOpenChange={setMenuOpen}
+        <aside
+          className={[
+            "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r bg-background transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
+            mobileOpen
+              ? "translate-x-0"
+              : "-translate-x-full",
+          ].join(" ")}
         >
-          <SheetTrigger asChild>
+          {/* LOGO */}
+
+          <div className="flex h-16 items-center justify-between border-b px-5">
+            <Link
+              to="/"
+              className="flex items-center gap-3 font-bold"
+              onClick={() =>
+                setMobileOpen(
+                  false,
+                )
+              }
+            >
+              <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-base font-bold text-primary-foreground">
+                F
+              </span>
+
+              <span className="text-lg">
+                FinanLook
+              </span>
+            </Link>
+
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Abrir menu"
+              className="lg:hidden"
+              onClick={() =>
+                setMobileOpen(
+                  false,
+                )
+              }
+              aria-label="Fechar menu"
             >
-              <Menu className="size-5" />
+              <ChevronLeft className="size-5" />
             </Button>
-          </SheetTrigger>
+          </div>
 
-          <SheetContent
-            side="right"
-            className="w-[85vw] max-w-xs p-4"
-          >
-            <SheetTitle className="font-display">
-              Menu
-            </SheetTitle>
+          {/* NAVEGAÇÃO */}
 
-            <nav className="mt-4 flex flex-col gap-1">
-              {NAV.map((item) => (
-                <NavItem
-                  key={item.to}
-                  {...item}
-                  active={pathname === item.to}
-                  onNavigate={() =>
-                    setMenuOpen(false)
-                  }
-                />
-              ))}
-            </nav>
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+            {navigation.map(
+              (item) => {
+                const Icon =
+                  item.icon;
 
-            <Button
-              variant="outline"
-              className="mt-4 w-full"
-              onClick={() => void signOut()}
-            >
-              <LogOut className="size-4" />
-              Sair da conta
-            </Button>
-          </SheetContent>
-        </Sheet>
-      </header>
+                const active =
+                  isActive(
+                    item.to,
+                  );
 
-      {/* CONTEÚDO PRINCIPAL */}
-      <main className="w-full flex-1 px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8">
-        <div className="mx-auto w-full max-w-5xl space-y-6">
-          {children}
-        </div>
-      </main>
+                return (
+                  <Link
+                    key={
+                      item.to
+                    }
+                    to={
+                      item.to
+                    }
+                    onClick={() =>
+                      setMobileOpen(
+                        false,
+                      )
+                    }
+                    className={[
+                      "flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ].join(
+                      " ",
+                    )}
+                  >
+                    <Icon className="size-5 shrink-0" />
 
-      {/* NAVEGAÇÃO MOBILE */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 gap-1 border-t border-border bg-background/95 px-2 pb-2 pt-1.5 backdrop-blur md:hidden">
-        {MOBILE_MAIN.map(
-          ({
-            to,
-            label,
-            icon: Icon,
-          }) => (
-            <Link
-              key={to}
-              to={to}
-              className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium",
-                pathname === to
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground",
-              )}
-            >
-              <Icon className="size-5" />
+                    <span>
+                      {
+                        item.title
+                      }
+                    </span>
+                  </Link>
+                );
+              },
+            )}
+          </nav>
 
-              <span className="truncate">
-                {label === "Organizar salário"
-                  ? "Organizar"
-                  : label}
-              </span>
-            </Link>
-          ),
-        )}
+          {/* RODAPÉ SIDEBAR */}
 
-        <button
-          type="button"
-          onClick={() => setMenuOpen(true)}
-          className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium text-muted-foreground"
-        >
-          <Menu className="size-5" />
+          <div className="border-t p-4">
+            <p className="text-xs text-muted-foreground">
+              Organize sua vida
+              financeira.
+            </p>
+          </div>
+        </aside>
 
-          <span>Mais</span>
-        </button>
-      </nav>
+        {/* OVERLAY MOBILE */}
+
+        {mobileOpen ? (
+          <button
+            type="button"
+            aria-label="Fechar menu"
+            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            onClick={() =>
+              setMobileOpen(
+                false,
+              )
+            }
+          />
+        ) : null}
+
+        {/* CONTEÚDO */}
+
+        <main className="min-w-0 flex-1">
+          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
 
-function NavItem({
-  to,
-  label,
-  icon: Icon,
-  active,
-  onNavigate,
-}: {
-  to: string;
-  label: string;
-  icon: typeof LayoutDashboard;
-  active: boolean;
-  onNavigate?: () => void;
-}) {
-  return (
-    <Link
-      to={to}
-      onClick={onNavigate}
-      className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-        active
-          ? "bg-sidebar-primary/12 text-sidebar-primary"
-          : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-      )}
-    >
-      <Icon className="size-[18px]" />
-
-      {label}
-    </Link>
-  );
-}
+export {
+  AppShell,
+};
