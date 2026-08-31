@@ -8,7 +8,6 @@ import {
   Minus,
   Plus,
   Save,
-  Sparkles,
   Trash2,
   Wallet,
 } from "lucide-react";
@@ -51,10 +50,6 @@ export const Route = createFileRoute(
 /* =========================================================
    TIPOS
    ========================================================= */
-
-type OrganizationMode =
-  | "manual"
-  | "automatic";
 
 type Allocation = {
   id: string;
@@ -161,7 +156,10 @@ function formatMonth(month: string) {
    ========================================================= */
 
 function OrganizeSalaryPage() {
-  const [month, setMonth] =
+  const [
+    month,
+    setMonth,
+  ] =
     useState(
       getCurrentMonth(),
     );
@@ -180,14 +178,6 @@ function OrganizeSalaryPage() {
 
   const savePlan =
     useSaveSalaryPlan(month);
-
-  const [
-    mode,
-    setMode,
-  ] =
-    useState<OrganizationMode>(
-      "manual",
-    );
 
   const [
     allocations,
@@ -241,6 +231,7 @@ function OrganizeSalaryPage() {
 
           return {
             ...allocation,
+
             amount:
               Number.isFinite(
                 savedValue,
@@ -318,7 +309,6 @@ function OrganizeSalaryPage() {
     ]);
   }, [
     savedPlan,
-    month,
     currentBalance,
   ]);
 
@@ -554,21 +544,8 @@ function OrganizeSalaryPage() {
      ======================================================= */
 
   function useAutomaticOrganization() {
-    /*
-     * Aqui entra a verificação real
-     * do plano Premium quando ela
-     * existir no perfil.
-     *
-     * Por enquanto o botão informa
-     * que a funcionalidade é Premium.
-     */
-
     toast.info(
       "A organização automática é um recurso Premium.",
-    );
-
-    setMode(
-      "automatic",
     );
   }
 
@@ -644,13 +621,6 @@ function OrganizeSalaryPage() {
 
     try {
       await savePlan.mutateAsync({
-        /*
-         * O income continua sendo
-         * obrigatório para a tabela,
-         * mas o planejamento usa
-         * o saldo atual real.
-         */
-
         income:
           currentBalance,
 
@@ -695,7 +665,7 @@ function OrganizeSalaryPage() {
      ======================================================= */
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full space-y-6 overflow-x-hidden">
       <PageHeader
         title="Organizar salário"
         subtitle="Distribua seu saldo atual entre o que é importante para você."
@@ -705,19 +675,19 @@ function OrganizeSalaryPage() {
           MÊS E SALDO
          ================================================= */}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="surface p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-secondary">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+        <div className="surface min-w-0 overflow-hidden p-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
               📅
             </div>
 
-            <div>
-              <p className="text-sm font-semibold">
+            <div className="min-w-0">
+              <p className="break-words text-sm font-semibold">
                 Mês da organização
               </p>
 
-              <p className="text-xs text-muted-foreground">
+              <p className="break-words text-xs text-muted-foreground">
                 Escolha o período que deseja planejar.
               </p>
             </div>
@@ -725,7 +695,7 @@ function OrganizeSalaryPage() {
 
           <Input
             type="month"
-            className="mt-4 h-11"
+            className="mt-4 h-11 w-full max-w-full"
             value={month}
             onChange={(event) =>
               setMonth(
@@ -734,37 +704,37 @@ function OrganizeSalaryPage() {
             }
           />
 
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-3 break-words text-xs text-muted-foreground">
             {formatMonth(
               month,
             )}
           </p>
         </div>
 
-        <div className="surface p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-secondary">
+        <div className="surface min-w-0 overflow-hidden p-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
               <Wallet className="size-5" />
             </div>
 
-            <div>
-              <p className="text-sm font-semibold">
+            <div className="min-w-0">
+              <p className="break-words text-sm font-semibold">
                 Saldo atual disponível
               </p>
 
-              <p className="text-xs text-muted-foreground">
+              <p className="break-words text-xs text-muted-foreground">
                 Dinheiro atual somando todas as suas contas.
               </p>
             </div>
           </div>
 
-          <p className="mt-4 text-3xl font-bold">
+          <p className="mt-4 break-words text-3xl font-bold">
             {formatBRL(
               currentBalance,
             )}
           </p>
 
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 break-words text-xs text-muted-foreground">
             Esse valor considera saldo inicial, ajustes, entradas e saídas.
           </p>
         </div>
@@ -774,113 +744,92 @@ function OrganizeSalaryPage() {
           MODO
          ================================================= */}
 
-      <div className="surface p-4">
-        <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="surface min-w-0 overflow-hidden p-4">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row">
+          {/* ORGANIZAÇÃO MANUAL */}
+
           <Button
             type="button"
-            variant={
-              mode === "manual"
-                ? "default"
-                : "outline"
-            }
-            className="h-auto flex-1 justify-start gap-3 py-4"
-            onClick={() =>
-              setMode(
-                "manual",
-              )
-            }
+            variant="default"
+            className="h-auto min-w-0 flex-1 items-start justify-start gap-3 whitespace-normal py-4"
           >
-            <Edit3 className="size-5" />
+            <Edit3 className="mt-0.5 size-5 shrink-0" />
 
-            <div className="text-left">
-              <p>
+            <div className="min-w-0 text-left">
+              <p className="break-words">
                 Organização manual
               </p>
 
-              <p className="text-xs font-normal opacity-70">
+              <p className="mt-1 break-words whitespace-normal text-xs font-normal opacity-70">
                 Você decide exatamente quanto colocar em cada categoria.
               </p>
             </div>
           </Button>
 
+          {/* ORGANIZAÇÃO AUTOMÁTICA — APENAS UMA */}
+
           <Button
             type="button"
             variant="outline"
-            className="h-auto flex-1 justify-start gap-3 py-4"
+            className="h-auto min-w-0 flex-1 items-start justify-start gap-3 whitespace-normal py-4"
             onClick={
               useAutomaticOrganization
             }
           >
-            <div className="relative">
+            <div className="relative mt-0.5 shrink-0">
               <Bot className="size-5" />
 
               <Crown className="absolute -right-3 -top-2 size-3" />
             </div>
 
-            <div className="text-left">
-              <p className="flex items-center gap-2">
-                Organização automática
+            <div className="min-w-0 flex-1 text-left">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <p className="break-words">
+                  Organização automática
+                </p>
 
-                <span className="rounded-full border px-2 py-0.5 text-[10px]">
+                <span className="shrink-0 rounded-full border px-2 py-0.5 text-[10px]">
                   PREMIUM
                 </span>
-              </p>
+              </div>
 
-              <p className="text-xs font-normal text-muted-foreground">
+              <p className="mt-1 break-words whitespace-normal text-xs font-normal text-muted-foreground">
                 O FinanLook sugere uma divisão automática do seu dinheiro.
               </p>
             </div>
           </Button>
         </div>
-
-        {mode === "automatic" ? (
-          <div className="mt-4 rounded-xl border p-4">
-            <div className="flex items-start gap-3">
-              <Sparkles className="mt-0.5 size-5 shrink-0" />
-
-              <div>
-                <p className="text-sm font-semibold">
-                  Organização automática
-                </p>
-
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Este recurso estará disponível para usuários Premium.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : null}
       </div>
 
       {/* =================================================
           RESUMO
          ================================================= */}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="surface p-5">
-          <p className="text-sm text-muted-foreground">
+      <div className="grid min-w-0 gap-4 md:grid-cols-3">
+        <div className="surface min-w-0 overflow-hidden p-5">
+          <p className="break-words text-sm text-muted-foreground">
             Saldo atual
           </p>
 
-          <p className="mt-2 text-xl font-bold">
+          <p className="mt-2 break-words text-xl font-bold">
             {formatBRL(
               currentBalance,
             )}
           </p>
         </div>
 
-        <div className="surface p-5">
-          <p className="text-sm text-muted-foreground">
+        <div className="surface min-w-0 overflow-hidden p-5">
+          <p className="break-words text-sm text-muted-foreground">
             Já organizado
           </p>
 
-          <p className="mt-2 text-xl font-bold">
+          <p className="mt-2 break-words text-xl font-bold">
             {formatBRL(
               totalAllocated,
             )}
           </p>
 
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 break-words text-xs text-muted-foreground">
             {allocationPercentage.toFixed(
               1,
             )}
@@ -888,16 +837,16 @@ function OrganizeSalaryPage() {
           </p>
         </div>
 
-        <div className="surface p-5">
-          <p className="text-sm text-muted-foreground">
+        <div className="surface min-w-0 overflow-hidden p-5">
+          <p className="break-words text-sm text-muted-foreground">
             Saldo restante
           </p>
 
           <p
             className={
               remainingBalance < 0
-                ? "mt-2 text-xl font-bold text-destructive"
-                : "mt-2 text-xl font-bold text-success"
+                ? "mt-2 break-words text-xl font-bold text-destructive"
+                : "mt-2 break-words text-xl font-bold text-success"
             }
           >
             {formatBRL(
@@ -905,7 +854,7 @@ function OrganizeSalaryPage() {
             )}
           </p>
 
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 break-words text-xs text-muted-foreground">
             {remainingBalance < 0
               ? "Você passou do saldo disponível."
               : "Ainda disponível para organizar."}
@@ -917,13 +866,13 @@ function OrganizeSalaryPage() {
           ORGANIZAÇÕES
          ================================================= */}
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold">
+      <section className="min-w-0 space-y-4">
+        <div className="min-w-0">
+          <h2 className="break-words text-lg font-semibold">
             Como deseja dividir seu dinheiro?
           </h2>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="break-words text-sm text-muted-foreground">
             Defina um valor ou uma porcentagem para cada organização.
           </p>
         </div>
@@ -937,9 +886,9 @@ function OrganizeSalaryPage() {
                 key={
                   allocation.id
                 }
-                className="surface p-4"
+                className="surface min-w-0 overflow-hidden p-4"
               >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-lg">
                       {
@@ -948,13 +897,13 @@ function OrganizeSalaryPage() {
                     </span>
 
                     <div className="min-w-0">
-                      <p className="truncate font-semibold">
+                      <p className="break-words font-semibold">
                         {
                           allocation.name
                         }
                       </p>
 
-                      <p className="text-xs text-muted-foreground">
+                      <p className="break-words text-xs text-muted-foreground">
                         {
                           allocation.percentage.toFixed(
                             1,
@@ -965,14 +914,14 @@ function OrganizeSalaryPage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-2 sm:grid-cols-2 lg:w-[360px]">
-                    <div>
+                  <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:w-[360px] lg:max-w-full">
+                    <div className="min-w-0">
                       <Label className="text-xs">
                         Valor
                       </Label>
 
                       <Input
-                        className="mt-1 h-10"
+                        className="mt-1 h-10 w-full"
                         inputMode="decimal"
                         placeholder="0,00"
                         value={
@@ -998,14 +947,14 @@ function OrganizeSalaryPage() {
                       />
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <Label className="text-xs">
                         Porcentagem
                       </Label>
 
                       <div className="relative mt-1">
                         <Input
-                          className="h-10 pr-8"
+                          className="h-10 w-full pr-8"
                           inputMode="decimal"
                           placeholder="0"
                           value={
@@ -1040,6 +989,7 @@ function OrganizeSalaryPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
+                      className="shrink-0 self-end lg:self-auto"
                       aria-label="Remover organização"
                       onClick={() =>
                         removeCategory(
@@ -1061,26 +1011,26 @@ function OrganizeSalaryPage() {
           NOVA ORGANIZAÇÃO
          ================================================= */}
 
-      <div className="surface p-5">
-        <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-secondary">
+      <div className="surface min-w-0 overflow-hidden p-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
             <Plus className="size-5" />
           </div>
 
-          <div>
-            <h2 className="font-semibold">
+          <div className="min-w-0">
+            <h2 className="break-words font-semibold">
               Nova organização personalizada
             </h2>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="break-words text-sm text-muted-foreground">
               Crie uma categoria que combine com a sua vida.
             </p>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <div className="mt-4 flex min-w-0 flex-col gap-2 sm:flex-row">
           <Input
-            className="h-11 flex-1"
+            className="h-11 min-w-0 flex-1"
             placeholder="Ex.: Estudos, Pets, Viagem..."
             value={
               newCategoryName
@@ -1108,7 +1058,7 @@ function OrganizeSalaryPage() {
 
           <Button
             type="button"
-            className="h-11"
+            className="h-11 shrink-0"
             onClick={
               addCustomCategory
             }
@@ -1125,11 +1075,11 @@ function OrganizeSalaryPage() {
 
       {remainingBalance < 0 ? (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-          <p className="font-semibold text-destructive">
+          <p className="break-words font-semibold text-destructive">
             Você organizou mais dinheiro do que possui.
           </p>
 
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 break-words text-sm text-muted-foreground">
             Reduza{" "}
             {formatBRL(
               Math.abs(
@@ -1149,18 +1099,18 @@ function OrganizeSalaryPage() {
         <Button
           type="button"
           variant="outline"
-          className="h-11"
+          className="h-11 whitespace-normal"
           onClick={
             clearAll
           }
         >
-          <Minus className="size-4" />
+          <Minus className="size-4 shrink-0" />
           Limpar valores
         </Button>
 
         <Button
           type="button"
-          className="h-11"
+          className="h-11 whitespace-normal"
           disabled={
             savePlan.isPending ||
             currentBalance <= 0 ||
@@ -1171,7 +1121,7 @@ function OrganizeSalaryPage() {
             void save()
           }
         >
-          <Save className="size-4" />
+          <Save className="size-4 shrink-0" />
 
           {savePlan.isPending
             ? "Salvando..."
