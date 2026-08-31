@@ -72,9 +72,8 @@ import {
   useAccountsWithBalances,
   useDeleteAccount,
   useSaveAccount,
-  type Account,
-  type AccountInput,
   type AccountWithBalance,
+  type AccountInput,
 } from "@/lib/data";
 
 import {
@@ -82,6 +81,9 @@ import {
   parseAmount,
 } from "@/lib/finance";
 
+/* =========================================================
+   ROUTE
+   ========================================================= */
 
 export const Route =
   createFileRoute(
@@ -106,36 +108,22 @@ export const Route =
       AccountsPage,
   });
 
-
 /* =========================================================
    TIPOS
    ========================================================= */
 
-type AccountFormState = {
+type FormState = {
   name: string;
   type: string;
+  current_balance: string;
 };
 
-type BalanceFormState = {
-  balance: string;
-};
-
-
-/* =========================================================
-   FORMULÁRIOS VAZIOS
-   ========================================================= */
-
-const emptyAccountForm =
-  (): AccountFormState => ({
+const emptyForm =
+  (): FormState => ({
     name: "",
     type: "conta",
+    current_balance: "0",
   });
-
-const emptyBalanceForm =
-  (): BalanceFormState => ({
-    balance: "",
-  });
-
 
 /* =========================================================
    TIPOS DE CONTA
@@ -144,53 +132,36 @@ const emptyBalanceForm =
 const ACCOUNT_TYPES = [
   {
     value: "conta",
-    label:
-      "Conta bancária",
-    icon:
-      Landmark,
+    label: "Conta bancária",
+    icon: Landmark,
   },
-
   {
     value: "carteira",
-    label:
-      "Carteira",
-    icon:
-      Wallet,
+    label: "Carteira",
+    icon: Wallet,
   },
-
   {
     value: "cartao",
-    label:
-      "Cartão",
-    icon:
-      CreditCard,
+    label: "Cartão",
+    icon: CreditCard,
   },
-
   {
     value: "dinheiro",
-    label:
-      "Dinheiro",
-    icon:
-      Banknote,
+    label: "Dinheiro",
+    icon: Banknote,
   },
 ] as const;
-
 
 function getAccountTypeLabel(
   type: string,
 ) {
   return (
     ACCOUNT_TYPES.find(
-      (
-        item,
-      ) =>
-        item.value ===
-        type,
-    )?.label ??
-    type
+      (item) =>
+        item.value === type,
+    )?.label ?? type
   );
 }
-
 
 /* =========================================================
    PÁGINA
@@ -198,13 +169,11 @@ function getAccountTypeLabel(
 
 function AccountsPage() {
   const {
-    data:
-      accounts = [],
+    data: accounts = [],
     isLoading,
     isError,
   } =
     useAccountsWithBalances();
-
 
   const save =
     useSaveAccount();
@@ -212,38 +181,27 @@ function AccountsPage() {
   const remove =
     useDeleteAccount();
 
-
-  /* =====================================================
-     STATES
-     ===================================================== */
-
-  const [
-    accountDialogOpen,
-    setAccountDialogOpen,
-  ] =
-    useState(
-      false,
-    );
+  /*
+   * Dialog completo da conta.
+   */
 
   const [
-    balanceDialogOpen,
-    setBalanceDialogOpen,
+    open,
+    setOpen,
   ] =
-    useState(
-      false,
-    );
-
+    useState(false);
 
   const [
     editing,
     setEditing,
   ] =
     useState<
-      Account | null
-    >(
-      null,
-    );
+      AccountWithBalance | null
+    >(null);
 
+  /*
+   * Dialog exclusivo para saldo.
+   */
 
   const [
     editingBalance,
@@ -251,47 +209,37 @@ function AccountsPage() {
   ] =
     useState<
       AccountWithBalance | null
-    >(
-      null,
-    );
+    >(null);
 
+  const [
+    balanceValue,
+    setBalanceValue,
+  ] =
+    useState("");
+
+  /*
+   * Exclusão.
+   */
 
   const [
     deleting,
     setDeleting,
   ] =
     useState<
-      Account | null
-    >(
-      null,
-    );
-
+      AccountWithBalance | null
+    >(null);
 
   const [
-    accountForm,
-    setAccountForm,
+    form,
+    setForm,
   ] =
-    useState<
-      AccountFormState
-    >(
-      emptyAccountForm(),
+    useState<FormState>(
+      emptyForm(),
     );
 
-
-  const [
-    balanceForm,
-    setBalanceForm,
-  ] =
-    useState<
-      BalanceFormState
-    >(
-      emptyBalanceForm(),
-    );
-
-
-  /* =====================================================
-     TOTAL
-     ===================================================== */
+  /* =======================================================
+     SALDO TOTAL
+     ======================================================= */
 
   const totalBalance =
     accounts.reduce(
@@ -304,74 +252,57 @@ function AccountsPage() {
       0,
     );
 
-
-  /* =====================================================
+  /* =======================================================
      NOVA CONTA
-     ===================================================== */
+     ======================================================= */
 
-  function openNewAccount() {
-    setEditing(
-      null,
+  function openNew() {
+    setEditing(null);
+
+    setForm(
+      emptyForm(),
     );
 
-    setAccountForm(
-      emptyAccountForm(),
-    );
-
-    setAccountDialogOpen(
-      true,
-    );
+    setOpen(true);
   }
 
+  /* =======================================================
+     EDITAR CONTA COMPLETA
+     ======================================================= */
 
-  /* =====================================================
-     EDITAR CONTA
-     ===================================================== */
-
-  function openEditAccount(
-    account: Account,
+  function openEdit(
+    account:
+      AccountWithBalance,
   ) {
     setEditing(
       account,
     );
 
-    setAccountForm({
+    setForm({
       name:
         account.name,
 
       type:
         account.type ||
         "conta",
+
+      current_balance:
+        String(
+          Number(
+            account.calculatedBalance,
+          ),
+        ).replace(
+          ".",
+          ",",
+        ),
     });
 
-    setAccountDialogOpen(
-      true,
-    );
+    setOpen(true);
   }
 
-
-  /* =====================================================
-     FECHAR DIALOG CONTA
-     ===================================================== */
-
-  function closeAccountDialog() {
-    setAccountDialogOpen(
-      false,
-    );
-
-    setEditing(
-      null,
-    );
-
-    setAccountForm(
-      emptyAccountForm(),
-    );
-  }
-
-
-  /* =====================================================
-     EDITAR SALDO
-     ===================================================== */
+  /* =======================================================
+     EDITAR APENAS SALDO
+     ======================================================= */
 
   function openEditBalance(
     account:
@@ -381,48 +312,82 @@ function AccountsPage() {
       account,
     );
 
-    setBalanceForm({
-      balance:
-        String(
+    setBalanceValue(
+      String(
+        Number(
           account.calculatedBalance,
-        ).replace(
-          ".",
-          ",",
         ),
-    });
-
-    setBalanceDialogOpen(
-      true,
+      ).replace(
+        ".",
+        ",",
+      ),
     );
   }
 
+  /* =======================================================
+     FECHAR DIALOG COMPLETO
+     ======================================================= */
+
+  function closeDialog() {
+    setOpen(false);
+
+    setEditing(null);
+
+    setForm(
+      emptyForm(),
+    );
+  }
+
+  /* =======================================================
+     FECHAR DIALOG SALDO
+     ======================================================= */
 
   function closeBalanceDialog() {
-    setBalanceDialogOpen(
-      false,
-    );
-
     setEditingBalance(
       null,
     );
 
-    setBalanceForm(
-      emptyBalanceForm(),
+    setBalanceValue(
+      "",
     );
   }
 
+  /* =======================================================
+     CALCULAR AJUSTE
+     ======================================================= */
 
-  /* =====================================================
-     SALVAR CONTA
-     ===================================================== */
+  function calculateAdjustment(
+    currentBalance: number,
+    account:
+      | AccountWithBalance
+      | null,
+  ) {
+    const transactionBalance =
+      Number(
+        account?.transactionBalance,
+      ) || 0;
 
-  async function submitAccount() {
+    const initialBalance =
+      Number(
+        account?.initial_balance,
+      ) || 0;
+
+    return (
+      currentBalance -
+      initialBalance -
+      transactionBalance
+    );
+  }
+
+  /* =======================================================
+     SALVAR CONTA COMPLETA
+     ======================================================= */
+
+  async function submit() {
     const name =
-      accountForm.name.trim();
+      form.name.trim();
 
-    if (
-      !name
-    ) {
+    if (!name) {
       toast.error(
         "Informe o nome da conta.",
       );
@@ -430,20 +395,54 @@ function AccountsPage() {
       return;
     }
 
+    const currentBalance =
+      parseAmount(
+        form.current_balance,
+      );
+
+    if (
+      !Number.isFinite(
+        currentBalance,
+      )
+    ) {
+      toast.error(
+        "Informe um saldo válido.",
+      );
+
+      return;
+    }
+
+    /*
+     * O saldo digitado pelo usuário
+     * será o saldo final da conta.
+     */
+
+    const balanceAdjustment =
+      calculateAdjustment(
+        currentBalance,
+        editing,
+      );
 
     const values:
       AccountInput = {
-        name:
-          name.slice(
-            0,
-            100,
-          ),
+      name:
+        name.slice(
+          0,
+          100,
+        ),
 
-        type:
-          accountForm.type ||
-          "conta",
+      type:
+        form.type ||
+        "conta",
+
+      initial_balance:
+        Number(
+          editing?.initial_balance,
+        ) || 0,
+
+      balance_adjustment:
+        balanceAdjustment,
     };
-
 
     try {
       await save.mutateAsync({
@@ -453,15 +452,13 @@ function AccountsPage() {
         values,
       });
 
-
       toast.success(
         editing
           ? "Conta atualizada."
           : "Conta adicionada.",
       );
 
-
-      closeAccountDialog();
+      closeDialog();
     } catch (
       error
     ) {
@@ -475,28 +472,25 @@ function AccountsPage() {
     }
   }
 
+  /* =======================================================
+     SALVAR APENAS SALDO
+     ======================================================= */
 
-  /* =====================================================
-     SALVAR SALDO
-     ===================================================== */
-
-  async function submitBalance() {
+  async function saveBalance() {
     if (
       !editingBalance
     ) {
       return;
     }
 
-
-    const newBalance =
+    const currentBalance =
       parseAmount(
-        balanceForm.balance,
+        balanceValue,
       );
-
 
     if (
       !Number.isFinite(
-        newBalance,
+        currentBalance,
       )
     ) {
       toast.error(
@@ -506,85 +500,29 @@ function AccountsPage() {
       return;
     }
 
-
-    /*
-     * Fórmula atual:
-     *
-     * saldo atual =
-     * saldo inicial
-     * +
-     * ajuste
-     * +
-     * movimentações
-     *
-     * Queremos que:
-     *
-     * novo saldo atual =
-     * saldo inicial
-     * +
-     * novo ajuste
-     * +
-     * movimentações
-     *
-     * Portanto:
-     *
-     * novo ajuste =
-     * novo saldo desejado
-     * -
-     * saldo inicial
-     * -
-     * movimentações
-     */
-
-    const initialBalance =
-      Number(
-        editingBalance.initial_balance,
+    const balanceAdjustment =
+      calculateAdjustment(
+        currentBalance,
+        editingBalance,
       );
-
-    const transactionBalance =
-      Number(
-        editingBalance.transactionBalance,
-      );
-
-
-    const safeInitialBalance =
-      Number.isFinite(
-        initialBalance,
-      )
-        ? initialBalance
-        : 0;
-
-
-    const safeTransactionBalance =
-      Number.isFinite(
-        transactionBalance,
-      )
-        ? transactionBalance
-        : 0;
-
-
-    const newAdjustment =
-      newBalance -
-      safeInitialBalance -
-      safeTransactionBalance;
-
 
     const values:
       AccountInput = {
-        name:
-          editingBalance.name,
+      name:
+        editingBalance.name,
 
-        type:
-          editingBalance.type ||
-          "conta",
+      type:
+        editingBalance.type ||
+        "conta",
 
-        initial_balance:
-          safeInitialBalance,
+      initial_balance:
+        Number(
+          editingBalance.initial_balance,
+        ) || 0,
 
-        balance_adjustment:
-          newAdjustment,
-      };
-
+      balance_adjustment:
+        balanceAdjustment,
+    };
 
     try {
       await save.mutateAsync({
@@ -594,11 +532,9 @@ function AccountsPage() {
         values,
       });
 
-
       toast.success(
         "Saldo atualizado.",
       );
-
 
       closeBalanceDialog();
     } catch (
@@ -614,10 +550,9 @@ function AccountsPage() {
     }
   }
 
-
-  /* =====================================================
-     EXCLUIR
-     ===================================================== */
+  /* =======================================================
+     EXCLUIR CONTA
+     ======================================================= */
 
   async function confirmDelete() {
     if (
@@ -626,12 +561,10 @@ function AccountsPage() {
       return;
     }
 
-
     try {
       await remove.mutateAsync(
         deleting.id,
       );
-
 
       toast.success(
         "Conta excluída.",
@@ -648,23 +581,17 @@ function AccountsPage() {
       );
     }
 
-
-    setDeleting(
-      null,
-    );
+    setDeleting(null);
   }
 
-
-  /* =====================================================
+  /* =======================================================
      RENDER
-     ===================================================== */
+     ======================================================= */
 
   return (
     <div className="space-y-6">
 
-      {/* =================================================
-         HEADER
-         ================================================= */}
+      {/* CABEÇALHO */}
 
       <PageHeader
         title="Contas"
@@ -673,7 +600,7 @@ function AccountsPage() {
           <Button
             className="h-11"
             onClick={
-              openNewAccount
+              openNew
             }
           >
             <Plus className="size-4" />
@@ -683,10 +610,7 @@ function AccountsPage() {
         }
       />
 
-
-      {/* =================================================
-         RESUMO
-         ================================================= */}
+      {/* RESUMO */}
 
       <div className="surface p-5">
 
@@ -698,290 +622,227 @@ function AccountsPage() {
               Saldo total
             </p>
 
-
             <p
               className={`mt-1 text-3xl font-bold tracking-tight ${
-                totalBalance >=
-                0
+                totalBalance >= 0
                   ? "text-success"
                   : "text-destructive"
               }`}
             >
-              {
-                formatBRL(
-                  totalBalance,
-                )
-              }
+              {formatBRL(
+                totalBalance,
+              )}
             </p>
 
           </div>
 
-
           <p className="text-xs text-muted-foreground">
-            {
-              accounts.length ===
-              1
-                ? "1 conta cadastrada"
-                : `${accounts.length} contas cadastradas`
-            }
+            {accounts.length === 1
+              ? "1 conta cadastrada"
+              : `${accounts.length} contas cadastradas`}
           </p>
 
         </div>
 
       </div>
 
+      {/* ESTADOS */}
 
-      {/* =================================================
-         LOADING
-         ================================================= */}
+      {isLoading ? (
 
-      {
-        isLoading ? (
-          <p className="text-sm text-muted-foreground">
-            Carregando contas...
-          </p>
-        ) : isError ? (
-          <EmptyState
-            emoji="⚠️"
-            title="Não foi possível carregar suas contas"
-            description="Tente atualizar a página novamente."
-          />
-        ) : accounts.length ===
-          0 ? (
-          <EmptyState
-            emoji="🏦"
-            title="Você ainda não possui contas."
-            description="Cadastre uma conta para acompanhar seus saldos e movimentações."
-            action={
-              <Button
-                onClick={
-                  openNewAccount
-                }
-              >
-                <Plus className="size-4" />
+        <p className="text-sm text-muted-foreground">
+          Carregando contas...
+        </p>
 
-                Adicionar conta
-              </Button>
-            }
-          />
-        ) : (
+      ) : isError ? (
 
-          /* =============================================
-             LISTA
-             ============================================= */
+        <EmptyState
+          emoji="⚠️"
+          title="Não foi possível carregar suas contas"
+          description="Tente atualizar a página novamente."
+        />
 
-          <div className="grid gap-4 md:grid-cols-2">
+      ) : accounts.length === 0 ? (
 
-            {
-              accounts.map(
-                (
-                  account,
-                ) => {
+        <EmptyState
+          emoji="🏦"
+          title="Você ainda não possui contas."
+          description="Cadastre uma conta para acompanhar seus saldos."
+          action={
+            <Button
+              onClick={
+                openNew
+              }
+            >
+              <Plus className="size-4" />
 
-                  const Icon =
-                    ACCOUNT_TYPES.find(
-                      (
-                        item,
-                      ) =>
-                        item.value ===
-                        account.type,
-                    )?.icon ??
-                    Landmark;
+              Adicionar conta
+            </Button>
+          }
+        />
 
+      ) : (
 
-                  const balance =
-                    account.calculatedBalance;
+        <div className="grid gap-4 md:grid-cols-2">
 
+          {accounts.map(
+            (
+              account,
+            ) => {
 
-                  return (
-                    <div
-                      key={
-                        account.id
-                      }
-                      className="surface overflow-hidden"
-                    >
+              const Icon =
+                ACCOUNT_TYPES.find(
+                  (
+                    item,
+                  ) =>
+                    item.value ===
+                    account.type,
+                )?.icon ??
+                Landmark;
 
-                      <div className="p-5">
+              const balance =
+                account.calculatedBalance;
 
-                        {/* =================================
-                           TOPO
-                           ================================= */}
+              return (
+                <div
+                  key={
+                    account.id
+                  }
+                  className="surface overflow-hidden"
+                >
 
-                        <div className="flex items-start gap-3">
+                  <div className="p-5">
 
-                          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
-                            <Icon className="size-5" />
-                          </span>
+                    {/* TOPO */}
 
+                    <div className="flex items-start gap-3">
 
-                          <div className="min-w-0 flex-1">
+                      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
 
-                            <div className="flex items-start justify-between gap-3">
+                        <Icon className="size-5" />
 
-                              <div className="min-w-0">
+                      </span>
 
-                                <p className="truncate font-semibold">
-                                  {
-                                    account.name
-                                  }
-                                </p>
+                      <div className="min-w-0 flex-1">
 
+                        <div className="flex items-start justify-between gap-3">
 
-                                <p className="text-xs text-muted-foreground">
-                                  {
-                                    getAccountTypeLabel(
-                                      account.type,
-                                    )
-                                  }
-                                </p>
+                          <div className="min-w-0">
 
-                              </div>
+                            <p className="truncate font-semibold">
+                              {account.name}
+                            </p>
 
-
-                              <div className="flex shrink-0 gap-1">
-
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  aria-label={`Editar ${account.name}`}
-                                  onClick={() =>
-                                    openEditAccount(
-                                      account,
-                                    )
-                                  }
-                                >
-                                  <Pencil className="size-4" />
-                                </Button>
-
-
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  aria-label={`Excluir ${account.name}`}
-                                  onClick={() =>
-                                    setDeleting(
-                                      account,
-                                    )
-                                  }
-                                >
-                                  <Trash2 className="size-4 text-destructive" />
-                                </Button>
-
-                              </div>
-
-                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {getAccountTypeLabel(
+                                account.type,
+                              )}
+                            </p>
 
                           </div>
 
-                        </div>
+                          {/* UM ÚNICO LÁPIS PARA EDITAR CONTA */}
 
-
-                        {/* =================================
-                           SALDO
-                           ================================= */}
-
-                        <div className="mt-6">
-
-                          <div className="flex items-center justify-between gap-4">
-
-                            <p className="text-xs text-muted-foreground">
-                              Saldo atual
-                            </p>
-
+                          <div className="flex shrink-0 gap-1">
 
                             <Button
-                              variant="outline"
-                              size="sm"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Editar ${account.name}`}
                               onClick={() =>
-                                openEditBalance(
+                                openEdit(
                                   account,
                                 )
                               }
                             >
-                              <Pencil className="size-3.5" />
+                              <Pencil className="size-4" />
+                            </Button>
 
-                              Editar saldo
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Excluir ${account.name}`}
+                              onClick={() =>
+                                setDeleting(
+                                  account,
+                                )
+                              }
+                            >
+                              <Trash2 className="size-4 text-destructive" />
                             </Button>
 
                           </div>
-
-
-                          <p
-                            className={`mt-2 text-3xl font-bold tracking-tight ${
-                              balance >=
-                              0
-                                ? "text-success"
-                                : "text-destructive"
-                            }`}
-                          >
-                            {
-                              formatBRL(
-                                balance,
-                              )
-                            }
-                          </p>
-
-                        </div>
-
-
-                        {/* =================================
-                           MOVIMENTAÇÕES
-                           ================================= */}
-
-                        <div className="mt-6 border-t pt-4">
-
-                          <p className="text-[11px] text-muted-foreground">
-                            Movimentações
-                          </p>
-
-
-                          <p
-                            className={`mt-1 text-sm font-medium ${
-                              account.transactionBalance >=
-                              0
-                                ? "text-success"
-                                : "text-destructive"
-                            }`}
-                          >
-                            {
-                              account.transactionBalance >=
-                              0
-                                ? "+"
-                                : "−"
-                            }
-
-                            {
-                              formatBRL(
-                                Math.abs(
-                                  account.transactionBalance,
-                                ),
-                              )
-                            }
-                          </p>
 
                         </div>
 
                       </div>
 
                     </div>
-                  );
-                },
-              )
-            }
 
-          </div>
-        )
-      }
+                    {/* SALDO ATUAL */}
 
+                    <div className="mt-6">
 
-      {/* =================================================
-         DIALOG
-         CRIAR / EDITAR CONTA
-         ================================================= */}
+                      <div className="flex items-center justify-between gap-3">
+
+                        <div>
+
+                          <p className="text-xs text-muted-foreground">
+                            Saldo atual
+                          </p>
+
+                          <p
+                            className={`mt-1 text-2xl font-bold ${
+                              balance >= 0
+                                ? "text-success"
+                                : "text-destructive"
+                            }`}
+                          >
+                            {formatBRL(
+                              balance,
+                            )}
+                          </p>
+
+                        </div>
+
+                        {/* LÁPIS EXCLUSIVO DO SALDO */}
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0"
+                          aria-label={`Editar saldo de ${account.name}`}
+                          onClick={() =>
+                            openEditBalance(
+                              account,
+                            )
+                          }
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              );
+            },
+          )}
+
+        </div>
+
+      )}
+
+      {/* ===================================================
+          DIALOG EDITAR CONTA
+          =================================================== */}
 
       <Dialog
         open={
-          accountDialogOpen
+          open
         }
         onOpenChange={(
           value,
@@ -989,38 +850,30 @@ function AccountsPage() {
           if (
             value
           ) {
-            setAccountDialogOpen(
+            setOpen(
               true,
             );
           } else {
-            closeAccountDialog();
+            closeDialog();
           }
         }}
       >
 
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
 
           <DialogHeader>
 
             <DialogTitle>
-              {
-                editing
-                  ? "Editar conta"
-                  : "Adicionar conta"
-              }
+              {editing
+                ? "Editar conta"
+                : "Adicionar conta"}
             </DialogTitle>
 
-
             <DialogDescription>
-              {
-                editing
-                  ? "Atualize os dados da sua conta."
-                  : "Cadastre uma nova conta."
-              }
+              Atualize os dados da sua conta.
             </DialogDescription>
 
           </DialogHeader>
-
 
           <div className="space-y-4">
 
@@ -1030,23 +883,21 @@ function AccountsPage() {
                 Nome
               </Label>
 
-
               <Input
                 id="account-name"
                 className="h-11"
-                placeholder="Nubank, Carteira, Banco..."
                 value={
-                  accountForm.name
+                  form.name
                 }
+                placeholder="Nome da conta"
                 onChange={(
                   event,
                 ) =>
-                  setAccountForm(
+                  setForm(
                     (
                       previous,
                     ) => ({
                       ...previous,
-
                       name:
                         event.target.value,
                     }),
@@ -1056,28 +907,25 @@ function AccountsPage() {
 
             </div>
 
-
             <div className="space-y-1.5">
 
               <Label>
                 Tipo
               </Label>
 
-
               <Select
                 value={
-                  accountForm.type ||
+                  form.type ||
                   "conta"
                 }
                 onValueChange={(
                   type,
                 ) =>
-                  setAccountForm(
+                  setForm(
                     (
                       previous,
                     ) => ({
                       ...previous,
-
                       type,
                     }),
                   )
@@ -1090,30 +938,27 @@ function AccountsPage() {
 
                 </SelectTrigger>
 
-
                 <SelectContent>
 
-                  {
-                    ACCOUNT_TYPES.map(
-                      ({
-                        value,
-                        label,
-                      }) => (
-                        <SelectItem
-                          key={
-                            value
-                          }
-                          value={
-                            value
-                          }
-                        >
-                          {
-                            label
-                          }
-                        </SelectItem>
-                      ),
-                    )
-                  }
+                  {ACCOUNT_TYPES.map(
+                    ({
+                      value,
+                      label,
+                    }) => (
+
+                      <SelectItem
+                        key={
+                          value
+                        }
+                        value={
+                          value
+                        }
+                      >
+                        {label}
+                      </SelectItem>
+
+                    ),
+                  )}
 
                 </SelectContent>
 
@@ -1121,27 +966,55 @@ function AccountsPage() {
 
             </div>
 
-          </div>
+            <div className="space-y-1.5">
 
+              <Label htmlFor="current-balance">
+                Saldo atual
+              </Label>
+
+              <Input
+                id="current-balance"
+                className="h-11"
+                inputMode="decimal"
+                placeholder="0,00"
+                value={
+                  form.current_balance
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setForm(
+                    (
+                      previous,
+                    ) => ({
+                      ...previous,
+                      current_balance:
+                        event.target.value,
+                    }),
+                  )
+                }
+              />
+
+            </div>
+
+          </div>
 
           <DialogFooter>
 
             <Button
               className="h-11 w-full"
               onClick={() =>
-                void submitAccount()
+                void submit()
               }
               disabled={
                 save.isPending
               }
             >
-              {
-                save.isPending
-                  ? "Salvando..."
-                  : editing
-                    ? "Salvar alterações"
-                    : "Adicionar conta"
-              }
+              {save.isPending
+                ? "Salvando..."
+                : editing
+                  ? "Salvar alterações"
+                  : "Adicionar conta"}
             </Button>
 
           </DialogFooter>
@@ -1150,26 +1023,22 @@ function AccountsPage() {
 
       </Dialog>
 
-
-      {/* =================================================
-         DIALOG
-         EDITAR SALDO
-         ================================================= */}
+      {/* ===================================================
+          DIALOG EDITAR SALDO
+          =================================================== */}
 
       <Dialog
         open={
-          balanceDialogOpen
+          Boolean(
+            editingBalance,
+          )
         }
         onOpenChange={(
           value,
         ) => {
           if (
-            value
+            !value
           ) {
-            setBalanceDialogOpen(
-              true,
-            );
-          } else {
             closeBalanceDialog();
           }
         }}
@@ -1183,68 +1052,53 @@ function AccountsPage() {
               Editar saldo
             </DialogTitle>
 
-
             <DialogDescription>
-              {
-                editingBalance
-                  ? `Informe o saldo atual de "${editingBalance.name}".`
-                  : "Informe o novo saldo atual da conta."
-              }
+              {editingBalance
+                ? `Atualize o saldo atual de "${editingBalance.name}".`
+                : ""}
             </DialogDescription>
 
           </DialogHeader>
 
-
           <div className="space-y-2">
 
-            <Label htmlFor="current-balance">
+            <Label htmlFor="balance-value">
               Saldo atual
             </Label>
 
-
             <Input
-              id="current-balance"
-              className="h-12 text-lg font-semibold"
+              id="balance-value"
+              className="h-11"
               inputMode="decimal"
               placeholder="0,00"
               value={
-                balanceForm.balance
+                balanceValue
               }
               onChange={(
                 event,
               ) =>
-                setBalanceForm({
-                  balance:
-                    event.target.value,
-                })
+                setBalanceValue(
+                  event.target.value,
+                )
               }
             />
 
-
-            <p className="text-xs text-muted-foreground">
-              As movimentações já cadastradas serão mantidas.
-              O sistema ajustará automaticamente o saldo da conta.
-            </p>
-
           </div>
-
 
           <DialogFooter>
 
             <Button
               className="h-11 w-full"
               onClick={() =>
-                void submitBalance()
+                void saveBalance()
               }
               disabled={
                 save.isPending
               }
             >
-              {
-                save.isPending
-                  ? "Salvando..."
-                  : "Salvar saldo"
-              }
+              {save.isPending
+                ? "Salvando..."
+                : "Salvar saldo"}
             </Button>
 
           </DialogFooter>
@@ -1253,10 +1107,9 @@ function AccountsPage() {
 
       </Dialog>
 
-
-      {/* =================================================
-         CONFIRMAR EXCLUSÃO
-         ================================================= */}
+      {/* ===================================================
+          CONFIRMAR EXCLUSÃO
+          =================================================== */}
 
       <AlertDialog
         open={
@@ -1285,24 +1138,19 @@ function AccountsPage() {
               Excluir conta?
             </AlertDialogTitle>
 
-
             <AlertDialogDescription>
-              {
-                deleting
-                  ? `"${deleting.name}" será excluída. As movimentações serão mantidas, mas ficarão sem uma conta vinculada.`
-                  : ""
-              }
+              {deleting
+                ? `"${deleting.name}" será excluída. As movimentações vinculadas serão mantidas, mas ficarão sem conta.`
+                : ""}
             </AlertDialogDescription>
 
           </AlertDialogHeader>
-
 
           <AlertDialogFooter>
 
             <AlertDialogCancel>
               Cancelar
             </AlertDialogCancel>
-
 
             <AlertDialogAction
               onClick={() =>
@@ -1312,11 +1160,9 @@ function AccountsPage() {
                 remove.isPending
               }
             >
-              {
-                remove.isPending
-                  ? "Excluindo..."
-                  : "Excluir"
-              }
+              {remove.isPending
+                ? "Excluindo..."
+                : "Excluir"}
             </AlertDialogAction>
 
           </AlertDialogFooter>
