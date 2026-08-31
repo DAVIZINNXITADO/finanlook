@@ -7,13 +7,15 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import {
+  useEffect,
+  type ReactNode,
+} from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ThemeProvider } from "@/components/theme-provider";
 
 function NotFoundComponent() {
   return (
@@ -53,11 +55,13 @@ function ErrorComponent({
 }) {
   console.error(error);
 
-  const router = useRouter();
+  const router =
+    useRouter();
 
   useEffect(() => {
     reportLovableError(error, {
-      boundary: "tanstack_root_error_component",
+      boundary:
+        "tanstack_root_error_component",
     });
   }, [error]);
 
@@ -74,6 +78,7 @@ function ErrorComponent({
 
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
+            type="button"
             onClick={() => {
               router.invalidate();
               reset();
@@ -106,7 +111,8 @@ export const Route =
         },
         {
           name: "viewport",
-          content: "width=device-width, initial-scale=1",
+          content:
+            "width=device-width, initial-scale=1",
         },
         {
           title:
@@ -123,7 +129,8 @@ export const Route =
         },
         {
           name: "twitter:card",
-          content: "summary_large_image",
+          content:
+            "summary_large_image",
         },
       ],
 
@@ -134,32 +141,42 @@ export const Route =
         },
         {
           rel: "preconnect",
-          href: "https://fonts.googleapis.com",
+          href:
+            "https://fonts.googleapis.com",
         },
         {
           rel: "preconnect",
-          href: "https://fonts.gstatic.com",
-          crossOrigin: "anonymous",
+          href:
+            "https://fonts.gstatic.com",
+          crossOrigin:
+            "anonymous",
         },
         {
           rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
+          href:
+            "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
         },
         {
           rel: "icon",
-          href: "/favicon.png",
-          type: "image/png",
+          href:
+            "/favicon.png",
+          type:
+            "image/png",
         },
       ],
     }),
 
-    shellComponent: RootShell,
+    shellComponent:
+      RootShell,
 
-    component: RootComponent,
+    component:
+      RootComponent,
 
-    notFoundComponent: NotFoundComponent,
+    notFoundComponent:
+      NotFoundComponent,
 
-    errorComponent: ErrorComponent,
+    errorComponent:
+      ErrorComponent,
   });
 
 function RootShell({
@@ -168,10 +185,7 @@ function RootShell({
   children: ReactNode;
 }) {
   return (
-    <html
-      lang="pt-BR"
-      suppressHydrationWarning
-    >
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
@@ -189,7 +203,8 @@ function RootComponent() {
   const { queryClient } =
     Route.useRouteContext();
 
-  const router = useRouter();
+  const router =
+    useRouter();
 
   useEffect(() => {
     const { data } =
@@ -205,15 +220,16 @@ function RootComponent() {
 
           void router.invalidate();
 
-          if (event !== "SIGNED_OUT") {
+          if (
+            event !== "SIGNED_OUT"
+          ) {
             void queryClient.invalidateQueries();
           }
         },
       );
 
-    return () => {
+    return () =>
       data.subscription.unsubscribe();
-    };
   }, [
     router,
     queryClient,
@@ -223,17 +239,12 @@ function RootComponent() {
     <QueryClientProvider
       client={queryClient}
     >
-      <ThemeProvider
-        defaultTheme="system"
-        storageKey="finanlook-theme"
-      >
-        <Outlet />
+      <Outlet />
 
-        <Toaster
-          position="top-center"
-          richColors
-        />
-      </ThemeProvider>
+      <Toaster
+        position="top-center"
+        richColors
+      />
     </QueryClientProvider>
   );
 }
