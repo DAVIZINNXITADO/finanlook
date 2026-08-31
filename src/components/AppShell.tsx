@@ -8,13 +8,14 @@ import {
   CalendarRange,
   ChartPie,
   Goal,
+  Landmark,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
   Menu,
   Settings,
   TrendingUp,
-  Wallet,
+  WalletCards,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
@@ -36,11 +37,6 @@ const NAV = [
     icon: LayoutDashboard,
   },
   {
-    to: "/contas",
-    label: "Contas",
-    icon: Wallet,
-  },
-  {
     to: "/movimentacoes",
     label: "Movimentações",
     icon: ArrowLeftRight,
@@ -48,7 +44,12 @@ const NAV = [
   {
     to: "/organizar-salario",
     label: "Organizar salário",
-    icon: Wallet,
+    icon: Landmark,
+  },
+  {
+    to: "/contas",
+    label: "Contas",
+    icon: WalletCards,
   },
   {
     to: "/reserva",
@@ -82,11 +83,6 @@ const NAV = [
   },
 ] as const;
 
-/*
- * Itens principais mostrados na barra inferior do celular.
- *
- * O "Mais" abre o restante do menu.
- */
 const MOBILE_MAIN = NAV.slice(0, 4);
 
 export function AppShell({
@@ -105,46 +101,21 @@ export function AppShell({
   });
 
   async function signOut() {
-    try {
-      /*
-       * Cancela consultas que ainda estejam carregando.
-       */
-      await queryClient.cancelQueries();
+    await queryClient.cancelQueries();
 
-      /*
-       * Limpa os dados do usuário anterior do cache.
-       */
-      queryClient.clear();
+    queryClient.clear();
 
-      /*
-       * Sai da conta no Supabase.
-       */
-      await supabase.auth.signOut();
+    await supabase.auth.signOut();
 
-      /*
-       * Redireciona para login.
-       */
-      navigate({
-        to: "/auth",
-        replace: true,
-      });
-    } catch {
-      /*
-       * Mesmo se ocorrer algum problema, tentamos
-       * levar o usuário para a tela de autenticação.
-       */
-      navigate({
-        to: "/auth",
-        replace: true,
-      });
-    }
+    navigate({
+      to: "/auth",
+      replace: true,
+    });
   }
 
   return (
     <div className="min-h-screen bg-background md:flex">
-      {/* ============================================
-          MENU LATERAL — DESKTOP
-      ============================================ */}
+      {/* MENU DESKTOP */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
         {/* LOGO */}
         <Link
@@ -171,7 +142,7 @@ export function AppShell({
           ))}
         </nav>
 
-        {/* PERFIL */}
+        {/* USUÁRIO */}
         <div className="mt-4 rounded-2xl bg-sidebar-accent/60 p-3">
           <p className="truncate text-sm font-medium">
             {profile?.name || "Você"}
@@ -193,9 +164,7 @@ export function AppShell({
         </div>
       </aside>
 
-      {/* ============================================
-          CABEÇALHO — MOBILE
-      ============================================ */}
+      {/* HEADER MOBILE */}
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur md:hidden">
         <Link
           to="/visao-geral"
@@ -210,7 +179,6 @@ export function AppShell({
           </span>
         </Link>
 
-        {/* MENU MOBILE */}
         <Sheet
           open={menuOpen}
           onOpenChange={setMenuOpen}
@@ -258,18 +226,14 @@ export function AppShell({
         </Sheet>
       </header>
 
-      {/* ============================================
-          CONTEÚDO DAS PÁGINAS
-      ============================================ */}
+      {/* CONTEÚDO PRINCIPAL */}
       <main className="w-full flex-1 px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8">
         <div className="mx-auto w-full max-w-5xl space-y-6">
           {children}
         </div>
       </main>
 
-      {/* ============================================
-          NAVEGAÇÃO INFERIOR — MOBILE
-      ============================================ */}
+      {/* NAVEGAÇÃO MOBILE */}
       <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 gap-1 border-t border-border bg-background/95 px-2 pb-2 pt-1.5 backdrop-blur md:hidden">
         {MOBILE_MAIN.map(
           ({
@@ -290,13 +254,14 @@ export function AppShell({
               <Icon className="size-5" />
 
               <span className="truncate">
-                {label.split(" ")[0]}
+                {label === "Organizar salário"
+                  ? "Organizar"
+                  : label}
               </span>
             </Link>
           ),
         )}
 
-        {/* BOTÃO MAIS */}
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
