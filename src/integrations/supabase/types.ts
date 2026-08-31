@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          balance_adjustment: number
+          created_at: string
+          id: string
+          initial_balance: number
+          is_demo: boolean
+          name: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance_adjustment?: number
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          is_demo?: boolean
+          name: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance_adjustment?: number
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          is_demo?: boolean
+          name?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
@@ -116,6 +152,45 @@ export type Database = {
         }
         Relationships: []
       }
+      open_finance_connections: {
+        Row: {
+          created_at: string
+          id: string
+          institution_name: string
+          last_error: string | null
+          last_synced_at: string | null
+          provider: string | null
+          provider_item_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_name: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: string | null
+          provider_item_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_name?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: string | null
+          provider_item_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -203,47 +278,109 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          plan: string
+          provider: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: string
+          provider?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: string
+          provider?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
+          account_id: string | null
           amount: number
           category: string
+          classification_status: string
           created_at: string
           date: string
           description: string
+          external_id: string | null
           id: string
+          imported_at: string | null
+          institution: string | null
           is_demo: boolean
           note: string | null
+          source: string
+          suggested_category: string | null
           type: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           amount: number
           category: string
+          classification_status?: string
           created_at?: string
           date?: string
           description: string
+          external_id?: string | null
           id?: string
+          imported_at?: string | null
+          institution?: string | null
           is_demo?: boolean
           note?: string | null
+          source?: string
+          suggested_category?: string | null
           type: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_id?: string | null
           amount?: number
           category?: string
+          classification_status?: string
           created_at?: string
           date?: string
           description?: string
+          external_id?: string | null
           id?: string
+          imported_at?: string | null
+          institution?: string | null
           is_demo?: boolean
           note?: string | null
+          source?: string
+          suggested_category?: string | null
           type?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_settings: {
         Row: {
