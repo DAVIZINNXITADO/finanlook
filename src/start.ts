@@ -10,8 +10,7 @@ import {
 const csrfMiddleware =
   createCsrfMiddleware({
     filter: (ctx) =>
-      ctx.handlerType ===
-      "serverFn",
+      ctx.handlerType === "serverFn",
   });
 
 export const startInstance =
