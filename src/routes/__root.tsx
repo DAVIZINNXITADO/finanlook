@@ -13,7 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function NotFoundComponent() {
   return (
@@ -120,8 +120,7 @@ export const Route =
         },
         {
           property: "og:type",
-          content:
-            "website",
+          content: "website",
         },
         {
           name: "twitter:card",
@@ -137,22 +136,27 @@ export const Route =
         },
         {
           rel: "preconnect",
-          href: "https://fonts.googleapis.com",
+          href:
+            "https://fonts.googleapis.com",
         },
         {
           rel: "preconnect",
-          href: "https://fonts.gstatic.com",
+          href:
+            "https://fonts.gstatic.com",
           crossOrigin:
             "anonymous",
         },
         {
           rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
+          href:
+            "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
         },
         {
           rel: "icon",
-          href: "/favicon.png",
-          type: "image/png",
+          href:
+            "/favicon.png",
+          type:
+            "image/png",
         },
       ],
     }),
@@ -176,7 +180,10 @@ function RootShell({
   children: ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+    >
       <head>
         <HeadContent />
       </head>
@@ -200,9 +207,13 @@ function RootComponent() {
     useRouter();
 
   useEffect(() => {
-    const { data } =
+    const {
+      data,
+    } =
       supabase.auth.onAuthStateChange(
-        (event) => {
+        (
+          event,
+        ) => {
           if (
             event !==
               "SIGNED_IN" &&
