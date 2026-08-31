@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+
 import {
   Outlet,
   Link,
@@ -7,13 +11,25 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+
+import {
+  useEffect,
+  type ReactNode,
+} from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
-import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { ThemeProvider } from "@/components/theme-provider";
+
+import {
+  Toaster,
+} from "@/components/ui/sonner";
+
+import {
+  supabase,
+} from "@/integrations/supabase/client";
+
+import {
+  ThemeProvider,
+} from "@/components/theme-provider";
 
 /* =========================================================
    404
@@ -49,91 +65,6 @@ function NotFoundComponent() {
 }
 
 /* =========================================================
-   ERRO
-   ========================================================= */
-
-function ErrorComponent({
-  error,
-}: {
-  error: Error;
-}) {
-  console.error("ERRO DA APLICAÇÃO:", error);
-
-  useEffect(() => {
-    reportLovableError(error, {
-      boundary: "tanstack_root_error_component",
-    });
-  }, [error]);
-
-  return (
-    <div className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto flex min-h-[80vh] w-full max-w-3xl items-center justify-center">
-        <div className="w-full rounded-2xl border border-destructive/30 bg-card p-6 shadow-lg">
-          <div className="text-center">
-            <div className="text-5xl">
-              ⚠️
-            </div>
-
-            <h1 className="mt-4 text-2xl font-bold text-foreground">
-              Oops! Algo deu errado
-            </h1>
-
-            <p className="mt-3 text-muted-foreground">
-              Ocorreu um erro ao carregar esta página.
-            </p>
-          </div>
-
-          {/* =================================================
-              ERRO REAL
-             ================================================= */}
-
-          <div className="mt-6">
-            <p className="mb-2 text-sm font-semibold text-foreground">
-              Erro encontrado:
-            </p>
-
-            <pre className="max-h-[400px] overflow-auto rounded-xl bg-muted p-4 text-left text-xs leading-6 text-destructive whitespace-pre-wrap break-words">
-              {error?.message ||
-                String(error) ||
-                "Erro desconhecido"}
-            </pre>
-          </div>
-
-          {/* =================================================
-              DETALHES
-             ================================================= */}
-
-          {error?.stack && (
-            <details className="mt-4">
-              <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
-                Ver detalhes técnicos
-              </summary>
-
-              <pre className="mt-3 max-h-[300px] overflow-auto rounded-xl bg-muted p-4 text-left text-xs leading-6 text-muted-foreground whitespace-pre-wrap break-words">
-                {error.stack}
-              </pre>
-            </details>
-          )}
-
-          {/* =================================================
-              VOLTAR
-             ================================================= */}
-
-          <div className="mt-6 flex justify-center">
-            <a
-              href="/"
-              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-            >
-              Voltar ao início
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* =========================================================
    ROOT ROUTE
    ========================================================= */
 
@@ -148,7 +79,8 @@ export const Route =
         },
         {
           name: "viewport",
-          content: "width=device-width, initial-scale=1",
+          content:
+            "width=device-width, initial-scale=1",
         },
         {
           title:
@@ -165,7 +97,8 @@ export const Route =
         },
         {
           name: "twitter:card",
-          content: "summary_large_image",
+          content:
+            "summary_large_image",
         },
       ],
 
@@ -176,12 +109,15 @@ export const Route =
         },
         {
           rel: "preconnect",
-          href: "https://fonts.googleapis.com",
+          href:
+            "https://fonts.googleapis.com",
         },
         {
           rel: "preconnect",
-          href: "https://fonts.gstatic.com",
-          crossOrigin: "anonymous",
+          href:
+            "https://fonts.gstatic.com",
+          crossOrigin:
+            "anonymous",
         },
         {
           rel: "stylesheet",
@@ -202,9 +138,6 @@ export const Route =
 
     notFoundComponent:
       NotFoundComponent,
-
-    errorComponent:
-      ErrorComponent,
   });
 
 /* =========================================================
@@ -223,6 +156,59 @@ function RootShell({
     >
       <head>
         <HeadContent />
+
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const storageKey = "finanlook-theme";
+
+                  const savedTheme =
+                    localStorage.getItem(storageKey) ||
+                    "system";
+
+                  const html =
+                    document.documentElement;
+
+                  html.classList.remove(
+                    "light",
+                    "dark"
+                  );
+
+                  let resolvedTheme =
+                    savedTheme;
+
+                  if (
+                    savedTheme === "system"
+                  ) {
+                    const isDark =
+                      window.matchMedia(
+                        "(prefers-color-scheme: dark)"
+                      ).matches;
+
+                    resolvedTheme =
+                      isDark
+                        ? "dark"
+                        : "light";
+                  }
+
+                  html.classList.add(
+                    resolvedTheme
+                  );
+
+                  html.style.colorScheme =
+                    resolvedTheme;
+                } catch (error) {
+                  console.error(
+                    "Erro ao carregar tema:",
+                    error
+                  );
+                }
+              })();
+            `,
+          }}
+        />
       </head>
 
       <body>
@@ -239,20 +225,27 @@ function RootShell({
    ========================================================= */
 
 function RootComponent() {
-  const { queryClient } =
+  const {
+    queryClient,
+  } =
     Route.useRouteContext();
 
   const router =
     useRouter();
 
   useEffect(() => {
-    const { data } =
+    const {
+      data,
+    } =
       supabase.auth.onAuthStateChange(
         (event) => {
           if (
-            event !== "SIGNED_IN" &&
-            event !== "SIGNED_OUT" &&
-            event !== "USER_UPDATED"
+            event !==
+              "SIGNED_IN" &&
+            event !==
+              "SIGNED_OUT" &&
+            event !==
+              "USER_UPDATED"
           ) {
             return;
           }
@@ -260,11 +253,12 @@ function RootComponent() {
           void router.invalidate();
 
           if (
-            event !== "SIGNED_OUT"
+            event !==
+            "SIGNED_OUT"
           ) {
             void queryClient.invalidateQueries();
           }
-        },
+        }
       );
 
     return () => {
