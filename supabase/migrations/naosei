@@ -1,0 +1,66 @@
+-- =========================================================
+-- CONTA AUTOMÁTICA DO FINANLOOK
+-- =========================================================
+
+-- Remove a trigger antiga caso exista.
+drop trigger if exists
+  on_auth_user_created_create_default_account
+on auth.users;
+
+
+-- Remove a função antiga caso exista.
+drop function if exists
+  public.create_default_account_for_user();
+
+
+-- =========================================================
+-- FUNÇÃO
+-- =========================================================
+
+create or replace function
+  public.create_default_account_for_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+
+  -- Cria automaticamente uma conta normal.
+  --
+  -- Não existe campo "protected".
+  -- Não existe bloqueio.
+  -- O usuário poderá editar ou excluir.
+
+  insert into public.accounts (
+    user_id,
+    name,
+    type,
+    initial_balance,
+    balance_adjustment
+  )
+  values (
+    new.id,
+    'Saldo principal',
+    'conta',
+    0,
+    0
+  );
+
+  return new;
+
+end;
+$$;
+
+
+-- =========================================================
+-- TRIGGER
+-- =========================================================
+
+create trigger
+  on_auth_user_created_create_default_account
+after insert
+on auth.users
+for each row
+execute function
+  public.create_default_account_for_user();
