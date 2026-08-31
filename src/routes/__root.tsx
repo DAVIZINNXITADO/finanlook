@@ -13,18 +13,24 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
+        <h1 className="text-7xl font-bold text-foreground">
+          404
+        </h1>
+
         <h2 className="mt-4 text-xl font-semibold text-foreground">
           Página não encontrada
         </h2>
+
         <p className="mt-2 text-sm text-muted-foreground">
           A página que você procura não existe ou foi movida.
         </p>
+
         <div className="mt-6">
           <Link
             to="/"
@@ -46,6 +52,7 @@ function ErrorComponent({
   reset: () => void;
 }) {
   console.error(error);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -89,16 +96,22 @@ function ErrorComponent({
 }
 
 export const Route =
-  createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  createRootRouteWithContext<{
+    queryClient: QueryClient;
+  }>()({
     head: () => ({
       meta: [
-        { charSet: "utf-8" },
         {
-          name: "viewport",
-          content: "width=device-width, initial-scale=1",
+          charSet: "utf-8",
         },
         {
-          title: "FinanLook — organize seu dinheiro de forma simples",
+          name: "viewport",
+          content:
+            "width=device-width, initial-scale=1",
+        },
+        {
+          title:
+            "FinanLook — organize seu dinheiro de forma simples",
         },
         {
           name: "description",
@@ -107,11 +120,13 @@ export const Route =
         },
         {
           property: "og:type",
-          content: "website",
+          content:
+            "website",
         },
         {
           name: "twitter:card",
-          content: "summary_large_image",
+          content:
+            "summary_large_image",
         },
       ],
 
@@ -127,13 +142,13 @@ export const Route =
         {
           rel: "preconnect",
           href: "https://fonts.gstatic.com",
-          crossOrigin: "anonymous",
+          crossOrigin:
+            "anonymous",
         },
         {
           rel: "stylesheet",
           href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
         },
-
         {
           rel: "icon",
           href: "/favicon.png",
@@ -142,13 +157,24 @@ export const Route =
       ],
     }),
 
-    shellComponent: RootShell,
-    component: RootComponent,
-    notFoundComponent: NotFoundComponent,
-    errorComponent: ErrorComponent,
+    shellComponent:
+      RootShell,
+
+    component:
+      RootComponent,
+
+    notFoundComponent:
+      NotFoundComponent,
+
+    errorComponent:
+      ErrorComponent,
   });
 
-function RootShell({ children }: { children: ReactNode }) {
+function RootShell({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <html lang="pt-BR">
       <head>
@@ -157,6 +183,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
       <body>
         {children}
+
         <Scripts />
       </body>
     </html>
@@ -164,35 +191,62 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
-  const router = useRouter();
+  const {
+    queryClient,
+  } =
+    Route.useRouteContext();
+
+  const router =
+    useRouter();
 
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (
-        event !== "SIGNED_IN" &&
-        event !== "SIGNED_OUT" &&
-        event !== "USER_UPDATED"
-      ) {
-        return;
-      }
+    const { data } =
+      supabase.auth.onAuthStateChange(
+        (event) => {
+          if (
+            event !==
+              "SIGNED_IN" &&
+            event !==
+              "SIGNED_OUT" &&
+            event !==
+              "USER_UPDATED"
+          ) {
+            return;
+          }
 
-      void router.invalidate();
+          void router.invalidate();
 
-      if (event !== "SIGNED_OUT") {
-        void queryClient.invalidateQueries();
-      }
-    });
+          if (
+            event !==
+            "SIGNED_OUT"
+          ) {
+            void queryClient.invalidateQueries();
+          }
+        },
+      );
 
-    return () => data.subscription.unsubscribe();
-  }, [router, queryClient]);
+    return () =>
+      data.subscription.unsubscribe();
+  }, [
+    router,
+    queryClient,
+  ]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+    <QueryClientProvider
+      client={queryClient}
+    >
+      <ThemeProvider
+        defaultTheme="system"
+        storageKey="finanlook-theme"
+      >
+        <Outlet />
 
-      <Toaster position="top-center" richColors />
+        <Toaster
+          position="top-center"
+          richColors
+        />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
