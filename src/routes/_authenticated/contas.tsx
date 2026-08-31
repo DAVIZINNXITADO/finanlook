@@ -11,6 +11,7 @@ import {
   Wallet,
   CreditCard,
   Banknote,
+  Sparkles,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -95,6 +96,7 @@ type FormState = {
   type: string;
   initial_balance: string;
   balance_adjustment: string;
+  real_balance: string;
 };
 
 const emptyForm = (): FormState => ({
@@ -102,6 +104,7 @@ const emptyForm = (): FormState => ({
   type: "conta",
   initial_balance: "",
   balance_adjustment: "",
+  real_balance: "",
 });
 
 const ACCOUNT_TYPES = [
@@ -124,6 +127,11 @@ const ACCOUNT_TYPES = [
     value: "dinheiro",
     label: "Dinheiro",
     icon: Banknote,
+  },
+  {
+    value: "outros",
+    label: "Outros",
+    icon: Sparkles,
   },
 ] as const;
 
@@ -182,16 +190,25 @@ function AccountsPage() {
 
     setForm({
       name: account.name,
+
       type:
         account.type || "conta",
+
       initial_balance: String(
         Number(
           account.initial_balance,
         ),
       ).replace(".", ","),
+
       balance_adjustment: String(
         Number(
           account.balance_adjustment,
+        ),
+      ).replace(".", ","),
+
+      real_balance: String(
+        Number(
+          account.calculatedBalance,
         ),
       ).replace(".", ","),
     });
@@ -221,11 +238,6 @@ function AccountsPage() {
         form.initial_balance,
       );
 
-    const balanceAdjustment =
-      parseAmount(
-        form.balance_adjustment,
-      );
-
     if (
       !Number.isFinite(
         initialBalance,
@@ -236,6 +248,11 @@ function AccountsPage() {
       );
       return;
     }
+
+    let balanceAdjustment =
+      parseAmount(
+        form.balance_adjustment,
+      );
 
     if (
       !Number.isFinite(
@@ -248,19 +265,75 @@ function AccountsPage() {
       return;
     }
 
+    const hasRealBalance =
+      form.real_balance.trim()
+        .length > 0;
+
+    if (
+      editing &&
+      hasRealBalance
+    ) {
+      const realBalance =
+        parseAmount(
+          form.real_balance,
+        );
+
+      if (
+        !Number.isFinite(
+          realBalance,
+        )
+      ) {
+        toast.error(
+          "Informe um saldo real válido.",
+        );
+        return;
+      }
+
+      /*
+       * Mantém todas as movimentações.
+       *
+       * Saldo real =
+       * saldo inicial +
+       * movimentações +
+       * ajuste
+       *
+       * Portanto:
+       *
+       * ajuste =
+       * saldo real -
+       * saldo inicial -
+       * movimentações
+       */
+      balanceAdjustment =
+        realBalance -
+        Number(
+          editing.initial_balance,
+        ) -
+        editing.transactionBalance;
+    }
+
     const values: AccountInput = {
-      name: name.slice(0, 100),
+      name:
+        name.slice(
+          0,
+          100,
+        ),
+
       type:
-        form.type || "conta",
+        form.type ||
+        "conta",
+
       initial_balance:
         initialBalance,
+
       balance_adjustment:
         balanceAdjustment,
     };
 
     try {
       await save.mutateAsync({
-        id: editing?.id,
+        id:
+          editing?.id,
         values,
       });
 
@@ -272,7 +345,9 @@ function AccountsPage() {
 
       closeDialog();
     } catch (error) {
-      console.error(error);
+      console.error(
+        error,
+      );
 
       toast.error(
         "Não foi possível salvar a conta. Tente novamente.",
@@ -294,7 +369,9 @@ function AccountsPage() {
         "Conta excluída. As movimentações vinculadas foram mantidas.",
       );
     } catch (error) {
-      console.error(error);
+      console.error(
+        error,
+      );
 
       toast.error(
         "Não foi possível excluir a conta.",
@@ -308,7 +385,7 @@ function AccountsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Contas"
-        subtitle="Gerencie suas contas e acompanhe o saldo calculado automaticamente."
+        subtitle="Gerencie suas contas e acompanhe seus saldos calculados automaticamente."
         action={
           <Button
             className="h-11"
@@ -396,6 +473,14 @@ function AccountsPage() {
               const balance =
                 account.calculatedBalance;
 
+              const isAutomaticBalance =
+                account.type ===
+                  "outros" &&
+                account.name
+                  .trim()
+                  .toLowerCase() ===
+                  "saldo automático";
+
               return (
                 <div
                   key={account.id}
@@ -415,9 +500,11 @@ function AccountsPage() {
                             </p>
 
                             <p className="text-xs text-muted-foreground">
-                              {getAccountTypeLabel(
-                                account.type,
-                              )}
+                              {isAutomaticBalance
+                                ? "Saldo geral automático"
+                                : getAccountTypeLabel(
+                                    account.type,
+                                  )}
                             </p>
                           </div>
 
@@ -500,6 +587,7 @@ function AccountsPage() {
                           0
                             ? "+"
                             : "−"}
+
                           {formatBRL(
                             Math.abs(
                               account.transactionBalance,
@@ -515,7 +603,7 @@ function AccountsPage() {
                       <div className="mt-3 rounded-lg bg-secondary/60 px-3 py-2">
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs text-muted-foreground">
-                            Ajuste manual
+                            Ajuste automático
                           </span>
 
                           <span className="text-xs font-medium">
@@ -524,6 +612,7 @@ function AccountsPage() {
                             ) >= 0
                               ? "+"
                               : "−"}
+
                             {formatBRL(
                               Math.abs(
                                 Number(
@@ -567,8 +656,8 @@ function AccountsPage() {
 
             <DialogDescription>
               {editing
-                ? "Atualize os dados da conta. O saldo das movimentações é calculado automaticamente."
-                : "Cadastre uma conta para acompanhar seu saldo e vincular suas movimentações."}
+                ? "Atualize os dados da conta ou informe o saldo real atual."
+                : "Cadastre uma conta para acompanhar seu saldo e vincular movimentações."}
             </DialogDescription>
           </DialogHeader>
 
@@ -584,13 +673,16 @@ function AccountsPage() {
                 id="account-name"
                 className="h-11"
                 placeholder="Nubank, Carteira, Banco..."
-                value={form.name}
+                value={
+                  form.name
+                }
                 onChange={(event) =>
                   setForm(
                     (previous) => ({
                       ...previous,
-                      name: event.target
-                        .value,
+                      name:
+                        event.target
+                          .value,
                     }),
                   )
                 }
@@ -670,51 +762,95 @@ function AccountsPage() {
               />
 
               <p className="text-xs text-muted-foreground">
-                O valor que a conta tinha antes das movimentações cadastradas.
+                O valor que existia nesta conta antes das movimentações cadastradas.
               </p>
             </div>
 
-            {/* AJUSTE */}
+            {/* SALDO REAL */}
 
-            <div className="space-y-1.5">
-              <Label htmlFor="balance-adjustment">
-                Ajuste manual
-              </Label>
+            {editing ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="real-balance">
+                  Saldo real atual
+                </Label>
 
-              <Input
-                id="balance-adjustment"
-                className="h-11"
-                inputMode="decimal"
-                placeholder="0,00"
-                value={
-                  form.balance_adjustment
-                }
-                onChange={(event) =>
-                  setForm(
-                    (previous) => ({
-                      ...previous,
-                      balance_adjustment:
-                        event.target
-                          .value,
-                    }),
-                  )
-                }
-              />
+                <Input
+                  id="real-balance"
+                  className="h-11"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={
+                    form.real_balance
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setForm(
+                      (
+                        previous,
+                      ) => ({
+                        ...previous,
+                        real_balance:
+                          event.target
+                            .value,
+                      }),
+                    )
+                  }
+                />
 
-              <p className="text-xs text-muted-foreground">
-                Use apenas se o saldo real da conta precisar de uma correção. Movimentações continuam sendo calculadas separadamente.
-              </p>
-            </div>
+                <p className="text-xs text-muted-foreground">
+                  Informe o valor que realmente existe na conta. O ajuste será calculado automaticamente sem alterar suas movimentações.
+                </p>
+              </div>
+            ) : null}
+
+            {/* AJUSTE MANUAL */}
+
+            {!editing ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="balance-adjustment">
+                  Ajuste de saldo
+                </Label>
+
+                <Input
+                  id="balance-adjustment"
+                  className="h-11"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={
+                    form.balance_adjustment
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setForm(
+                      (
+                        previous,
+                      ) => ({
+                        ...previous,
+                        balance_adjustment:
+                          event.target
+                            .value,
+                      }),
+                    )
+                  }
+                />
+
+                <p className="text-xs text-muted-foreground">
+                  Opcional. Use apenas se quiser começar com uma correção adicional.
+                </p>
+              </div>
+            ) : null}
 
             {/* PREVISÃO */}
 
             <div className="rounded-xl border bg-secondary/50 p-3">
               <p className="text-xs text-muted-foreground">
-                O saldo atual será calculado como:
+                O saldo atual é calculado automaticamente:
               </p>
 
               <p className="mt-1 text-sm font-medium">
-                Saldo inicial + ajuste + movimentações
+                Saldo inicial + movimentações + ajuste
               </p>
             </div>
           </div>
@@ -749,7 +885,9 @@ function AccountsPage() {
         )}
         onOpenChange={(value) => {
           if (!value) {
-            setDeleting(null);
+            setDeleting(
+              null,
+            );
           }
         }}
       >
