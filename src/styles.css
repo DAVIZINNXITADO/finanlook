@@ -1,228 +1,286 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  Outlet,
-  Link,
-  createRootRouteWithContext,
-  useRouter,
-  HeadContent,
-  Scripts,
-} from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
 
-import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
-import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { ThemeProvider } from "@/components/theme-provider";
+@custom-variant dark (&:is(.dark *));
 
-function NotFoundComponent() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
+/* =========================================================
+   FINANLOOK DESIGN SYSTEM
+   ========================================================= */
 
-        <h2 className="mt-4 text-xl font-semibold text-foreground">
-          Página não encontrada
-        </h2>
+@theme inline {
+  /* Fontes */
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
 
-        <p className="mt-2 text-sm text-muted-foreground">
-          A página que você procura não existe ou foi movida.
-        </p>
+  /* Bordas */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-3xl: calc(var(--radius) + 16px);
 
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Voltar ao início
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+  /* Cores principais */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  /* Status */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  /* Inputs */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Gráficos */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Sombras */
+  --shadow-card:
+    0 1px 2px 0 oklch(0.35 0.05 165 / 0.04),
+    0 8px 24px -12px oklch(0.35 0.05 165 / 0.16);
+
+  --shadow-float:
+    0 12px 40px -12px oklch(0.35 0.05 165 / 0.26);
 }
 
-function ErrorComponent({
-  error,
-  reset,
-}: {
-  error: Error;
-  reset: () => void;
-}) {
-  console.error(error);
+/* =========================================================
+   TEMA CLARO
+   ========================================================= */
 
-  const router = useRouter();
+:root {
+  --radius: 0.9rem;
 
-  useEffect(() => {
-    reportLovableError(error, {
-      boundary: "tanstack_root_error_component",
-    });
-  }, [error]);
+  --background: oklch(0.985 0.008 150);
+  --foreground: oklch(0.23 0.03 165);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Esta página não carregou
-        </h1>
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.23 0.03 165);
 
-        <p className="mt-2 text-sm text-muted-foreground">
-          Algo deu errado. Tente novamente ou volte para o início.
-        </p>
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.23 0.03 165);
 
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Tentar novamente
-          </button>
+  --primary: oklch(0.56 0.13 162);
+  --primary-foreground: oklch(0.99 0.01 150);
 
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Ir para o início
-          </a>
-        </div>
-      </div>
-    </div>
-  );
+  --secondary: oklch(0.95 0.02 160);
+  --secondary-foreground: oklch(0.3 0.05 165);
+
+  --muted: oklch(0.955 0.012 155);
+  --muted-foreground: oklch(0.52 0.025 165);
+
+  --accent: oklch(0.93 0.045 155);
+  --accent-foreground: oklch(0.3 0.06 165);
+
+  --destructive: oklch(0.58 0.19 22);
+  --destructive-foreground: oklch(0.99 0.01 150);
+
+  --success: oklch(0.6 0.14 158);
+  --success-foreground: oklch(0.99 0.01 150);
+
+  --warning: oklch(0.75 0.15 75);
+  --warning-foreground: oklch(0.26 0.05 75);
+
+  --info: oklch(0.6 0.11 235);
+  --info-foreground: oklch(0.99 0.01 150);
+
+  --border: oklch(0.9 0.015 160);
+  --input: oklch(0.9 0.015 160);
+  --ring: oklch(0.56 0.13 162);
+
+  /* Gráficos */
+
+  --chart-1: oklch(0.56 0.13 162);
+  --chart-2: oklch(0.68 0.14 200);
+  --chart-3: oklch(0.72 0.15 75);
+  --chart-4: oklch(0.62 0.17 25);
+  --chart-5: oklch(0.6 0.13 300);
+  --chart-6: oklch(0.68 0.13 130);
+  --chart-7: oklch(0.62 0.1 250);
+  --chart-8: oklch(0.7 0.09 20);
+
+  /* Sidebar */
+
+  --sidebar: oklch(0.99 0.006 150);
+  --sidebar-foreground: oklch(0.23 0.03 165);
+
+  --sidebar-primary: oklch(0.56 0.13 162);
+  --sidebar-primary-foreground: oklch(0.99 0.01 150);
+
+  --sidebar-accent: oklch(0.94 0.03 155);
+  --sidebar-accent-foreground: oklch(0.28 0.05 165);
+
+  --sidebar-border: oklch(0.92 0.012 160);
+  --sidebar-ring: oklch(0.56 0.13 162);
 }
 
-export const Route =
-  createRootRouteWithContext<{
-    queryClient: QueryClient;
-  }>()({
-    head: () => ({
-      meta: [
-        {
-          charSet: "utf-8",
-        },
-        {
-          name: "viewport",
-          content: "width=device-width, initial-scale=1",
-        },
-        {
-          title:
-            "FinanLook — organize seu dinheiro de forma simples",
-        },
-        {
-          name: "description",
-          content:
-            "Controle entradas, gastos, reserva de emergência e metas em um app simples de organização financeira pessoal.",
-        },
-        {
-          property: "og:type",
-          content: "website",
-        },
-        {
-          name: "twitter:card",
-          content: "summary_large_image",
-        },
-      ],
+/* =========================================================
+   TEMA ESCURO
+   ========================================================= */
 
-      links: [
-        {
-          rel: "stylesheet",
-          href: appCss,
-        },
-        {
-          rel: "preconnect",
-          href: "https://fonts.googleapis.com",
-        },
-        {
-          rel: "preconnect",
-          href: "https://fonts.gstatic.com",
-          crossOrigin: "anonymous",
-        },
-        {
-          rel: "stylesheet",
-          href:
-            "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
-        },
-        {
-          rel: "icon",
-          href: "/favicon.png",
-          type: "image/png",
-        },
-      ],
-    }),
+.dark {
+  --background: oklch(0.19 0.025 165);
+  --foreground: oklch(0.96 0.01 150);
 
-    shellComponent: RootShell,
-    component: RootComponent,
-    notFoundComponent: NotFoundComponent,
-    errorComponent: ErrorComponent,
-  });
+  --card: oklch(0.24 0.03 165);
+  --card-foreground: oklch(0.96 0.01 150);
 
-function RootShell({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <head>
-        <HeadContent />
-      </head>
+  --popover: oklch(0.24 0.03 165);
+  --popover-foreground: oklch(0.96 0.01 150);
 
-      <body>
-        {children}
+  --primary: oklch(0.72 0.14 160);
+  --primary-foreground: oklch(0.2 0.03 165);
 
-        <Scripts />
-      </body>
-    </html>
-  );
+  --secondary: oklch(0.29 0.03 165);
+  --secondary-foreground: oklch(0.96 0.01 150);
+
+  --muted: oklch(0.28 0.025 165);
+  --muted-foreground: oklch(0.72 0.02 160);
+
+  --accent: oklch(0.32 0.05 160);
+  --accent-foreground: oklch(0.96 0.01 150);
+
+  --destructive: oklch(0.65 0.18 22);
+  --destructive-foreground: oklch(0.99 0.01 150);
+
+  --success: oklch(0.7 0.14 158);
+  --success-foreground: oklch(0.2 0.03 165);
+
+  --warning: oklch(0.8 0.14 75);
+  --warning-foreground: oklch(0.24 0.05 75);
+
+  --info: oklch(0.7 0.11 235);
+  --info-foreground: oklch(0.2 0.03 165);
+
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.72 0.14 160);
+
+  /* Sidebar */
+
+  --sidebar: oklch(0.22 0.028 165);
+  --sidebar-foreground: oklch(0.96 0.01 150);
+
+  --sidebar-primary: oklch(0.72 0.14 160);
+  --sidebar-primary-foreground: oklch(0.2 0.03 165);
+
+  --sidebar-accent: oklch(0.3 0.04 165);
+  --sidebar-accent-foreground: oklch(0.96 0.01 150);
+
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.72 0.14 160);
 }
 
-function RootComponent() {
-  const { queryClient } =
-    Route.useRouteContext();
+/* =========================================================
+   ESTILOS BASE
+   ========================================================= */
 
-  const router = useRouter();
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
 
-  useEffect(() => {
-    const { data } =
-      supabase.auth.onAuthStateChange(
-        (event) => {
-          if (
-            event !== "SIGNED_IN" &&
-            event !== "SIGNED_OUT" &&
-            event !== "USER_UPDATED"
-          ) {
-            return;
-          }
+  html {
+    min-height: 100%;
+  }
 
-          void router.invalidate();
+  body {
+    min-height: 100vh;
+    margin: 0;
 
-          if (event !== "SIGNED_OUT") {
-            void queryClient.invalidateQueries();
-          }
-        },
-      );
+    background-color: var(--color-background);
+    color: var(--color-foreground);
 
-    return () =>
-      data.subscription.unsubscribe();
-  }, [router, queryClient]);
+    font-family: var(--font-sans);
 
-  return (
-    <ThemeProvider
-      defaultTheme="system"
-      storageKey="finanlook-theme"
-    >
-      <QueryClientProvider
-        client={queryClient}
-      >
-        <Outlet />
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-        <Toaster
-          position="top-center"
-          richColors
-        />
-      </QueryClientProvider>
-    </ThemeProvider>
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}
+
+/* =========================================================
+   UTILITIES
+   ========================================================= */
+
+@utility surface {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+}
+
+@utility hero-gradient {
+  background-image: linear-gradient(
+    140deg,
+    oklch(0.56 0.13 162) 0%,
+    oklch(0.52 0.1 190) 55%,
+    oklch(0.48 0.09 215) 100%
   );
 }
