@@ -1,4 +1,8 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  Link,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import {
   ArrowLeftRight,
   CalendarRange,
@@ -26,39 +30,123 @@ import { cn } from "@/lib/utils";
 import { useProfile } from "@/lib/data";
 
 const NAV = [
-  { to: "/visao-geral", label: "Visão geral", icon: LayoutDashboard },
-  { to: "/movimentacoes", label: "Movimentações", icon: ArrowLeftRight },
-  { to: "/organizar-salario", label: "Organizar salário", icon: Wallet },
-  { to: "/reserva", label: "Reserva", icon: LifeBuoy },
-  { to: "/metas", label: "Metas", icon: Goal },
-  { to: "/investimentos", label: "Investimentos", icon: TrendingUp },
-  { to: "/planejamento", label: "Planejamento do mês", icon: CalendarRange },
-  { to: "/relatorios", label: "Relatórios", icon: ChartPie },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
+  {
+    to: "/visao-geral",
+    label: "Visão geral",
+    icon: LayoutDashboard,
+  },
+  {
+    to: "/contas",
+    label: "Contas",
+    icon: Wallet,
+  },
+  {
+    to: "/movimentacoes",
+    label: "Movimentações",
+    icon: ArrowLeftRight,
+  },
+  {
+    to: "/organizar-salario",
+    label: "Organizar salário",
+    icon: Wallet,
+  },
+  {
+    to: "/reserva",
+    label: "Reserva",
+    icon: LifeBuoy,
+  },
+  {
+    to: "/metas",
+    label: "Metas",
+    icon: Goal,
+  },
+  {
+    to: "/investimentos",
+    label: "Investimentos",
+    icon: TrendingUp,
+  },
+  {
+    to: "/planejamento",
+    label: "Planejamento do mês",
+    icon: CalendarRange,
+  },
+  {
+    to: "/relatorios",
+    label: "Relatórios",
+    icon: ChartPie,
+  },
+  {
+    to: "/configuracoes",
+    label: "Configurações",
+    icon: Settings,
+  },
 ] as const;
 
+/*
+ * Itens principais mostrados na barra inferior do celular.
+ *
+ * O "Mais" abre o restante do menu.
+ */
 const MOBILE_MAIN = NAV.slice(0, 4);
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: profile } = useProfile();
+
   const [menuOpen, setMenuOpen] = useState(false);
+
   const pathname = useRouterState({
-    select: (s) => s.location.pathname,
+    select: (state) => state.location.pathname,
   });
 
   async function signOut() {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    try {
+      /*
+       * Cancela consultas que ainda estejam carregando.
+       */
+      await queryClient.cancelQueries();
+
+      /*
+       * Limpa os dados do usuário anterior do cache.
+       */
+      queryClient.clear();
+
+      /*
+       * Sai da conta no Supabase.
+       */
+      await supabase.auth.signOut();
+
+      /*
+       * Redireciona para login.
+       */
+      navigate({
+        to: "/auth",
+        replace: true,
+      });
+    } catch {
+      /*
+       * Mesmo se ocorrer algum problema, tentamos
+       * levar o usuário para a tela de autenticação.
+       */
+      navigate({
+        to: "/auth",
+        replace: true,
+      });
+    }
   }
 
   return (
     <div className="min-h-screen bg-background md:flex">
-      {/* MENU DESKTOP */}
+      {/* ============================================
+          MENU LATERAL — DESKTOP
+      ============================================ */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
+        {/* LOGO */}
         <Link
           to="/visao-geral"
           className="mb-6 flex items-center gap-2 px-2"
@@ -72,6 +160,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </Link>
 
+        {/* NAVEGAÇÃO */}
         <nav className="flex flex-1 flex-col gap-1">
           {NAV.map((item) => (
             <NavItem
@@ -82,6 +171,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
 
+        {/* PERFIL */}
         <div className="mt-4 rounded-2xl bg-sidebar-accent/60 p-3">
           <p className="truncate text-sm font-medium">
             {profile?.name || "Você"}
@@ -95,7 +185,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             variant="ghost"
             size="sm"
             className="mt-2 w-full justify-start"
-            onClick={signOut}
+            onClick={() => void signOut()}
           >
             <LogOut className="size-4" />
             Sair da conta
@@ -103,7 +193,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* HEADER MOBILE */}
+      {/* ============================================
+          CABEÇALHO — MOBILE
+      ============================================ */}
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur md:hidden">
         <Link
           to="/visao-geral"
@@ -118,7 +210,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </Link>
 
-        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        {/* MENU MOBILE */}
+        <Sheet
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+        >
           <SheetTrigger asChild>
             <Button
               variant="ghost"
@@ -143,7 +239,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.to}
                   {...item}
                   active={pathname === item.to}
-                  onNavigate={() => setMenuOpen(false)}
+                  onNavigate={() =>
+                    setMenuOpen(false)
+                  }
                 />
               ))}
             </nav>
@@ -151,7 +249,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Button
               variant="outline"
               className="mt-4 w-full"
-              onClick={signOut}
+              onClick={() => void signOut()}
             >
               <LogOut className="size-4" />
               Sair da conta
@@ -160,39 +258,52 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Sheet>
       </header>
 
-      {/* CONTEÚDO */}
+      {/* ============================================
+          CONTEÚDO DAS PÁGINAS
+      ============================================ */}
       <main className="w-full flex-1 px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8">
         <div className="mx-auto w-full max-w-5xl space-y-6">
           {children}
         </div>
       </main>
 
-      {/* NAVEGAÇÃO MOBILE INFERIOR */}
+      {/* ============================================
+          NAVEGAÇÃO INFERIOR — MOBILE
+      ============================================ */}
       <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 gap-1 border-t border-border bg-background/95 px-2 pb-2 pt-1.5 backdrop-blur md:hidden">
-        {MOBILE_MAIN.map(({ to, label, icon: Icon }) => (
-          <Link
-            key={to}
-            to={to}
-            className={cn(
-              "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium",
-              pathname === to
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground",
-            )}
-          >
-            <Icon className="size-5" />
-            <span className="truncate">
-              {label.split(" ")[0]}
-            </span>
-          </Link>
-        ))}
+        {MOBILE_MAIN.map(
+          ({
+            to,
+            label,
+            icon: Icon,
+          }) => (
+            <Link
+              key={to}
+              to={to}
+              className={cn(
+                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium",
+                pathname === to
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
+              <Icon className="size-5" />
 
+              <span className="truncate">
+                {label.split(" ")[0]}
+              </span>
+            </Link>
+          ),
+        )}
+
+        {/* BOTÃO MAIS */}
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
           className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium text-muted-foreground"
         >
           <Menu className="size-5" />
+
           <span>Mais</span>
         </button>
       </nav>
@@ -225,6 +336,7 @@ function NavItem({
       )}
     >
       <Icon className="size-[18px]" />
+
       {label}
     </Link>
   );
