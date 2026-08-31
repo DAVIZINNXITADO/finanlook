@@ -1,27 +1,48 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import {
+  createFileRoute,
+} from "@tanstack/react-router";
 
 import {
-  AlertTriangle,
-  BarChart3,
-  Brain,
-  CalendarDays,
-  CheckCircle2,
-  CircleDollarSign,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import {
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Building2,
+  Coins,
   Landmark,
+  Pencil,
   Plus,
-  Search,
-  ShieldAlert,
-  TrendingDown,
+  Trash2,
   TrendingUp,
-  Wallet,
-  X,
+  WalletCards,
 } from "lucide-react";
 
-import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  supabase,
+} from "@/integrations/supabase/client";
+
+import {
+  PageHeader,
+} from "@/components/PageHeader";
+
+import {
+  Button,
+} from "@/components/ui/button";
+
+import {
+  Input,
+} from "@/components/ui/input";
+
+import {
+  Label,
+} from "@/components/ui/label";
 
 import {
   Dialog,
@@ -32,169 +53,168 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export const Route = createFileRoute(
-  "/_authenticated/investimentos",
-)({
-  head: () => ({
-    meta: [
-      {
-        title: "Investimentos — FinanLook",
-      },
-      {
-        name: "description",
-        content:
-          "Simule, registre e acompanhe seus investimentos no FinanLook.",
-      },
-    ],
-  }),
+import {
+  toast,
+} from "sonner";
 
-  component: InvestmentsPage,
-});
+export const Route =
+  createFileRoute(
+    "/_authenticated/investimentos",
+  )({
+    component:
+      InvestmentsPage,
+  });
 
-type InvestmentType =
-  | "Ação"
-  | "FII"
-  | "Renda fixa"
-  | "Criptomoeda"
-  | "ETF"
-  | "Outro";
+/* =========================================================
+   TIPOS
+   ========================================================= */
 
-type RegisteredInvestment = {
+type InvestmentCategory =
+  | "renda_fixa"
+  | "renda_variavel"
+  | "fundos"
+  | "cripto"
+  | "outros";
+
+type Investment = {
   id: string;
+
+  user_id: string;
+
   name: string;
-  type: InvestmentType;
-  investedValue: number;
-  currentValue: number;
-  date: string;
+
+  category: InvestmentCategory;
+
+  institution:
+    | string
+    | null;
+
+  invested_amount: number;
+
+  current_amount: number;
+
+  investment_date:
+    | string
+    | null;
+
+  created_at: string;
+
+  updated_at: string;
 };
 
-const SEARCH_SUGGESTIONS = [
+/* =========================================================
+   CATEGORIAS
+   ========================================================= */
+
+const CATEGORIES: {
+  value: InvestmentCategory;
+  label: string;
+}[] = [
   {
-    name: "Tesouro Selic",
-    code: "Renda fixa",
-    type: "Renda fixa" as InvestmentType,
-    risk: "Baixo",
-    signal: "positive",
+    value: "renda_fixa",
+    label: "Renda fixa",
   },
+
   {
-    name: "PETR4",
-    code: "Petrobras PN",
-    type: "Ação" as InvestmentType,
-    risk: "Alto",
-    signal: "attention",
+    value: "renda_variavel",
+    label: "Renda variável",
   },
+
   {
-    name: "VALE3",
-    code: "Vale ON",
-    type: "Ação" as InvestmentType,
-    risk: "Alto",
-    signal: "attention",
+    value: "fundos",
+    label: "Fundos",
   },
+
   {
-    name: "MXRF11",
-    code: "Fundo imobiliário",
-    type: "FII" as InvestmentType,
-    risk: "Médio",
-    signal: "attention",
+    value: "cripto",
+    label: "Criptoativos",
   },
+
   {
-    name: "Bitcoin",
-    code: "BTC",
-    type: "Criptomoeda" as InvestmentType,
-    risk: "Muito alto",
-    signal: "risk",
-  },
-  {
-    name: "IVVB11",
-    code: "ETF internacional",
-    type: "ETF" as InvestmentType,
-    risk: "Alto",
-    signal: "attention",
+    value: "outros",
+    label: "Outros",
   },
 ];
 
+/* =========================================================
+   OPÇÕES DE INVESTIMENTO
+   ========================================================= */
+
+const INVESTMENT_OPTIONS = [
+  "Tesouro Direto",
+  "CDB",
+  "LCI",
+  "LCA",
+  "Ações",
+  "Fundos Imobiliários",
+  "ETF",
+  "Fundos de Investimento",
+  "Previdência",
+  "Bitcoin",
+  "Ethereum",
+  "Poupança",
+  "Outro",
+];
+
+/* =========================================================
+   PÁGINA
+   ========================================================= */
+
 function InvestmentsPage() {
-  const [
-    search,
-    setSearch,
-  ] =
-    useState("");
+  const queryClient =
+    useQueryClient();
 
   const [
-    selectedInvestment,
-    setSelectedInvestment,
+    dialogOpen,
+    setDialogOpen,
+  ] =
+    useState(false);
+
+  const [
+    editingInvestment,
+    setEditingInvestment,
   ] =
     useState<
-      (typeof SEARCH_SUGGESTIONS)[number] | null
+      Investment | null
     >(null);
 
   const [
-    simulatorOpen,
-    setSimulatorOpen,
-  ] =
-    useState(false);
-
-  const [
-    registerOpen,
-    setRegisterOpen,
-  ] =
-    useState(false);
-
-  const [
-    initialValue,
-    setInitialValue,
+    name,
+    setName,
   ] =
     useState("");
 
   const [
-    monthlyContribution,
-    setMonthlyContribution,
+    category,
+    setCategory,
+  ] =
+    useState<
+      InvestmentCategory
+    >("renda_fixa");
+
+  const [
+    institution,
+    setInstitution,
   ] =
     useState("");
 
   const [
-    duration,
-    setDuration,
+    investedAmount,
+    setInvestedAmount,
   ] =
     useState("");
 
   const [
-    annualRate,
-    setAnnualRate,
-  ] =
-    useState("");
-
-  const [
-    simulationStarted,
-    setSimulationStarted,
-  ] =
-    useState(false);
-
-  const [
-    investmentName,
-    setInvestmentName,
-  ] =
-    useState("");
-
-  const [
-    investmentType,
-    setInvestmentType,
-  ] =
-    useState<InvestmentType>(
-      "Outro",
-    );
-
-  const [
-    investedValue,
-    setInvestedValue,
-  ] =
-    useState("");
-
-  const [
-    currentValue,
-    setCurrentValue,
+    currentAmount,
+    setCurrentAmount,
   ] =
     useState("");
 
@@ -204,1139 +224,778 @@ function InvestmentsPage() {
   ] =
     useState("");
 
-  const [
-    investments,
-    setInvestments,
-  ] =
-    useState<
-      RegisteredInvestment[]
-    >([]);
+  /* =====================================================
+     QUERY
+     ===================================================== */
 
-  const filteredInvestments =
+  const investmentsQuery =
+    useQuery({
+      queryKey: [
+        "investments",
+      ],
+
+      queryFn:
+        async () => {
+          const {
+            data:
+              authData,
+            error:
+              authError,
+          } =
+            await supabase.auth.getUser();
+
+          if (
+            authError ||
+            !authData.user
+          ) {
+            throw new Error(
+              "Usuário não autenticado.",
+            );
+          }
+
+          const {
+            data,
+            error,
+          } =
+            await supabase
+              .from(
+                "investments",
+              )
+              .select("*")
+              .eq(
+                "user_id",
+                authData.user.id,
+              )
+              .order(
+                "created_at",
+                {
+                  ascending:
+                    false,
+                },
+              );
+
+          if (error) {
+            throw error;
+          }
+
+          return (
+            data ??
+            []
+          ) as Investment[];
+        },
+    });
+
+  const investments =
+    investmentsQuery.data ??
+    [];
+
+  /* =====================================================
+     TOTAIS
+     ===================================================== */
+
+  const totals =
     useMemo(() => {
-      const normalized =
-        search
-          .trim()
-          .toLowerCase();
+      return investments.reduce(
+        (
+          accumulator,
+          investment,
+        ) => {
+          accumulator.invested +=
+            Number(
+              investment.invested_amount,
+            ) || 0;
 
-      if (!normalized) {
-        return SEARCH_SUGGESTIONS;
-      }
+          accumulator.current +=
+            Number(
+              investment.current_amount,
+            ) || 0;
 
-      return SEARCH_SUGGESTIONS.filter(
-        (investment) =>
-          investment.name
-            .toLowerCase()
-            .includes(
-              normalized,
-            ) ||
-          investment.code
-            .toLowerCase()
-            .includes(
-              normalized,
-            ),
+          return accumulator;
+        },
+        {
+          invested: 0,
+          current: 0,
+        },
       );
     }, [
-      search,
+      investments,
     ]);
 
-  const simulation =
-    useMemo(() => {
-      const initial =
-        Number(
-          initialValue,
-        ) || 0;
+  /* =====================================================
+     FORMULÁRIO
+     ===================================================== */
 
-      const monthly =
-        Number(
-          monthlyContribution,
-        ) || 0;
+  function resetForm() {
+    setName("");
 
-      const months =
-        Number(
-          duration,
-        ) || 0;
-
-      const annual =
-        Number(
-          annualRate,
-        ) || 0;
-
-      if (
-        initial <= 0 ||
-        months <= 0
-      ) {
-        return null;
-      }
-
-      const monthlyRate =
-        Math.pow(
-          1 +
-            annual /
-              100,
-          1 / 12,
-        ) -
-        1;
-
-      let total =
-        initial;
-
-      for (
-        let month = 0;
-        month < months;
-        month += 1
-      ) {
-        total =
-          total *
-            (
-              1 +
-              monthlyRate
-            ) +
-          monthly;
-      }
-
-      const totalInvested =
-        initial +
-        monthly *
-          months;
-
-      const earnings =
-        total -
-        totalInvested;
-
-      return {
-        total,
-        totalInvested,
-        earnings,
-        months,
-      };
-    }, [
-      initialValue,
-      monthlyContribution,
-      duration,
-      annualRate,
-    ]);
-
-  function formatCurrency(
-    value: number,
-  ) {
-    return new Intl.NumberFormat(
-      "pt-BR",
-      {
-        style:
-          "currency",
-        currency:
-          "BRL",
-      },
-    ).format(
-      Number.isFinite(
-        value,
-      )
-        ? value
-        : 0,
-    );
-  }
-
-  function openSimulator() {
-    setInitialValue("");
-    setMonthlyContribution("");
-    setDuration("");
-    setAnnualRate("");
-    setSimulationStarted(
-      false,
+    setCategory(
+      "renda_fixa",
     );
 
-    setSimulatorOpen(
-      true,
-    );
-  }
+    setInstitution("");
 
-  function openRegister() {
-    setInvestmentName("");
-    setInvestmentType(
-      "Outro",
-    );
-    setInvestedValue("");
-    setCurrentValue("");
+    setInvestedAmount("");
+
+    setCurrentAmount("");
+
     setInvestmentDate("");
 
-    setRegisterOpen(
+    setEditingInvestment(
+      null,
+    );
+  }
+
+  function openCreateDialog() {
+    resetForm();
+
+    setDialogOpen(
       true,
     );
   }
 
-  function runSimulation() {
-    setSimulationStarted(
-      true,
-    );
-  }
-
-  function registerInvestment() {
-    const invested =
-      Number(
-        investedValue,
-      );
-
-    const current =
-      Number(
-        currentValue,
-      );
-
-    if (
-      !investmentName.trim() ||
-      invested <= 0
-    ) {
-      return;
-    }
-
-    const investment:
-      RegisteredInvestment =
-      {
-        id:
-          crypto.randomUUID(),
-        name:
-          investmentName.trim(),
-        type:
-          investmentType,
-        investedValue:
-          invested,
-        currentValue:
-          current > 0
-            ? current
-            : invested,
-        date:
-          investmentDate ||
-          new Date()
-            .toISOString()
-            .slice(
-              0,
-              10,
-            ),
-      };
-
-    setInvestments(
-      (
-        currentInvestments,
-      ) => [
-        investment,
-        ...currentInvestments,
-      ],
-    );
-
-    setRegisterOpen(
-      false,
-    );
-  }
-
-  function removeInvestment(
-    id: string,
+  function openEditDialog(
+    investment: Investment,
   ) {
-    setInvestments(
-      (
-        currentInvestments,
-      ) =>
-        currentInvestments.filter(
-          (
-            investment,
-          ) =>
-            investment.id !==
-            id,
-        ),
+    setEditingInvestment(
+      investment,
+    );
+
+    setName(
+      investment.name,
+    );
+
+    setCategory(
+      investment.category,
+    );
+
+    setInstitution(
+      investment.institution ??
+        "",
+    );
+
+    setInvestedAmount(
+      String(
+        investment.invested_amount,
+      ),
+    );
+
+    setCurrentAmount(
+      String(
+        investment.current_amount,
+      ),
+    );
+
+    setInvestmentDate(
+      investment.investment_date ??
+        "",
+    );
+
+    setDialogOpen(
+      true,
     );
   }
 
-  const totalInvested =
-    investments.reduce(
-      (
-        total,
-        investment,
-      ) =>
-        total +
-        investment.investedValue,
-      0,
-    );
+  /* =====================================================
+     SALVAR
+     ===================================================== */
 
-  const totalCurrent =
-    investments.reduce(
-      (
-        total,
-        investment,
-      ) =>
-        total +
-        investment.currentValue,
-      0,
-    );
+  const saveMutation =
+    useMutation({
+      mutationFn:
+        async () => {
+          const cleanName =
+            name.trim();
 
-  const totalResult =
-    totalCurrent -
-    totalInvested;
+          if (
+            !cleanName
+          ) {
+            throw new Error(
+              "Informe o investimento.",
+            );
+          }
+
+          const invested =
+            Number(
+              investedAmount
+                .replace(
+                  ",",
+                  ".",
+                ),
+            );
+
+          const current =
+            Number(
+              currentAmount
+                .replace(
+                  ",",
+                  ".",
+                ),
+            );
+
+          if (
+            Number.isNaN(
+              invested,
+            ) ||
+            invested < 0
+          ) {
+            throw new Error(
+              "Informe um valor investido válido.",
+            );
+          }
+
+          if (
+            Number.isNaN(
+              current,
+            ) ||
+            current < 0
+          ) {
+            throw new Error(
+              "Informe um valor atual válido.",
+            );
+          }
+
+          const {
+            data:
+              authData,
+            error:
+              authError,
+          } =
+            await supabase.auth.getUser();
+
+          if (
+            authError ||
+            !authData.user
+          ) {
+            throw new Error(
+              "Você precisa estar autenticado.",
+            );
+          }
+
+          const payload = {
+            name:
+              cleanName,
+
+            category,
+
+            institution:
+              institution.trim() ||
+              null,
+
+            invested_amount:
+              invested,
+
+            current_amount:
+              current,
+
+            investment_date:
+              investmentDate ||
+              null,
+          };
+
+          if (
+            editingInvestment
+          ) {
+            const {
+              error,
+            } =
+              await supabase
+                .from(
+                  "investments",
+                )
+                .update(
+                  payload,
+                )
+                .eq(
+                  "id",
+                  editingInvestment.id,
+                )
+                .eq(
+                  "user_id",
+                  authData.user.id,
+                );
+
+            if (error) {
+              throw error;
+            }
+
+            return;
+          }
+
+          const {
+            error,
+          } =
+            await supabase
+              .from(
+                "investments",
+              )
+              .insert({
+                ...payload,
+
+                user_id:
+                  authData.user.id,
+              });
+
+          if (error) {
+            throw error;
+          }
+        },
+
+      onSuccess:
+        async () => {
+          await queryClient.invalidateQueries({
+            queryKey: [
+              "investments",
+            ],
+          });
+
+          toast.success(
+            editingInvestment
+              ? "Investimento atualizado."
+              : "Investimento adicionado.",
+          );
+
+          setDialogOpen(
+            false,
+          );
+
+          resetForm();
+        },
+
+      onError:
+        (
+          error,
+        ) => {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível salvar o investimento.",
+          );
+        },
+    });
+
+  /* =====================================================
+     EXCLUIR
+     ===================================================== */
+
+  const deleteMutation =
+    useMutation({
+      mutationFn:
+        async (
+          id: string,
+        ) => {
+          const {
+            error,
+          } =
+            await supabase
+              .from(
+                "investments",
+              )
+              .delete()
+              .eq(
+                "id",
+                id,
+              );
+
+          if (error) {
+            throw error;
+          }
+        },
+
+      onSuccess:
+        async () => {
+          await queryClient.invalidateQueries({
+            queryKey: [
+              "investments",
+            ],
+          });
+
+          toast.success(
+            "Investimento removido.",
+          );
+        },
+
+      onError: () => {
+        toast.error(
+          "Não foi possível remover o investimento.",
+        );
+      },
+    });
+
+  /* =====================================================
+     RENDER
+     ===================================================== */
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Investimentos"
-        subtitle="Simule investimentos, registre sua carteira e acompanhe informações importantes."
-      />
-
-      {/* ===============================================
-          RESUMO
-         =============================================== */}
-
-      <section className="grid gap-4 md:grid-cols-3">
-        <SummaryCard
-          title="Total investido"
-          value={formatCurrency(
-            totalInvested,
-          )}
-          icon={
-            <Wallet className="size-5" />
-          }
-        />
-
-        <SummaryCard
-          title="Valor atual"
-          value={formatCurrency(
-            totalCurrent,
-          )}
-          icon={
-            <CircleDollarSign className="size-5" />
-          }
-        />
-
-        <SummaryCard
-          title="Resultado"
-          value={formatCurrency(
-            totalResult,
-          )}
-          icon={
-            totalResult >= 0 ? (
-              <TrendingUp className="size-5" />
-            ) : (
-              <TrendingDown className="size-5" />
-            )
-          }
-          positive={
-            totalResult >= 0
-          }
-          negative={
-            totalResult < 0
-          }
-        />
-      </section>
-
-      {/* ===============================================
-          AÇÕES
-         =============================================== */}
-
-      <section className="grid gap-4 md:grid-cols-2">
-        <button
-          type="button"
-          onClick={
-            openSimulator
-          }
-          className="surface group p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg"
-        >
-          <div className="flex items-start gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <TrendingUp className="size-6" />
-            </div>
-
-            <div className="min-w-0">
-              <h2 className="font-display text-lg font-semibold">
-                Simular investimento
-              </h2>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Informe um valor, aportes,
-                duração e uma rentabilidade
-                estimada para visualizar uma
-                projeção.
-              </p>
-
-              <span className="mt-4 inline-flex text-sm font-medium text-primary">
-                Criar simulação →
-              </span>
-            </div>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={
-            openRegister
-          }
-          className="surface group p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg"
-        >
-          <div className="flex items-start gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Plus className="size-6" />
-            </div>
-
-            <div className="min-w-0">
-              <h2 className="font-display text-lg font-semibold">
-                Registrar investimento
-              </h2>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Adicione investimentos que
-                você já possui para acompanhar
-                sua carteira.
-              </p>
-
-              <span className="mt-4 inline-flex text-sm font-medium text-primary">
-                Adicionar investimento →
-              </span>
-            </div>
-          </div>
-        </button>
-      </section>
-
-      {/* ===============================================
-          PESQUISA
-         =============================================== */}
-
-      <section className="surface p-5">
-        <div className="flex items-center gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Search className="size-5" />
-          </div>
-
-          <div>
-            <h2 className="font-display text-lg font-semibold">
-              Pesquisar investimento
-            </h2>
-
-            <p className="text-sm text-muted-foreground">
-              Pesquise por nome ou código do
-              investimento.
-            </p>
-          </div>
-        </div>
-
-        <div className="relative mt-5">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-          <Input
-            value={search}
-            onChange={(
-              event,
-            ) =>
-              setSearch(
-                event.target
-                  .value,
-              )
-            }
-            placeholder="Ex.: PETR4, Bitcoin, Tesouro Selic..."
-            className="h-12 pl-10"
-          />
-        </div>
-
-        <div className="mt-4 grid gap-2">
-          {filteredInvestments.map(
-            (
-              investment,
-            ) => (
-              <button
-                key={
-                  investment.name
-                }
-                type="button"
-                onClick={() =>
-                  setSelectedInvestment(
-                    investment,
-                  )
-                }
-                className={cn(
-                  "flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors hover:bg-muted/50",
-
-                  selectedInvestment?.name ===
-                    investment.name &&
-                    "border-primary bg-primary/5",
-                )}
-              >
-                <div className="min-w-0">
-                  <p className="font-medium">
-                    {
-                      investment.name
-                    }
-                  </p>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {
-                      investment.code
-                    }
-                  </p>
-                </div>
-
-                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium">
-                  {
-                    investment.type
-                  }
-                </span>
-              </button>
-            ),
-          )}
-
-          {filteredInvestments.length ===
-          0 ? (
-            <div className="rounded-xl border border-dashed p-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Nenhum investimento encontrado.
-              </p>
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      {/* ===============================================
-          ANÁLISE
-         =============================================== */}
-
-      {selectedInvestment ? (
-        <section className="space-y-4">
-          <div>
-            <h2 className="font-display text-xl font-semibold">
-              Análise do investimento
-            </h2>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Informações gerais para ajudar
-              você a entender melhor o ativo.
-            </p>
-          </div>
-
-          <div className="surface overflow-hidden">
-            <div className="border-b p-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-display text-xl font-semibold">
-                    {
-                      selectedInvestment.name
-                    }
-                  </h3>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {
-                      selectedInvestment.code
-                    }
-                  </p>
-                </div>
-
-                <span className="rounded-full bg-secondary px-3 py-1.5 text-sm font-medium">
-                  {
-                    selectedInvestment.type
-                  }
-                </span>
-              </div>
-            </div>
-
-            <div className="grid divide-y md:grid-cols-3 md:divide-x md:divide-y-0">
-              <InfoItem
-                icon={
-                  <BarChart3 className="size-5" />
-                }
-                label="Tipo"
-                value={
-                  selectedInvestment.type
-                }
-              />
-
-              <InfoItem
-                icon={
-                  <ShieldAlert className="size-5" />
-                }
-                label="Risco estimado"
-                value={
-                  selectedInvestment.risk
-                }
-              />
-
-              <InfoItem
-                icon={
-                  <TrendingUp className="size-5" />
-                }
-                label="Status"
-                value="Em análise"
-              />
-            </div>
-          </div>
-
-          {/* =============================================
-              INSIGHT
-             ============================================= */}
-
-          <div className="surface overflow-hidden">
-            <div className="border-b p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Brain className="size-5" />
-                </div>
-
-                <div>
-                  <h2 className="font-display text-lg font-semibold">
-                    Insight FinanLook
-                  </h2>
-
-                  <p className="text-sm text-muted-foreground">
-                    Análise informativa baseada
-                    nas características gerais
-                    do investimento.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5">
-              <InvestmentInsight
-                signal={
-                  selectedInvestment.signal
-                }
-                name={
-                  selectedInvestment.name
-                }
-                risk={
-                  selectedInvestment.risk
-                }
-              />
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      {/* ===============================================
-          CARTEIRA
-         =============================================== */}
-
-      <section className="surface overflow-hidden">
-        <div className="flex items-center justify-between gap-4 border-b p-5">
-          <div>
-            <h2 className="font-display text-lg font-semibold">
-              Minha carteira
-            </h2>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Investimentos registrados por
-              você.
-            </p>
-          </div>
-
+        subtitle="Acompanhe os investimentos que você possui."
+        action={
           <Button
-            size="sm"
             onClick={
-              openRegister
+              openCreateDialog
             }
           >
             <Plus className="size-4" />
 
             Adicionar
           </Button>
-        </div>
+        }
+      />
 
-        {investments.length ===
+      {/* =================================================
+          RESUMO
+         ================================================= */}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <SummaryCard
+          title="Total investido"
+          value={
+            formatCurrency(
+              totals.invested,
+            )
+          }
+          icon={
+            <WalletCards className="size-5" />
+          }
+        />
+
+        <SummaryCard
+          title="Valor atual"
+          value={
+            formatCurrency(
+              totals.current,
+            )
+          }
+          icon={
+            <TrendingUp className="size-5" />
+          }
+        />
+      </div>
+
+      {/* =================================================
+          LISTA
+         ================================================= */}
+
+      {investmentsQuery.isLoading ? (
+        <div className="surface p-8 text-center text-sm text-muted-foreground">
+          Carregando investimentos...
+        </div>
+      ) : investments.length ===
         0 ? (
-          <div className="p-8 text-center">
-            <Landmark className="mx-auto size-10 text-muted-foreground" />
-
-            <h3 className="mt-4 font-medium">
-              Nenhum investimento registrado
-            </h3>
-
-            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              Registre seus investimentos
-              para acompanhar sua carteira
-              aqui.
-            </p>
-
-            <Button
-              className="mt-5"
-              onClick={
-                openRegister
-              }
-            >
-              <Plus className="size-4" />
-
-              Registrar investimento
-            </Button>
+        <div className="surface p-8 text-center">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+            <Coins className="size-7 text-primary" />
           </div>
-        ) : (
-          <div className="divide-y">
-            {investments.map(
-              (
-                investment,
-              ) => {
-                const result =
-                  investment.currentValue -
-                  investment.investedValue;
 
-                return (
-                  <div
-                    key={
-                      investment.id
-                    }
-                    className="flex items-center gap-4 p-5"
-                  >
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <TrendingUp className="size-5" />
-                    </div>
+          <h2 className="mt-4 font-display text-lg font-semibold">
+            Nenhum investimento cadastrado
+          </h2>
 
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">
-                        {
-                          investment.name
-                        }
-                      </p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Adicione os investimentos que você possui para acompanhar seus valores.
+          </p>
 
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {
-                          investment.type
-                        }
-                      </p>
-                    </div>
+          <Button
+            className="mt-5"
+            onClick={
+              openCreateDialog
+            }
+          >
+            <Plus className="size-4" />
 
-                    <div className="hidden text-right sm:block">
-                      <p className="font-medium">
-                        {formatCurrency(
-                          investment.currentValue,
-                        )}
-                      </p>
-
-                      <p
-                        className={cn(
-                          "mt-1 text-xs",
-
-                          result >=
-                            0
-                            ? "text-emerald-600"
-                            : "text-destructive",
-                        )}
-                      >
-                        {result >=
-                        0
-                          ? "+"
-                          : ""}
-                        {formatCurrency(
-                          result,
-                        )}
-                      </p>
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() =>
-                        removeInvestment(
-                          investment.id,
-                        )
-                      }
-                      aria-label="Remover investimento"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </div>
-                );
-              },
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* ===============================================
-          AVISO
-         =============================================== */}
-
-      <section className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-5">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-yellow-600" />
-
-          <div>
-            <h2 className="font-medium">
-              Aviso sobre investimentos
-            </h2>
-
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Investimentos podem valorizar ou
-              desvalorizar. Simulações e
-              informações apresentadas pelo
-              FinanLook são apenas
-              informativas e educacionais e
-              não representam garantia de
-              rentabilidade ou recomendação
-              individual de investimento.
-            </p>
-          </div>
+            Adicionar investimento
+          </Button>
         </div>
-      </section>
+      ) : (
+        <div className="grid gap-4">
+          {investments.map(
+            (
+              investment,
+            ) => (
+              <InvestmentCard
+                key={
+                  investment.id
+                }
+                investment={
+                  investment
+                }
+                onEdit={() =>
+                  openEditDialog(
+                    investment,
+                  )
+                }
+                onDelete={() =>
+                  deleteMutation.mutate(
+                    investment.id,
+                  )
+                }
+                deleting={
+                  deleteMutation.isPending
+                }
+              />
+            ),
+          )}
+        </div>
+      )}
 
-      {/* ===============================================
-          DIALOG SIMULAÇÃO
-         =============================================== */}
+      {/* =================================================
+          DIALOG
+         ================================================= */}
 
       <Dialog
-        open={simulatorOpen}
-        onOpenChange={
-          setSimulatorOpen
+        open={
+          dialogOpen
         }
+        onOpenChange={(
+          open,
+        ) => {
+          setDialogOpen(
+            open,
+          );
+
+          if (!open) {
+            resetForm();
+          }
+        }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              Simular investimento
+              {editingInvestment
+                ? "Editar investimento"
+                : "Adicionar investimento"}
             </DialogTitle>
 
             <DialogDescription>
-              Informe os dados abaixo para
-              criar uma projeção.
+              Informe qual investimento você possui e em qual categoria ele se encaixa.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="initial-value">
-                Valor inicial
+          <div className="max-h-[65vh] space-y-4 overflow-y-auto px-1">
+            {/* INVESTIMENTO */}
+
+            <div className="space-y-2">
+              <Label>
+                Qual investimento você possui?
               </Label>
 
-              <Input
-                id="initial-value"
-                type="number"
-                min="0"
-                step="0.01"
-                value={
-                  initialValue
+              <Select
+                value={name}
+                onValueChange={
+                  setName
                 }
-                onChange={(
-                  event,
-                ) =>
-                  setInitialValue(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="Ex.: 1000"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="monthly-contribution">
-                Aporte mensal
-              </Label>
-
-              <Input
-                id="monthly-contribution"
-                type="number"
-                min="0"
-                step="0.01"
-                value={
-                  monthlyContribution
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setMonthlyContribution(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="Ex.: 500"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="duration">
-                Duração em meses
-              </Label>
-
-              <Input
-                id="duration"
-                type="number"
-                min="1"
-                value={
-                  duration
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setDuration(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="Ex.: 60"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="annual-rate">
-                Rentabilidade anual estimada (%)
-              </Label>
-
-              <Input
-                id="annual-rate"
-                type="number"
-                min="0"
-                step="0.01"
-                value={
-                  annualRate
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setAnnualRate(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="Ex.: 10"
-              />
-            </div>
-
-            {simulationStarted &&
-            simulation ? (
-              <div className="rounded-xl bg-primary/10 p-4">
-                <p className="text-sm text-muted-foreground">
-                  Valor estimado ao final
-                </p>
-
-                <p className="mt-1 font-display text-2xl font-semibold text-primary">
-                  {formatCurrency(
-                    simulation.total,
-                  )}
-                </p>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">
-                      Total investido
-                    </p>
-
-                    <p className="mt-1 font-medium">
-                      {formatCurrency(
-                        simulation.totalInvested,
-                      )}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-muted-foreground">
-                      Rendimento estimado
-                    </p>
-
-                    <p className="mt-1 font-medium text-emerald-600">
-                      +
-                      {formatCurrency(
-                        simulation.earnings,
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <DialogFooter>
-            <Button
-              className="w-full"
-              onClick={
-                runSimulation
-              }
-              disabled={
-                !initialValue ||
-                !duration
-              }
-            >
-              <TrendingUp className="size-4" />
-
-              Simular investimento
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ===============================================
-          DIALOG REGISTRAR
-         =============================================== */}
-
-      <Dialog
-        open={registerOpen}
-        onOpenChange={
-          setRegisterOpen
-        }
-      >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              Registrar investimento
-            </DialogTitle>
-
-            <DialogDescription>
-              Adicione um investimento que
-              você já possui.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="investment-name">
-                Nome do investimento
-              </Label>
-
-              <Input
-                id="investment-name"
-                value={
-                  investmentName
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setInvestmentName(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="Ex.: Tesouro Selic"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="investment-type">
-                Tipo
-              </Label>
-
-              <select
-                id="investment-type"
-                value={
-                  investmentType
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setInvestmentType(
-                    event.target
-                      .value as InvestmentType,
-                  )
-                }
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option>
-                  Ação
-                </option>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Escolha um investimento" />
+                </SelectTrigger>
 
-                <option>
-                  FII
-                </option>
+                <SelectContent>
+                  {INVESTMENT_OPTIONS.map(
+                    (
+                      option,
+                    ) => (
+                      <SelectItem
+                        key={
+                          option
+                        }
+                        value={
+                          option
+                        }
+                      >
+                        {option}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
 
-                <option>
-                  Renda fixa
-                </option>
-
-                <option>
-                  Criptomoeda
-                </option>
-
-                <option>
-                  ETF
-                </option>
-
-                <option>
-                  Outro
-                </option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="invested-value">
-                Valor investido
-              </Label>
-
-              <Input
-                id="invested-value"
-                type="number"
-                min="0"
-                step="0.01"
-                value={
-                  investedValue
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setInvestedValue(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="Ex.: 5000"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="current-value">
-                Valor atual
-              </Label>
-
-              <Input
-                id="current-value"
-                type="number"
-                min="0"
-                step="0.01"
-                value={
-                  currentValue
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setCurrentValue(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="Opcional"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="investment-date">
-                Data do investimento
-              </Label>
-
-              <div className="relative">
-                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
+              {name ===
+              "Outro" ? (
                 <Input
-                  id="investment-date"
-                  type="date"
-                  className="pl-10"
-                  value={
-                    investmentDate
-                  }
+                  className="h-11"
+                  placeholder="Digite o nome do investimento"
                   onChange={(
                     event,
                   ) =>
-                    setInvestmentDate(
-                      event.target
+                    setName(
+                      event
+                        .target
                         .value,
                     )
                   }
                 />
+              ) : null}
+            </div>
+
+            {/* CATEGORIA */}
+
+            <div className="space-y-2">
+              <Label>
+                Em qual área?
+              </Label>
+
+              <Select
+                value={
+                  category
+                }
+                onValueChange={(
+                  value,
+                ) =>
+                  setCategory(
+                    value as InvestmentCategory,
+                  )
+                }
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {CATEGORIES.map(
+                    (
+                      item,
+                    ) => (
+                      <SelectItem
+                        key={
+                          item.value
+                        }
+                        value={
+                          item.value
+                        }
+                      >
+                        {item.label}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* INSTITUIÇÃO */}
+
+            <div className="space-y-2">
+              <Label>
+                Onde está investido?
+              </Label>
+
+              <Input
+                className="h-11"
+                value={
+                  institution
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setInstitution(
+                    event
+                      .target
+                      .value,
+                  )
+                }
+                placeholder="Ex: Nubank, Inter, XP..."
+              />
+            </div>
+
+            {/* VALORES */}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>
+                  Quanto você investiu?
+                </Label>
+
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  className="h-11"
+                  value={
+                    investedAmount
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setInvestedAmount(
+                      event
+                        .target
+                        .value,
+                    )
+                  }
+                  placeholder="0,00"
+                />
               </div>
+
+              <div className="space-y-2">
+                <Label>
+                  Qual o valor atual?
+                </Label>
+
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  className="h-11"
+                  value={
+                    currentAmount
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setCurrentAmount(
+                      event
+                        .target
+                        .value,
+                    )
+                  }
+                  placeholder="0,00"
+                />
+              </div>
+            </div>
+
+            {/* DATA */}
+
+            <div className="space-y-2">
+              <Label>
+                Data do investimento
+              </Label>
+
+              <Input
+                type="date"
+                className="h-11"
+                value={
+                  investmentDate
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setInvestmentDate(
+                    event
+                      .target
+                      .value,
+                  )
+                }
+              />
             </div>
           </div>
 
           <DialogFooter>
             <Button
-              className="w-full"
+              className="h-11 w-full"
               disabled={
-                !investmentName.trim() ||
-                !investedValue ||
-                Number(
-                  investedValue,
-                ) <= 0
+                saveMutation.isPending
               }
-              onClick={
-                registerInvestment
+              onClick={() =>
+                saveMutation.mutate()
               }
             >
-              <CheckCircle2 className="size-4" />
-
-              Registrar investimento
+              {saveMutation.isPending
+                ? "Salvando..."
+                : editingInvestment
+                  ? "Salvar alterações"
+                  : "Adicionar investimento"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1346,206 +1005,223 @@ function InvestmentsPage() {
 }
 
 /* =========================================================
-   COMPONENTE: CARD DE RESUMO
+   CARD DE RESUMO
    ========================================================= */
 
 function SummaryCard({
   title,
   value,
   icon,
-  positive = false,
-  negative = false,
 }: {
   title: string;
   value: string;
   icon: React.ReactNode;
-  positive?: boolean;
-  negative?: boolean;
 }) {
   return (
     <div className="surface p-5">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {title}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {title}
+          </p>
 
-        <div
-          className={cn(
-            "flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary",
+          <p className="mt-2 font-display text-2xl font-semibold">
+            {value}
+          </p>
+        </div>
 
-            positive &&
-              "bg-emerald-500/10 text-emerald-600",
-
-            negative &&
-              "bg-destructive/10 text-destructive",
-          )}
-        >
+        <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
           {icon}
         </div>
       </div>
-
-      <p
-        className={cn(
-          "mt-3 font-display text-2xl font-semibold",
-
-          positive &&
-            "text-emerald-600",
-
-          negative &&
-            "text-destructive",
-        )}
-      >
-        {value}
-      </p>
     </div>
   );
 }
 
 /* =========================================================
-   COMPONENTE: INFORMAÇÃO
+   CARD DE INVESTIMENTO
    ========================================================= */
 
-function InfoItem({
-  icon,
-  label,
-  value,
+function InvestmentCard({
+  investment,
+  onEdit,
+  onDelete,
+  deleting,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
+  investment: Investment;
+  onEdit: () => void;
+  onDelete: () => void;
+  deleting: boolean;
 }) {
   return (
-    <div className="p-5">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {icon}
+    <div className="surface p-5">
+      <div className="flex gap-4">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <InvestmentIcon
+            category={
+              investment.category
+            }
+          />
+        </div>
 
-        <span className="text-sm">
-          {label}
-        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="truncate font-display text-base font-semibold">
+                {
+                  investment.name
+                }
+              </h2>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                {getCategoryLabel(
+                  investment.category,
+                )}
+              </p>
+            </div>
+
+            <div className="flex shrink-0 gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={
+                  onEdit
+                }
+              >
+                <Pencil className="size-4" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={
+                  deleting
+                }
+                onClick={
+                  onDelete
+                }
+              >
+                <Trash2 className="size-4 text-destructive" />
+              </Button>
+            </div>
+          </div>
+
+          {investment.institution ? (
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <Building2 className="size-4" />
+
+              <span>
+                {
+                  investment.institution
+                }
+              </span>
+            </div>
+          ) : null}
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl bg-muted/50 p-3">
+              <p className="text-xs text-muted-foreground">
+                Investido
+              </p>
+
+              <p className="mt-1 font-semibold">
+                {formatCurrency(
+                  Number(
+                    investment.invested_amount,
+                  ),
+                )}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-muted/50 p-3">
+              <p className="text-xs text-muted-foreground">
+                Valor atual
+              </p>
+
+              <p className="mt-1 font-semibold">
+                {formatCurrency(
+                  Number(
+                    investment.current_amount,
+                  ),
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <p className="mt-3 font-medium">
-        {value}
-      </p>
     </div>
   );
 }
 
 /* =========================================================
-   COMPONENTE: INSIGHT
+   ÍCONE
    ========================================================= */
 
-function InvestmentInsight({
-  signal,
-  name,
-  risk,
+function InvestmentIcon({
+  category,
 }: {
-  signal:
-    | "positive"
-    | "attention"
-    | "risk";
-
-  name: string;
-  risk: string;
+  category: InvestmentCategory;
 }) {
-  if (
-    signal ===
-    "positive"
+  switch (
+    category
   ) {
-    return (
-      <div className="space-y-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-700">
-          <CheckCircle2 className="size-4" />
+    case "renda_fixa":
+      return (
+        <Landmark className="size-6" />
+      );
 
-          Sinais positivos
-        </div>
+    case "renda_variavel":
+      return (
+        <TrendingUp className="size-6" />
+      );
 
-        <p className="text-sm leading-6 text-muted-foreground">
-          {name} possui características
-          geralmente associadas a uma opção
-          de menor volatilidade em comparação
-          com investimentos de maior risco.
-          Ainda assim, condições de mercado,
-          inflação e taxas podem influenciar
-          os resultados.
-        </p>
+    case "fundos":
+      return (
+        <WalletCards className="size-6" />
+      );
 
-        <div className="rounded-xl bg-muted/50 p-4">
-          <p className="text-sm font-medium">
-            Pontos de atenção
-          </p>
+    case "cripto":
+      return (
+        <Coins className="size-6" />
+      );
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Analise prazo, liquidez e
-            rentabilidade antes de investir.
-          </p>
-        </div>
-      </div>
-    );
+    default:
+      return (
+        <TrendingUp className="size-6" />
+      );
   }
+}
 
-  if (
-    signal ===
-    "risk"
-  ) {
-    return (
-      <div className="space-y-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1.5 text-sm font-medium text-destructive">
-          <AlertTriangle className="size-4" />
+/* =========================================================
+   HELPERS
+   ========================================================= */
 
-          Alta volatilidade
-        </div>
-
-        <p className="text-sm leading-6 text-muted-foreground">
-          {name} apresenta um nível de risco
-          estimado como {risk.toLowerCase()}.
-          Isso significa que o valor pode
-          apresentar variações significativas
-          em períodos curtos.
-        </p>
-
-        <div className="rounded-xl bg-muted/50 p-4">
-          <p className="text-sm font-medium">
-            Pontos de atenção
-          </p>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Considere seu perfil de risco,
-            horizonte de investimento e
-            diversificação da carteira.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+function getCategoryLabel(
+  category: InvestmentCategory,
+) {
   return (
-    <div className="space-y-4">
-      <div className="inline-flex items-center gap-2 rounded-full bg-yellow-500/10 px-3 py-1.5 text-sm font-medium text-yellow-700">
-        <AlertTriangle className="size-4" />
+    CATEGORIES.find(
+      (item) =>
+        item.value ===
+        category,
+    )?.label ??
+    "Outro"
+  );
+}
 
-        Atenção e análise necessária
-      </div>
+function formatCurrency(
+  value: number,
+) {
+  return new Intl.NumberFormat(
+    "pt-BR",
+    {
+      style:
+        "currency",
 
-      <p className="text-sm leading-6 text-muted-foreground">
-        {name} pode apresentar oportunidades
-        e riscos dependendo do cenário
-        econômico e das características do
-        ativo. Não é possível garantir que
-        o investimento irá valorizar.
-      </p>
-
-      <div className="rounded-xl bg-muted/50 p-4">
-        <p className="text-sm font-medium">
-          Insight FinanLook
-        </p>
-
-        <p className="mt-1 text-sm text-muted-foreground">
-          Avalie indicadores, histórico,
-          riscos e seu objetivo financeiro
-          antes de tomar uma decisão.
-        </p>
-      </div>
-    </div>
+      currency:
+        "BRL",
+    },
+  ).format(
+    value,
   );
 }
