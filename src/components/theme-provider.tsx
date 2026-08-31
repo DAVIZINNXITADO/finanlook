@@ -19,9 +19,7 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme;
-  setTheme: (
-    theme: Theme,
-  ) => void;
+  setTheme: (theme: Theme) => void;
 };
 
 const ThemeProviderContext =
@@ -29,7 +27,7 @@ const ThemeProviderContext =
     ThemeProviderState | undefined
   >(undefined);
 
-function getSystemTheme() {
+function getSystemTheme(): "light" | "dark" {
   return window.matchMedia(
     "(prefers-color-scheme: dark)",
   ).matches
@@ -118,9 +116,7 @@ export function ThemeProvider({
       newTheme,
     );
 
-    setThemeState(
-      newTheme,
-    );
+    setThemeState(newTheme);
   }
 
   return (
@@ -141,7 +137,7 @@ export function useTheme() {
       ThemeProviderContext,
     );
 
-  if (!context) {
+  if (context === undefined) {
     throw new Error(
       "useTheme must be used inside ThemeProvider.",
     );
