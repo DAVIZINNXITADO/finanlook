@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   Check,
@@ -12,7 +12,6 @@ import {
   Monitor,
   Moon,
   Palette,
-  Pencil,
   Save,
   ShieldCheck,
   Sun,
@@ -33,9 +32,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme-provider";
 
 export const Route = createFileRoute(
   "/_authenticated/configuracoes",
@@ -56,88 +57,76 @@ export const Route = createFileRoute(
   component: SettingsPage,
 });
 
-type Theme = "light" | "dark" | "system";
-
 function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: profile } = useProfile();
 
-  const [theme, setTheme] =
-    useState<Theme>("system");
+  const {
+    theme,
+    setTheme,
+  } = useTheme();
 
   const [
     editProfileOpen,
     setEditProfileOpen,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     editEmailOpen,
     setEditEmailOpen,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     editPasswordOpen,
     setEditPasswordOpen,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     profileName,
     setProfileName,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     profileUsername,
     setProfileUsername,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     newEmail,
     setNewEmail,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     newPassword,
     setNewPassword,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     confirmPassword,
     setConfirmPassword,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     showPassword,
     setShowPassword,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     savingProfile,
     setSavingProfile,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     savingEmail,
     setSavingEmail,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     savingPassword,
     setSavingPassword,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   /* =======================================================
      PERFIL
@@ -162,10 +151,7 @@ function SettingsPage() {
     const username =
       profileUsername
         .trim()
-        .replace(
-          /^@/,
-          "",
-        );
+        .replace(/^@/, "");
 
     if (!name) {
       toast.error(
@@ -196,12 +182,12 @@ function SettingsPage() {
         authError ||
         !authData.user
       ) {
-        throw new Error();
+        throw new Error(
+          "Usuário não autenticado.",
+        );
       }
 
-      const {
-        error,
-      } =
+      const { error } =
         await supabase
           .from("profiles")
           .update({
@@ -237,7 +223,9 @@ function SettingsPage() {
       );
 
       setEditProfileOpen(false);
-    } catch {
+    } catch (error) {
+      console.error(error);
+
       toast.error(
         "Não foi possível atualizar seu perfil.",
       );
@@ -272,9 +260,7 @@ function SettingsPage() {
       return;
     }
 
-    if (
-      !email.includes("@")
-    ) {
+    if (!email.includes("@")) {
       toast.error(
         "Informe um email válido.",
       );
@@ -285,9 +271,7 @@ function SettingsPage() {
     setSavingEmail(true);
 
     try {
-      const {
-        error,
-      } =
+      const { error } =
         await supabase.auth.updateUser({
           email,
         });
@@ -301,7 +285,9 @@ function SettingsPage() {
       );
 
       setEditEmailOpen(false);
-    } catch {
+    } catch (error) {
+      console.error(error);
+
       toast.error(
         "Não foi possível alterar seu email.",
       );
@@ -347,12 +333,9 @@ function SettingsPage() {
     setSavingPassword(true);
 
     try {
-      const {
-        error,
-      } =
+      const { error } =
         await supabase.auth.updateUser({
-          password:
-            newPassword,
+          password: newPassword,
         });
 
       if (error) {
@@ -365,18 +348,17 @@ function SettingsPage() {
 
       setNewPassword("");
       setConfirmPassword("");
+      setShowPassword(false);
 
-      setEditPasswordOpen(
-        false,
-      );
-    } catch {
+      setEditPasswordOpen(false);
+    } catch (error) {
+      console.error(error);
+
       toast.error(
         "Não foi possível alterar sua senha.",
       );
     } finally {
-      setSavingPassword(
-        false,
-      );
+      setSavingPassword(false);
     }
   }
 
@@ -385,17 +367,12 @@ function SettingsPage() {
      ======================================================= */
 
   function changeTheme(
-    value: Theme,
+    value:
+      | "light"
+      | "dark"
+      | "system",
   ) {
     setTheme(value);
-
-    /*
-     * Por enquanto a preferência fica
-     * nesta página. Quando conectarmos
-     * a preferência global do tema,
-     * esse estado pode ser integrado
-     * ao ThemeProvider.
-     */
 
     toast.success(
       "Preferência de aparência atualizada.",
@@ -412,13 +389,20 @@ function SettingsPage() {
 
       queryClient.clear();
 
-      await supabase.auth.signOut();
+      const { error } =
+        await supabase.auth.signOut();
+
+      if (error) {
+        throw error;
+      }
 
       navigate({
         to: "/auth",
         replace: true,
       });
-    } catch {
+    } catch (error) {
+      console.error(error);
+
       toast.error(
         "Não foi possível sair da conta.",
       );
@@ -436,9 +420,7 @@ function SettingsPage() {
         subtitle="Gerencie sua conta e personalize sua experiência no FinanLook."
       />
 
-      {/* =================================================
-          PERFIL
-         ================================================= */}
+      {/* PERFIL */}
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
@@ -495,9 +477,7 @@ function SettingsPage() {
         </div>
       </section>
 
-      {/* =================================================
-          SEGURANÇA
-         ================================================= */}
+      {/* SEGURANÇA */}
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
@@ -518,30 +498,24 @@ function SettingsPage() {
           </div>
         </div>
 
-        <div>
-          <SettingsRow
-            icon={
-              <LockKeyhole className="size-5" />
-            }
-            title="Senha"
-            description="Altere sua senha de acesso."
-            action="Alterar"
-            onClick={() => {
-              setNewPassword("");
-              setConfirmPassword("");
-              setShowPassword(false);
+        <SettingsRow
+          icon={
+            <LockKeyhole className="size-5" />
+          }
+          title="Senha"
+          description="Altere sua senha de acesso."
+          action="Alterar"
+          onClick={() => {
+            setNewPassword("");
+            setConfirmPassword("");
+            setShowPassword(false);
 
-              setEditPasswordOpen(
-                true,
-              );
-            }}
-          />
-        </div>
+            setEditPasswordOpen(true);
+          }}
+        />
       </section>
 
-      {/* =================================================
-          APARÊNCIA
-         ================================================= */}
+      {/* APARÊNCIA */}
 
       <section className="surface p-5">
         <div className="flex items-start gap-3">
@@ -567,13 +541,10 @@ function SettingsPage() {
             }
             title="Claro"
             active={
-              theme ===
-              "light"
+              theme === "light"
             }
             onClick={() =>
-              changeTheme(
-                "light",
-              )
+              changeTheme("light")
             }
           />
 
@@ -583,13 +554,10 @@ function SettingsPage() {
             }
             title="Escuro"
             active={
-              theme ===
-              "dark"
+              theme === "dark"
             }
             onClick={() =>
-              changeTheme(
-                "dark",
-              )
+              changeTheme("dark")
             }
           />
 
@@ -599,21 +567,16 @@ function SettingsPage() {
             }
             title="Sistema"
             active={
-              theme ===
-              "system"
+              theme === "system"
             }
             onClick={() =>
-              changeTheme(
-                "system",
-              )
+              changeTheme("system")
             }
           />
         </div>
       </section>
 
-      {/* =================================================
-          CONTA
-         ================================================= */}
+      {/* CONTA */}
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
@@ -648,9 +611,7 @@ function SettingsPage() {
         />
       </section>
 
-      {/* =================================================
-          DIALOG PERFIL
-         ================================================= */}
+      {/* DIALOG PERFIL */}
 
       <Dialog
         open={editProfileOpen}
@@ -678,15 +639,10 @@ function SettingsPage() {
               <Input
                 id="name"
                 className="h-11"
-                value={
-                  profileName
-                }
-                onChange={(
-                  event,
-                ) =>
+                value={profileName}
+                onChange={(event) =>
                   setProfileName(
-                    event.target
-                      .value,
+                    event.target.value,
                   )
                 }
                 placeholder="Seu nome"
@@ -706,15 +662,10 @@ function SettingsPage() {
                 <Input
                   id="username"
                   className="h-11 pl-7"
-                  value={
-                    profileUsername
-                  }
-                  onChange={(
-                    event,
-                  ) =>
+                  value={profileUsername}
+                  onChange={(event) =>
                     setProfileUsername(
-                      event.target
-                        .value,
+                      event.target.value,
                     )
                   }
                   placeholder="seuusername"
@@ -726,9 +677,7 @@ function SettingsPage() {
           <DialogFooter>
             <Button
               className="h-11 w-full"
-              disabled={
-                savingProfile
-              }
+              disabled={savingProfile}
               onClick={() =>
                 void saveProfile()
               }
@@ -743,9 +692,7 @@ function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* =================================================
-          DIALOG EMAIL
-         ================================================= */}
+      {/* DIALOG EMAIL */}
 
       <Dialog
         open={editEmailOpen}
@@ -773,15 +720,10 @@ function SettingsPage() {
               id="email"
               type="email"
               className="h-11"
-              value={
-                newEmail
-              }
-              onChange={(
-                event,
-              ) =>
+              value={newEmail}
+              onChange={(event) =>
                 setNewEmail(
-                  event.target
-                    .value,
+                  event.target.value,
                 )
               }
               placeholder="voce@email.com"
@@ -791,9 +733,7 @@ function SettingsPage() {
           <DialogFooter>
             <Button
               className="h-11 w-full"
-              disabled={
-                savingEmail
-              }
+              disabled={savingEmail}
               onClick={() =>
                 void saveEmail()
               }
@@ -808,9 +748,7 @@ function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* =================================================
-          DIALOG SENHA
-         ================================================= */}
+      {/* DIALOG SENHA */}
 
       <Dialog
         open={editPasswordOpen}
@@ -844,15 +782,10 @@ function SettingsPage() {
                       : "password"
                   }
                   className="h-11 pr-11"
-                  value={
-                    newPassword
-                  }
-                  onChange={(
-                    event,
-                  ) =>
+                  value={newPassword}
+                  onChange={(event) =>
                     setNewPassword(
-                      event.target
-                        .value,
+                      event.target.value,
                     )
                   }
                 />
@@ -861,9 +794,7 @@ function SettingsPage() {
                   type="button"
                   onClick={() =>
                     setShowPassword(
-                      (
-                        current,
-                      ) =>
+                      (current) =>
                         !current,
                     )
                   }
@@ -892,15 +823,10 @@ function SettingsPage() {
                     : "password"
                 }
                 className="h-11"
-                value={
-                  confirmPassword
-                }
-                onChange={(
-                  event,
-                ) =>
+                value={confirmPassword}
+                onChange={(event) =>
                   setConfirmPassword(
-                    event.target
-                      .value,
+                    event.target.value,
                   )
                 }
               />
@@ -910,9 +836,7 @@ function SettingsPage() {
           <DialogFooter>
             <Button
               className="h-11 w-full"
-              disabled={
-                savingPassword
-              }
+              disabled={savingPassword}
               onClick={() =>
                 void savePassword()
               }
@@ -942,7 +866,7 @@ function SettingsRow({
   destructive = false,
   onClick,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
   action: string;
@@ -999,7 +923,7 @@ function SettingsRow({
 }
 
 /* =========================================================
-   COMPONENTE: TEMA
+   COMPONENTE: OPÇÃO DE TEMA
    ========================================================= */
 
 function ThemeOption({
@@ -1008,7 +932,7 @@ function ThemeOption({
   active,
   onClick,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   active: boolean;
   onClick: () => void;
