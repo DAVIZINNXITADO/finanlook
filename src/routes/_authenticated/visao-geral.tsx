@@ -157,7 +157,7 @@ function Overview() {
 
       return {
         month,
-        label: monthLabel(month).split(" de ")[0].slice(0, 3),
+        label: (monthLabel(month).split(" de ")[0] ?? "").slice(0, 3),
         income: data.income,
         expenses: data.expenses,
         saved: data.saved,

@@ -284,7 +284,7 @@ const MONTH_NAMES = [
 export function monthLabel(
   key: string,
 ): string {
-  const [year, month] = key
+  const [year = NaN, month = NaN] = key
     .split("-")
     .map(Number);
 
@@ -297,7 +297,7 @@ export function monthLabel(
     return "Período inválido";
   }
 
-  const name = MONTH_NAMES[month - 1];
+  const name = MONTH_NAMES[month - 1] ?? "";
 
   return `${name.charAt(0).toUpperCase()}${name.slice(
     1,
@@ -307,7 +307,7 @@ export function monthLabel(
 export function shortMonthLabel(
   key: string,
 ): string {
-  const [, month] = key
+  const [, month = NaN] = key
     .split("-")
     .map(Number);
 
@@ -319,7 +319,7 @@ export function shortMonthLabel(
     return "";
   }
 
-  return MONTH_NAMES[month - 1].slice(
+  return (MONTH_NAMES[month - 1] ?? "").slice(
     0,
     3,
   );
@@ -329,7 +329,7 @@ export function addMonths(
   key: string,
   delta: number,
 ): string {
-  const [year, month] = key
+  const [year = NaN, month = NaN] = key
     .split("-")
     .map(Number);
 
