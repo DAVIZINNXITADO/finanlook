@@ -30,43 +30,11 @@ const ThemeProviderContext =
   >(undefined);
 
 function getSystemTheme() {
-  if (
-    typeof window === "undefined"
-  ) {
-    return "light";
-  }
-
   return window.matchMedia(
     "(prefers-color-scheme: dark)",
   ).matches
     ? "dark"
     : "light";
-}
-
-function getStoredTheme(
-  storageKey: string,
-  defaultTheme: Theme,
-): Theme {
-  if (
-    typeof window === "undefined"
-  ) {
-    return defaultTheme;
-  }
-
-  const savedTheme =
-    window.localStorage.getItem(
-      storageKey,
-    );
-
-  if (
-    savedTheme === "light" ||
-    savedTheme === "dark" ||
-    savedTheme === "system"
-  ) {
-    return savedTheme;
-  }
-
-  return defaultTheme;
 }
 
 export function ThemeProvider({
@@ -75,12 +43,22 @@ export function ThemeProvider({
   storageKey = "finanlook-theme",
 }: ThemeProviderProps) {
   const [theme, setThemeState] =
-    useState<Theme>(() =>
-      getStoredTheme(
-        storageKey,
-        defaultTheme,
-      ),
-    );
+    useState<Theme>(() => {
+      const savedTheme =
+        localStorage.getItem(
+          storageKey,
+        ) as Theme | null;
+
+      if (
+        savedTheme === "light" ||
+        savedTheme === "dark" ||
+        savedTheme === "system"
+      ) {
+        return savedTheme;
+      }
+
+      return defaultTheme;
+    });
 
   useEffect(() => {
     const root =
@@ -106,9 +84,7 @@ export function ThemeProvider({
 
     applyTheme(theme);
 
-    if (
-      theme !== "system"
-    ) {
+    if (theme !== "system") {
       return;
     }
 
@@ -137,16 +113,14 @@ export function ThemeProvider({
   function setTheme(
     newTheme: Theme,
   ) {
-    if (
-      typeof window !== "undefined"
-    ) {
-      window.localStorage.setItem(
-        storageKey,
-        newTheme,
-      );
-    }
+    localStorage.setItem(
+      storageKey,
+      newTheme,
+    );
 
-    setThemeState(newTheme);
+    setThemeState(
+      newTheme,
+    );
   }
 
   return (
@@ -167,9 +141,7 @@ export function useTheme() {
       ThemeProviderContext,
     );
 
-  if (
-    context === undefined
-  ) {
+  if (!context) {
     throw new Error(
       "useTheme must be used inside ThemeProvider.",
     );

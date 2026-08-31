@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Check,
@@ -12,6 +12,7 @@ import {
   Monitor,
   Moon,
   Palette,
+  Pencil,
   Save,
   ShieldCheck,
   Sun,
@@ -24,7 +25,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -59,46 +58,13 @@ export const Route = createFileRoute(
 
 type Theme = "light" | "dark" | "system";
 
-function getSystemTheme(): "light" | "dark" {
-  return window.matchMedia(
-    "(prefers-color-scheme: dark)",
-  ).matches
-    ? "dark"
-    : "light";
-}
-
-function applyTheme(theme: Theme) {
-  const root =
-    window.document.documentElement;
-
-  root.classList.remove(
-    "light",
-    "dark",
-  );
-
-  const resolvedTheme =
-    theme === "system"
-      ? getSystemTheme()
-      : theme;
-
-  root.classList.add(
-    resolvedTheme,
-  );
-}
-
 function SettingsPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const queryClient =
-    useQueryClient();
+  const { data: profile } = useProfile();
 
-  const { data: profile } =
-    useProfile();
-
-  const [
-    theme,
-    setTheme,
-  ] =
+  const [theme, setTheme] =
     useState<Theme>("system");
 
   const [
@@ -173,104 +139,9 @@ function SettingsPage() {
   ] =
     useState(false);
 
-  const [
-    savingTheme,
-    setSavingTheme,
-  ] =
-    useState(false);
-
-  /*
-   * =====================================================
-   * CARREGAR TEMA
-   * =====================================================
-   */
-
-  useEffect(() => {
-    const savedTheme =
-      profile?.theme;
-
-    if (
-      savedTheme === "light" ||
-      savedTheme === "dark" ||
-      savedTheme === "system"
-    ) {
-      setTheme(savedTheme);
-
-      applyTheme(
-        savedTheme,
-      );
-
-      return;
-    }
-
-    const localTheme =
-      localStorage.getItem(
-        "finanlook-theme",
-      );
-
-    if (
-      localTheme === "light" ||
-      localTheme === "dark" ||
-      localTheme === "system"
-    ) {
-      setTheme(localTheme);
-
-      applyTheme(
-        localTheme,
-      );
-
-      return;
-    }
-
-    applyTheme("system");
-  }, [
-    profile?.theme,
-  ]);
-
-  /*
-   * =====================================================
-   * ACOMPANHAR ALTERAÇÃO DO SISTEMA
-   * =====================================================
-   */
-
-  useEffect(() => {
-    if (
-      theme !== "system"
-    ) {
-      return;
-    }
-
-    const mediaQuery =
-      window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      );
-
-    function handleChange() {
-      applyTheme(
-        "system",
-      );
-    }
-
-    mediaQuery.addEventListener(
-      "change",
-      handleChange,
-    );
-
-    return () => {
-      mediaQuery.removeEventListener(
-        "change",
-        handleChange,
-      );
-    };
-  }, [
-    theme,
-  ]);
-
-  /*
-   * =====================================================
-   * PERFIL
-   * =====================================================
-   */
+  /* =======================================================
+     PERFIL
+     ======================================================= */
 
   function openProfileDialog() {
     setProfileName(
@@ -325,12 +196,12 @@ function SettingsPage() {
         authError ||
         !authData.user
       ) {
-        throw new Error(
-          "Usuário não autenticado.",
-        );
+        throw new Error();
       }
 
-      const { error } =
+      const {
+        error,
+      } =
         await supabase
           .from("profiles")
           .update({
@@ -366,9 +237,7 @@ function SettingsPage() {
       );
 
       setEditProfileOpen(false);
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       toast.error(
         "Não foi possível atualizar seu perfil.",
       );
@@ -377,11 +246,9 @@ function SettingsPage() {
     }
   }
 
-  /*
-   * =====================================================
-   * EMAIL
-   * =====================================================
-   */
+  /* =======================================================
+     EMAIL
+     ======================================================= */
 
   function openEmailDialog() {
     setNewEmail(
@@ -418,7 +285,9 @@ function SettingsPage() {
     setSavingEmail(true);
 
     try {
-      const { error } =
+      const {
+        error,
+      } =
         await supabase.auth.updateUser({
           email,
         });
@@ -432,9 +301,7 @@ function SettingsPage() {
       );
 
       setEditEmailOpen(false);
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       toast.error(
         "Não foi possível alterar seu email.",
       );
@@ -443,11 +310,9 @@ function SettingsPage() {
     }
   }
 
-  /*
-   * =====================================================
-   * SENHA
-   * =====================================================
-   */
+  /* =======================================================
+     SENHA
+     ======================================================= */
 
   async function savePassword() {
     if (!newPassword) {
@@ -482,7 +347,9 @@ function SettingsPage() {
     setSavingPassword(true);
 
     try {
-      const { error } =
+      const {
+        error,
+      } =
         await supabase.auth.updateUser({
           password:
             newPassword,
@@ -502,123 +369,42 @@ function SettingsPage() {
       setEditPasswordOpen(
         false,
       );
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       toast.error(
         "Não foi possível alterar sua senha.",
       );
     } finally {
-      setSavingPassword(false);
+      setSavingPassword(
+        false,
+      );
     }
   }
 
-  /*
-   * =====================================================
-   * TEMA
-   * =====================================================
-   */
+  /* =======================================================
+     TEMA
+     ======================================================= */
 
-  async function changeTheme(
-    newTheme: Theme,
+  function changeTheme(
+    value: Theme,
   ) {
-    const previousTheme =
-      theme;
+    setTheme(value);
 
     /*
-     * Aplica imediatamente.
+     * Por enquanto a preferência fica
+     * nesta página. Quando conectarmos
+     * a preferência global do tema,
+     * esse estado pode ser integrado
+     * ao ThemeProvider.
      */
 
-    setTheme(
-      newTheme,
+    toast.success(
+      "Preferência de aparência atualizada.",
     );
-
-    applyTheme(
-      newTheme,
-    );
-
-    localStorage.setItem(
-      "finanlook-theme",
-      newTheme,
-    );
-
-    setSavingTheme(true);
-
-    try {
-      const {
-        data: authData,
-        error: authError,
-      } =
-        await supabase.auth.getUser();
-
-      if (
-        authError ||
-        !authData.user
-      ) {
-        throw new Error(
-          "Usuário não autenticado.",
-        );
-      }
-
-      const { error } =
-        await supabase
-          .from("profiles")
-          .update({
-            theme:
-              newTheme,
-          })
-          .eq(
-            "id",
-            authData.user.id,
-          );
-
-      if (error) {
-        throw error;
-      }
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "profile",
-        ],
-      });
-
-      toast.success(
-        "Preferência de aparência salva.",
-      );
-    } catch (error) {
-      console.error(error);
-
-      /*
-       * Volta ao tema anterior caso
-       * o Supabase falhe.
-       */
-
-      setTheme(
-        previousTheme,
-      );
-
-      applyTheme(
-        previousTheme,
-      );
-
-      localStorage.setItem(
-        "finanlook-theme",
-        previousTheme,
-      );
-
-      toast.error(
-        "Não foi possível salvar sua preferência de aparência.",
-      );
-    } finally {
-      setSavingTheme(false);
-    }
   }
 
-  /*
-   * =====================================================
-   * SAIR
-   * =====================================================
-   */
+  /* =======================================================
+     SAIR
+     ======================================================= */
 
   async function signOut() {
     try {
@@ -626,31 +412,22 @@ function SettingsPage() {
 
       queryClient.clear();
 
-      const { error } =
-        await supabase.auth.signOut();
-
-      if (error) {
-        throw error;
-      }
+      await supabase.auth.signOut();
 
       navigate({
         to: "/auth",
         replace: true,
       });
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       toast.error(
         "Não foi possível sair da conta.",
       );
     }
   }
 
-  /*
-   * =====================================================
-   * RENDER
-   * =====================================================
-   */
+  /* =======================================================
+     RENDER
+     ======================================================= */
 
   return (
     <div className="space-y-6">
@@ -659,7 +436,9 @@ function SettingsPage() {
         subtitle="Gerencie sua conta e personalize sua experiência no FinanLook."
       />
 
-      {/* PERFIL */}
+      {/* =================================================
+          PERFIL
+         ================================================= */}
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
@@ -716,7 +495,9 @@ function SettingsPage() {
         </div>
       </section>
 
-      {/* SEGURANÇA */}
+      {/* =================================================
+          SEGURANÇA
+         ================================================= */}
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
@@ -737,26 +518,30 @@ function SettingsPage() {
           </div>
         </div>
 
-        <SettingsRow
-          icon={
-            <LockKeyhole className="size-5" />
-          }
-          title="Senha"
-          description="Altere sua senha de acesso."
-          action="Alterar"
-          onClick={() => {
-            setNewPassword("");
-            setConfirmPassword("");
-            setShowPassword(false);
+        <div>
+          <SettingsRow
+            icon={
+              <LockKeyhole className="size-5" />
+            }
+            title="Senha"
+            description="Altere sua senha de acesso."
+            action="Alterar"
+            onClick={() => {
+              setNewPassword("");
+              setConfirmPassword("");
+              setShowPassword(false);
 
-            setEditPasswordOpen(
-              true,
-            );
-          }}
-        />
+              setEditPasswordOpen(
+                true,
+              );
+            }}
+          />
+        </div>
       </section>
 
-      {/* APARÊNCIA */}
+      {/* =================================================
+          APARÊNCIA
+         ================================================= */}
 
       <section className="surface p-5">
         <div className="flex items-start gap-3">
@@ -782,13 +567,11 @@ function SettingsPage() {
             }
             title="Claro"
             active={
-              theme === "light"
-            }
-            disabled={
-              savingTheme
+              theme ===
+              "light"
             }
             onClick={() =>
-              void changeTheme(
+              changeTheme(
                 "light",
               )
             }
@@ -800,13 +583,11 @@ function SettingsPage() {
             }
             title="Escuro"
             active={
-              theme === "dark"
-            }
-            disabled={
-              savingTheme
+              theme ===
+              "dark"
             }
             onClick={() =>
-              void changeTheme(
+              changeTheme(
                 "dark",
               )
             }
@@ -818,27 +599,21 @@ function SettingsPage() {
             }
             title="Sistema"
             active={
-              theme === "system"
-            }
-            disabled={
-              savingTheme
+              theme ===
+              "system"
             }
             onClick={() =>
-              void changeTheme(
+              changeTheme(
                 "system",
               )
             }
           />
         </div>
-
-        {savingTheme ? (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Salvando preferência...
-          </p>
-        ) : null}
       </section>
 
-      {/* CONTA */}
+      {/* =================================================
+          CONTA
+         ================================================= */}
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
@@ -873,7 +648,9 @@ function SettingsPage() {
         />
       </section>
 
-      {/* DIALOG PERFIL */}
+      {/* =================================================
+          DIALOG PERFIL
+         ================================================= */}
 
       <Dialog
         open={editProfileOpen}
@@ -908,7 +685,8 @@ function SettingsPage() {
                   event,
                 ) =>
                   setProfileName(
-                    event.target.value,
+                    event.target
+                      .value,
                   )
                 }
                 placeholder="Seu nome"
@@ -935,7 +713,8 @@ function SettingsPage() {
                     event,
                   ) =>
                     setProfileUsername(
-                      event.target.value,
+                      event.target
+                        .value,
                     )
                   }
                   placeholder="seuusername"
@@ -964,7 +743,9 @@ function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* DIALOG EMAIL */}
+      {/* =================================================
+          DIALOG EMAIL
+         ================================================= */}
 
       <Dialog
         open={editEmailOpen}
@@ -999,7 +780,8 @@ function SettingsPage() {
                 event,
               ) =>
                 setNewEmail(
-                  event.target.value,
+                  event.target
+                    .value,
                 )
               }
               placeholder="voce@email.com"
@@ -1026,7 +808,9 @@ function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* DIALOG SENHA */}
+      {/* =================================================
+          DIALOG SENHA
+         ================================================= */}
 
       <Dialog
         open={editPasswordOpen}
@@ -1067,7 +851,8 @@ function SettingsPage() {
                     event,
                   ) =>
                     setNewPassword(
-                      event.target.value,
+                      event.target
+                        .value,
                     )
                   }
                 />
@@ -1114,7 +899,8 @@ function SettingsPage() {
                   event,
                 ) =>
                   setConfirmPassword(
-                    event.target.value,
+                    event.target
+                      .value,
                   )
                 }
               />
@@ -1144,11 +930,9 @@ function SettingsPage() {
   );
 }
 
-/*
- * =========================================================
- * COMPONENTE: LINHA DE CONFIGURAÇÃO
- * =========================================================
- */
+/* =========================================================
+   COMPONENTE: LINHA DE CONFIGURAÇÃO
+   ========================================================= */
 
 function SettingsRow({
   icon,
@@ -1214,37 +998,30 @@ function SettingsRow({
   );
 }
 
-/*
- * =========================================================
- * COMPONENTE: OPÇÃO DE TEMA
- * =========================================================
- */
+/* =========================================================
+   COMPONENTE: TEMA
+   ========================================================= */
 
 function ThemeOption({
   icon,
   title,
   active,
-  disabled = false,
   onClick,
 }: {
   icon: React.ReactNode;
   title: string;
   active: boolean;
-  disabled?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
       className={cn(
         "relative flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-sm font-medium transition-all",
         active
           ? "border-primary bg-primary/10 text-primary"
           : "hover:bg-muted/50",
-        disabled &&
-          "cursor-not-allowed opacity-60",
       )}
     >
       {active ? (
@@ -1255,9 +1032,7 @@ function ThemeOption({
 
       {icon}
 
-      <span>
-        {title}
-      </span>
+      <span>{title}</span>
     </button>
   );
 }
