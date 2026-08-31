@@ -84,12 +84,12 @@ function ErrorComponent({
             Tentar novamente
           </button>
 
-          <Link
-            to="/"
+          <a
+            href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Ir para o início
-          </Link>
+          </a>
         </div>
       </div>
     </div>
@@ -188,7 +188,8 @@ function RootComponent() {
   const { queryClient } =
     Route.useRouteContext();
 
-  const router = useRouter();
+  const router =
+    useRouter();
 
   useEffect(() => {
     const { data } =
@@ -204,7 +205,9 @@ function RootComponent() {
 
           void router.invalidate();
 
-          if (event !== "SIGNED_OUT") {
+          if (
+            event !== "SIGNED_OUT"
+          ) {
             void queryClient.invalidateQueries();
           }
         },
