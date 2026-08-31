@@ -1,5 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import {
+  supabase,
+} from "@/integrations/supabase/client";
+
 import type {
   Account,
   Goal,
@@ -10,33 +18,64 @@ import type {
   SalaryPlan,
   Transaction,
 } from "./finance";
-import { currentMonthKey, todayISO } from "./finance";
+
+import {
+  currentMonthKey,
+  todayISO,
+} from "./finance";
+
+/* =========================================================
+   USUÁRIO
+   ========================================================= */
 
 export function useUser() {
   return useQuery({
     queryKey: ["auth-user"],
+
     queryFn: async () => {
-      const { data } = await supabase.auth.getUser();
+      const { data } =
+        await supabase.auth.getUser();
+
       return data.user ?? null;
     },
+
     staleTime: 30_000,
   });
 }
 
+/* =========================================================
+   PERFIL
+   ========================================================= */
+
 export function useProfile() {
   return useQuery({
     queryKey: ["profile"],
+
     queryFn: async (): Promise<Profile | null> => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) return null;
+      const { data: auth } =
+        await supabase.auth.getUser();
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", auth.user.id)
-        .maybeSingle();
+      if (!auth.user) {
+        return null;
+      }
 
-      if (error) throw error;
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("profiles")
+          .select("*")
+          .eq(
+            "id",
+            auth.user.id,
+          )
+          .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
       return data;
     },
   });
@@ -49,13 +88,26 @@ export function useProfile() {
 export function useAccounts() {
   return useQuery({
     queryKey: ["accounts"],
-    queryFn: async (): Promise<Account[]> => {
-      const { data, error } = await supabase
-        .from("accounts")
-        .select("*")
-        .order("created_at", { ascending: true });
 
-      if (error) throw error;
+    queryFn: async (): Promise<Account[]> => {
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("accounts")
+          .select("*")
+          .order(
+            "created_at",
+            {
+              ascending: true,
+            },
+          );
+
+      if (error) {
+        throw error;
+      }
+
       return data ?? [];
     },
   });
@@ -69,7 +121,8 @@ export type AccountInput = {
 };
 
 export function useSaveAccount() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
     mutationFn: async ({
@@ -79,54 +132,92 @@ export function useSaveAccount() {
       id?: string | undefined;
       values: AccountInput;
     }) => {
-      const user_id = await requireUserId();
+      const user_id =
+        await requireUserId();
 
       if (id) {
-        const { error } = await supabase
-          .from("accounts")
-          .update(values)
-          .eq("id", id)
-          .eq("user_id", user_id);
+        const { error } =
+          await supabase
+            .from("accounts")
+            .update(values)
+            .eq(
+              "id",
+              id,
+            )
+            .eq(
+              "user_id",
+              user_id,
+            );
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
+
         return;
       }
 
-      const { error } = await supabase
-        .from("accounts")
-        .insert({
-          ...values,
-          user_id,
-          balance_adjustment: values.balance_adjustment ?? 0,
-        });
+      const { error } =
+        await supabase
+          .from("accounts")
+          .insert({
+            ...values,
+            user_id,
 
-      if (error) throw error;
+            balance_adjustment:
+              values.balance_adjustment ??
+              0,
+          });
+
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
 
 export function useDeleteAccount() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const user_id = await requireUserId();
+    mutationFn: async (
+      id: string,
+    ) => {
+      const user_id =
+        await requireUserId();
 
       /*
        * Não deixa apagar uma conta que ainda possui
        * movimentações vinculadas.
        */
-      const { count, error: countError } = await supabase
-        .from("transactions")
-        .select("id", {
-          count: "exact",
-          head: true,
-        })
-        .eq("account_id", id)
-        .eq("user_id", user_id);
 
-      if (countError) throw countError;
+      const {
+        count,
+        error: countError,
+      } =
+        await supabase
+          .from("transactions")
+          .select(
+            "id",
+            {
+              count: "exact",
+              head: true,
+            },
+          )
+          .eq(
+            "account_id",
+            id,
+          )
+          .eq(
+            "user_id",
+            user_id,
+          );
+
+      if (countError) {
+        throw countError;
+      }
 
       if ((count ?? 0) > 0) {
         throw new Error(
@@ -134,14 +225,24 @@ export function useDeleteAccount() {
         );
       }
 
-      const { error } = await supabase
-        .from("accounts")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user_id);
+      const { error } =
+        await supabase
+          .from("accounts")
+          .delete()
+          .eq(
+            "id",
+            id,
+          )
+          .eq(
+            "user_id",
+            user_id,
+          );
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
@@ -153,14 +254,32 @@ export function useDeleteAccount() {
 export function useTransactions() {
   return useQuery({
     queryKey: ["transactions"],
-    queryFn: async (): Promise<Transaction[]> => {
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*")
-        .order("date", { ascending: false })
-        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+    queryFn: async (): Promise<Transaction[]> => {
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("transactions")
+          .select("*")
+          .order(
+            "date",
+            {
+              ascending: false,
+            },
+          )
+          .order(
+            "created_at",
+            {
+              ascending: false,
+            },
+          );
+
+      if (error) {
+        throw error;
+      }
+
       return data ?? [];
     },
   });
@@ -177,7 +296,8 @@ export type TransactionInput = {
 };
 
 export function useSaveTransaction() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
     mutationFn: async ({
@@ -187,49 +307,266 @@ export function useSaveTransaction() {
       id?: string | undefined;
       values: TransactionInput;
     }) => {
-      const user_id = await requireUserId();
+      const user_id =
+        await requireUserId();
 
       if (id) {
-        const { error } = await supabase
-          .from("transactions")
-          .update(values)
-          .eq("id", id)
-          .eq("user_id", user_id);
+        const { error } =
+          await supabase
+            .from("transactions")
+            .update(values)
+            .eq(
+              "id",
+              id,
+            )
+            .eq(
+              "user_id",
+              user_id,
+            );
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
+
         return;
       }
 
-      const { error } = await supabase
-        .from("transactions")
-        .insert({
-          ...values,
-          user_id,
-        });
+      const { error } =
+        await supabase
+          .from("transactions")
+          .insert({
+            ...values,
+            user_id,
+          });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
 
 export function useDeleteTransaction() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const user_id = await requireUserId();
+    mutationFn: async (
+      id: string,
+    ) => {
+      const user_id =
+        await requireUserId();
 
-      const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user_id);
+      const { error } =
+        await supabase
+          .from("transactions")
+          .delete()
+          .eq(
+            "id",
+            id,
+          )
+          .eq(
+            "user_id",
+            user_id,
+          );
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
+}
+
+/* =========================================================
+   SALDOS DAS CONTAS
+   ========================================================= */
+
+export type AccountWithBalance =
+  Account & {
+    transactionBalance: number;
+    calculatedBalance: number;
+  };
+
+export function useAccountsWithBalances() {
+  const accountsQuery =
+    useAccounts();
+
+  const transactionsQuery =
+    useTransactions();
+
+  const accounts =
+    accountsQuery.data ??
+    [];
+
+  const transactions =
+    transactionsQuery.data ??
+    [];
+
+  const data =
+    accounts.map(
+      (
+        account,
+      ): AccountWithBalance => {
+        /*
+         * Soma somente as movimentações
+         * vinculadas a esta conta.
+         */
+
+        const transactionBalance =
+          transactions.reduce(
+            (
+              total,
+              transaction,
+            ) => {
+              if (
+                transaction.account_id !==
+                account.id
+              ) {
+                return total;
+              }
+
+              const amount =
+                Number(
+                  transaction.amount,
+                );
+
+              if (
+                !Number.isFinite(
+                  amount,
+                )
+              ) {
+                return total;
+              }
+
+              if (
+                transaction.type ===
+                "entrada"
+              ) {
+                return (
+                  total +
+                  amount
+                );
+              }
+
+              return (
+                total -
+                amount
+              );
+            },
+            0,
+          );
+
+        const initialBalance =
+          Number(
+            account.initial_balance,
+          );
+
+        const balanceAdjustment =
+          Number(
+            account.balance_adjustment,
+          );
+
+        const safeInitialBalance =
+          Number.isFinite(
+            initialBalance,
+          )
+            ? initialBalance
+            : 0;
+
+        const safeBalanceAdjustment =
+          Number.isFinite(
+            balanceAdjustment,
+          )
+            ? balanceAdjustment
+            : 0;
+
+        /*
+         * SALDO REAL DA CONTA:
+         *
+         * saldo inicial
+         * + ajuste manual
+         * + entradas
+         * - saídas
+         */
+
+        const calculatedBalance =
+          safeInitialBalance +
+          safeBalanceAdjustment +
+          transactionBalance;
+
+        return {
+          ...account,
+
+          transactionBalance,
+
+          calculatedBalance,
+        };
+      },
+    );
+
+  return {
+    ...accountsQuery,
+
+    data,
+
+    isLoading:
+      accountsQuery.isLoading ||
+      transactionsQuery.isLoading,
+
+    isFetching:
+      accountsQuery.isFetching ||
+      transactionsQuery.isFetching,
+
+    isError:
+      accountsQuery.isError ||
+      transactionsQuery.isError,
+
+    error:
+      accountsQuery.error ??
+      transactionsQuery.error ??
+      null,
+  };
+}
+
+/* =========================================================
+   SALDO TOTAL ATUAL
+   ========================================================= */
+
+/*
+ * ESTE É O HOOK QUE A PÁGINA
+ * ORGANIZAR SALÁRIO DEVE USAR.
+ *
+ * Ele pega o dinheiro que existe AGORA,
+ * não apenas as entradas do mês.
+ */
+
+export function useTotalAccountBalance() {
+  const {
+    data: accounts = [],
+    ...query
+  } =
+    useAccountsWithBalances();
+
+  const total =
+    accounts.reduce(
+      (
+        sum,
+        account,
+      ) =>
+        sum +
+        account.calculatedBalance,
+      0,
+    );
+
+  return {
+    ...query,
+
+    data: total,
+  };
 }
 
 /* =========================================================
@@ -239,20 +576,34 @@ export function useDeleteTransaction() {
 export function useGoals() {
   return useQuery({
     queryKey: ["goals"],
-    queryFn: async (): Promise<Goal[]> => {
-      const { data, error } = await supabase
-        .from("goals")
-        .select("*")
-        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+    queryFn: async (): Promise<Goal[]> => {
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("goals")
+          .select("*")
+          .order(
+            "created_at",
+            {
+              ascending: false,
+            },
+          );
+
+      if (error) {
+        throw error;
+      }
+
       return data ?? [];
     },
   });
 }
 
 export function useSaveGoal() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
     mutationFn: async ({
@@ -267,47 +618,76 @@ export function useSaveGoal() {
         deadline: string | null;
       };
     }) => {
-      const user_id = await requireUserId();
+      const user_id =
+        await requireUserId();
 
       if (id) {
-        const { error } = await supabase
-          .from("goals")
-          .update(values)
-          .eq("id", id)
-          .eq("user_id", user_id);
+        const { error } =
+          await supabase
+            .from("goals")
+            .update(values)
+            .eq(
+              "id",
+              id,
+            )
+            .eq(
+              "user_id",
+              user_id,
+            );
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
+
         return;
       }
 
-      const { error } = await supabase
-        .from("goals")
-        .insert({
-          ...values,
-          user_id,
-        });
+      const { error } =
+        await supabase
+          .from("goals")
+          .insert({
+            ...values,
+            user_id,
+          });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
 
 export function useDeleteGoal() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const user_id = await requireUserId();
+    mutationFn: async (
+      id: string,
+    ) => {
+      const user_id =
+        await requireUserId();
 
-      const { error } = await supabase
-        .from("goals")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user_id);
+      const { error } =
+        await supabase
+          .from("goals")
+          .delete()
+          .eq(
+            "id",
+            id,
+          )
+          .eq(
+            "user_id",
+            user_id,
+          );
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
@@ -319,20 +699,34 @@ export function useDeleteGoal() {
 export function useInvestments() {
   return useQuery({
     queryKey: ["investments"],
-    queryFn: async (): Promise<Investment[]> => {
-      const { data, error } = await supabase
-        .from("investments")
-        .select("*")
-        .order("date", { ascending: false });
 
-      if (error) throw error;
+    queryFn: async (): Promise<Investment[]> => {
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("investments")
+          .select("*")
+          .order(
+            "date",
+            {
+              ascending: false,
+            },
+          );
+
+      if (error) {
+        throw error;
+      }
+
       return data ?? [];
     },
   });
 }
 
 export function useSaveInvestment() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
     mutationFn: async ({
@@ -347,94 +741,140 @@ export function useSaveInvestment() {
         note: string | null;
       };
     }) => {
-      const user_id = await requireUserId();
+      const user_id =
+        await requireUserId();
 
       if (id) {
-        const { error } = await supabase
-          .from("investments")
-          .update(values)
-          .eq("id", id)
-          .eq("user_id", user_id);
+        const { error } =
+          await supabase
+            .from("investments")
+            .update(values)
+            .eq(
+              "id",
+              id,
+            )
+            .eq(
+              "user_id",
+              user_id,
+            );
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
+
         return;
       }
 
-      const { error } = await supabase
-        .from("investments")
-        .insert({
-          ...values,
-          user_id,
-        });
+      const { error } =
+        await supabase
+          .from("investments")
+          .insert({
+            ...values,
+            user_id,
+          });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
 
 export function useDeleteInvestment() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const user_id = await requireUserId();
+    mutationFn: async (
+      id: string,
+    ) => {
+      const user_id =
+        await requireUserId();
 
-      const { error } = await supabase
-        .from("investments")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user_id);
+      const { error } =
+        await supabase
+          .from("investments")
+          .delete()
+          .eq(
+            "id",
+            id,
+          )
+          .eq(
+            "user_id",
+            user_id,
+          );
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
 
 /* =========================================================
-   RESERVA
+   RESERVA DE EMERGÊNCIA
    ========================================================= */
 
 export function useReserve() {
   return useQuery({
     queryKey: ["reserve"],
-    queryFn: async (): Promise<Reserve | null> => {
-      const { data, error } = await supabase
-        .from("reserves")
-        .select("*")
-        .maybeSingle();
 
-      if (error) throw error;
+    queryFn: async (): Promise<Reserve | null> => {
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("reserves")
+          .select("*")
+          .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
       return data;
     },
   });
 }
 
 export function useSaveReserve() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
-    mutationFn: async (values: {
-      target_amount: number;
-      current_amount: number;
-    }) => {
-      const user_id = await requireUserId();
+    mutationFn: async (
+      values: {
+        target_amount: number;
+        current_amount: number;
+      },
+    ) => {
+      const user_id =
+        await requireUserId();
 
-      const { error } = await supabase
-        .from("reserves")
-        .upsert(
-          {
-            ...values,
-            user_id,
-          },
-          {
-            onConflict: "user_id",
-          },
-        );
+      const { error } =
+        await supabase
+          .from("reserves")
+          .upsert(
+            {
+              ...values,
+              user_id,
+            },
+            {
+              onConflict:
+                "user_id",
+            },
+          );
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
@@ -443,24 +883,50 @@ export function useSaveReserve() {
    PLANEJAMENTO MENSAL
    ========================================================= */
 
-export function useMonthlyPlans(month: string) {
+export function useMonthlyPlans(
+  month: string,
+) {
   return useQuery({
-    queryKey: ["monthly-plans", month],
-    queryFn: async (): Promise<MonthlyPlan[]> => {
-      const { data, error } = await supabase
-        .from("monthly_plans")
-        .select("*")
-        .eq("month", month)
-        .order("category");
+    queryKey: [
+      "monthly-plans",
+      month,
+    ],
 
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn:
+      async (): Promise<
+        MonthlyPlan[]
+      > => {
+        const {
+          data,
+          error,
+        } =
+          await supabase
+            .from(
+              "monthly_plans",
+            )
+            .select("*")
+            .eq(
+              "month",
+              month,
+            )
+            .order(
+              "category",
+            );
+
+        if (error) {
+          throw error;
+        }
+
+        return data ?? [];
+      },
   });
 }
 
-export function useSaveMonthlyLimit(month: string) {
-  const invalidate = useInvalidateFinance();
+export function useSaveMonthlyLimit(
+  month: string,
+) {
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
     mutationFn: async ({
@@ -470,36 +936,61 @@ export function useSaveMonthlyLimit(month: string) {
       category: string;
       limit: number;
     }) => {
-      const user_id = await requireUserId();
+      const user_id =
+        await requireUserId();
 
       if (limit <= 0) {
-        const { error } = await supabase
-          .from("monthly_plans")
-          .delete()
-          .eq("month", month)
-          .eq("category", category)
-          .eq("user_id", user_id);
+        const { error } =
+          await supabase
+            .from(
+              "monthly_plans",
+            )
+            .delete()
+            .eq(
+              "month",
+              month,
+            )
+            .eq(
+              "category",
+              category,
+            )
+            .eq(
+              "user_id",
+              user_id,
+            );
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
+
         return;
       }
 
-      const { error } = await supabase
-        .from("monthly_plans")
-        .upsert(
-          {
-            user_id,
-            month,
-            category,
-            limit_amount: limit,
-          },
-          {
-            onConflict: "user_id,month,category",
-          },
-        );
+      const { error } =
+        await supabase
+          .from(
+            "monthly_plans",
+          )
+          .upsert(
+            {
+              user_id,
+              month,
+              category,
 
-      if (error) throw error;
+              limit_amount:
+                limit,
+            },
+            {
+              onConflict:
+                "user_id,month,category",
+            },
+          );
+
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
@@ -508,24 +999,48 @@ export function useSaveMonthlyLimit(month: string) {
    PLANO DE SALÁRIO
    ========================================================= */
 
-export function useSalaryPlan(month: string) {
+export function useSalaryPlan(
+  month: string,
+) {
   return useQuery({
-    queryKey: ["salary-plan", month],
-    queryFn: async (): Promise<SalaryPlan | null> => {
-      const { data, error } = await supabase
-        .from("salary_plans")
-        .select("*")
-        .eq("month", month)
-        .maybeSingle();
+    queryKey: [
+      "salary-plan",
+      month,
+    ],
 
-      if (error) throw error;
-      return data;
-    },
+    queryFn:
+      async (): Promise<
+        SalaryPlan | null
+      > => {
+        const {
+          data,
+          error,
+        } =
+          await supabase
+            .from(
+              "salary_plans",
+            )
+            .select("*")
+            .eq(
+              "month",
+              month,
+            )
+            .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        return data;
+      },
   });
 }
 
-export function useSaveSalaryPlan(month: string) {
-  const invalidate = useInvalidateFinance();
+export function useSaveSalaryPlan(
+  month: string,
+) {
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
     mutationFn: async ({
@@ -533,64 +1048,97 @@ export function useSaveSalaryPlan(month: string) {
       allocations,
     }: {
       income: number;
-      allocations: Record<string, number>;
+      allocations:
+        Record<
+          string,
+          number
+        >;
     }) => {
-      const user_id = await requireUserId();
+      const user_id =
+        await requireUserId();
 
-      const { error } = await supabase
-        .from("salary_plans")
-        .upsert(
-          {
+      const { error } =
+        await supabase
+          .from(
+            "salary_plans",
+          )
+          .upsert(
+            {
+              user_id,
+              month,
+              income,
+              allocations,
+            },
+            {
+              onConflict:
+                "user_id,month",
+            },
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      const {
+        error: profileError,
+      } =
+        await supabase
+          .from("profiles")
+          .update({
+            monthly_income:
+              income,
+          })
+          .eq(
+            "id",
             user_id,
-            month,
-            income,
-            allocations,
-          },
-          {
-            onConflict: "user_id,month",
-          },
-        );
+          );
 
-      if (error) throw error;
-
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          monthly_income: income,
-        })
-        .eq("id", user_id);
-
-      if (profileError) throw profileError;
+      if (profileError) {
+        throw profileError;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
 
 /* =========================================================
-   PERFIL
+   ATUALIZAR PERFIL
    ========================================================= */
 
 export function useUpdateProfile() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
   return useMutation({
     mutationFn: async (
       values: Partial<
         Pick<
           Profile,
-          "name" | "username" | "monthly_income" | "onboarded"
+          | "name"
+          | "username"
+          | "monthly_income"
+          | "onboarded"
         >
       >,
     ) => {
-      const user_id = await requireUserId();
+      const user_id =
+        await requireUserId();
 
-      const { error } = await supabase
-        .from("profiles")
-        .update(values)
-        .eq("id", user_id);
+      const { error } =
+        await supabase
+          .from("profiles")
+          .update(values)
+          .eq(
+            "id",
+            user_id,
+          );
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
+
     onSuccess: invalidate,
   });
 }
@@ -600,32 +1148,38 @@ export function useUpdateProfile() {
    ========================================================= */
 
 export function useInvalidateFinance() {
-  const qc = useQueryClient();
+  const qc =
+    useQueryClient();
 
   return () => {
-    for (const key of [
-      "accounts",
-      "transactions",
-      "goals",
-      "investments",
-      "reserve",
-      "monthly-plans",
-      "salary-plan",
-      "profile",
-    ]) {
+    for (
+      const key of [
+        "accounts",
+        "transactions",
+        "goals",
+        "investments",
+        "reserve",
+        "monthly-plans",
+        "salary-plan",
+        "profile",
+      ]
+    ) {
       void qc.invalidateQueries({
-        queryKey: [key],
+        queryKey: [
+          key,
+        ],
       });
     }
   };
 }
 
 /* =========================================================
-   USUÁRIO
+   USUÁRIO ATUAL
    ========================================================= */
 
 async function requireUserId(): Promise<string> {
-  const { data } = await supabase.auth.getUser();
+  const { data } =
+    await supabase.auth.getUser();
 
   if (!data.user) {
     throw new Error(
@@ -637,175 +1191,347 @@ async function requireUserId(): Promise<string> {
 }
 
 /* =========================================================
-   DEMO
+   DADOS DE DEMONSTRAÇÃO
    ========================================================= */
 
 export function useDemoData() {
-  const invalidate = useInvalidateFinance();
+  const invalidate =
+    useInvalidateFinance();
 
-  const create = useMutation({
-    mutationFn: async () => {
-      const user_id = await requireUserId();
-      const month = currentMonthKey();
+  const create =
+    useMutation({
+      mutationFn: async () => {
+        const user_id =
+          await requireUserId();
 
-      const day = (d: number) =>
-        `${month}-${String(d).padStart(2, "0")}`;
+        const month =
+          currentMonthKey();
 
-      /*
-       * Primeiro cria uma conta de demonstração.
-       */
-      const { data: account, error: accountError } =
-        await supabase
-          .from("accounts")
-          .insert({
-            user_id,
-            name: "Conta principal",
-            type: "conta",
-            initial_balance: 0,
-            balance_adjustment: 0,
-          })
-          .select()
-          .single();
+        const day = (
+          d: number,
+        ) =>
+          `${month}-${String(
+            d,
+          ).padStart(
+            2,
+            "0",
+          )}`;
 
-      if (accountError) throw accountError;
+        /*
+         * Cria uma conta principal
+         * para os dados de demonstração.
+         */
 
-      const rows = [
-        {
-          type: "entrada",
-          description: "Salário",
-          amount: 2500,
-          category: "Salário",
-          date: day(5),
-        },
-        {
-          type: "saida",
-          description: "Mercado do mês",
-          amount: 350,
-          category: "Alimentação",
-          date: day(6),
-        },
-        {
-          type: "saida",
-          description: "Transporte",
-          amount: 200,
-          category: "Transporte",
-          date: day(8),
-        },
-        {
-          type: "saida",
-          description: "Cinema e passeios",
-          amount: 150,
-          category: "Lazer",
-          date: day(12),
-        },
-        {
-          type: "saida",
-          description: "Contas de casa",
-          amount: 400,
-          category: "Contas",
-          date: day(10),
-        },
-        {
-          type: "saida",
-          description: "Reserva de emergência",
-          amount: 300,
-          category: "Reserva de emergência",
-          date: day(15),
-        },
-      ] as const;
-
-      const { error } = await supabase
-        .from("transactions")
-        .insert(
-          rows.map((row) => ({
-            ...row,
-            user_id,
-            account_id: account.id,
-            is_demo: true,
-            note: "Dado de demonstração",
-          })),
-        );
-
-      if (error) throw error;
-
-      const { error: goalError } = await supabase
-        .from("goals")
-        .insert({
-          user_id,
-          name: "Comprar notebook",
-          target_amount: 3000,
-          saved_amount: 1200,
-          is_demo: true,
-        });
-
-      if (goalError) throw goalError;
-
-      const { error: reserveError } =
-        await supabase
-          .from("reserves")
-          .upsert(
-            {
+        const {
+          data: account,
+          error: accountError,
+        } =
+          await supabase
+            .from("accounts")
+            .insert({
               user_id,
-              target_amount: 3000,
-              current_amount: 300,
-            },
-            {
-              onConflict: "user_id",
-            },
-          );
 
-      if (reserveError) throw reserveError;
-    },
+              name:
+                "Conta principal",
 
-    onSuccess: invalidate,
-  });
+              type:
+                "conta",
 
-  const remove = useMutation({
-    mutationFn: async () => {
-      const user_id = await requireUserId();
+              initial_balance:
+                0,
 
-      const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("user_id", user_id)
-        .eq("is_demo", true);
+              balance_adjustment:
+                0,
+            })
+            .select()
+            .single();
 
-      if (error) throw error;
+        if (accountError) {
+          throw accountError;
+        }
 
-      const { error: goalError } =
-        await supabase
-          .from("goals")
-          .delete()
-          .eq("user_id", user_id)
-          .eq("is_demo", true);
+        const rows = [
+          {
+            type:
+              "entrada",
 
-      if (goalError) throw goalError;
+            description:
+              "Salário",
 
-      const { error: investError } =
-        await supabase
-          .from("investments")
-          .delete()
-          .eq("user_id", user_id)
-          .eq("is_demo", true);
+            amount:
+              2500,
 
-      if (investError) throw investError;
+            category:
+              "Salário",
 
-      /*
-       * Remove contas de demonstração somente quando
-       * não houver mais transações vinculadas.
-       */
-      const { error: accountError } =
-        await supabase
-          .from("accounts")
-          .delete()
-          .eq("user_id", user_id)
-          .eq("name", "Conta principal");
+            date:
+              day(5),
+          },
 
-      if (accountError) throw accountError;
-    },
+          {
+            type:
+              "saida",
 
-    onSuccess: invalidate,
-  });
+            description:
+              "Mercado do mês",
+
+            amount:
+              350,
+
+            category:
+              "Alimentação",
+
+            date:
+              day(6),
+          },
+
+          {
+            type:
+              "saida",
+
+            description:
+              "Transporte",
+
+            amount:
+              200,
+
+            category:
+              "Transporte",
+
+            date:
+              day(8),
+          },
+
+          {
+            type:
+              "saida",
+
+            description:
+              "Cinema e passeios",
+
+            amount:
+              150,
+
+            category:
+              "Lazer",
+
+            date:
+              day(12),
+          },
+
+          {
+            type:
+              "saida",
+
+            description:
+              "Contas de casa",
+
+            amount:
+              400,
+
+            category:
+              "Contas",
+
+            date:
+              day(10),
+          },
+
+          {
+            type:
+              "saida",
+
+            description:
+              "Reserva de emergência",
+
+            amount:
+              300,
+
+            category:
+              "Reserva de emergência",
+
+            date:
+              day(15),
+          },
+        ] as const;
+
+        const { error } =
+          await supabase
+            .from(
+              "transactions",
+            )
+            .insert(
+              rows.map(
+                (
+                  row,
+                ) => ({
+                  ...row,
+
+                  user_id,
+
+                  account_id:
+                    account.id,
+
+                  is_demo:
+                    true,
+
+                  note:
+                    "Dado de demonstração",
+                }),
+              ),
+            );
+
+        if (error) {
+          throw error;
+        }
+
+        const {
+          error: goalError,
+        } =
+          await supabase
+            .from("goals")
+            .insert({
+              user_id,
+
+              name:
+                "Comprar notebook",
+
+              target_amount:
+                3000,
+
+              saved_amount:
+                1200,
+
+              is_demo:
+                true,
+            });
+
+        if (goalError) {
+          throw goalError;
+        }
+
+        const {
+          error: reserveError,
+        } =
+          await supabase
+            .from("reserves")
+            .upsert(
+              {
+                user_id,
+
+                target_amount:
+                  3000,
+
+                current_amount:
+                  300,
+              },
+              {
+                onConflict:
+                  "user_id",
+              },
+            );
+
+        if (reserveError) {
+          throw reserveError;
+        }
+      },
+
+      onSuccess:
+        invalidate,
+    });
+
+  const remove =
+    useMutation({
+      mutationFn: async () => {
+        const user_id =
+          await requireUserId();
+
+        const { error } =
+          await supabase
+            .from(
+              "transactions",
+            )
+            .delete()
+            .eq(
+              "user_id",
+              user_id,
+            )
+            .eq(
+              "is_demo",
+              true,
+            );
+
+        if (error) {
+          throw error;
+        }
+
+        const {
+          error: goalError,
+        } =
+          await supabase
+            .from("goals")
+            .delete()
+            .eq(
+              "user_id",
+              user_id,
+            )
+            .eq(
+              "is_demo",
+              true,
+            );
+
+        if (goalError) {
+          throw goalError;
+        }
+
+        const {
+          error: investError,
+        } =
+          await supabase
+            .from(
+              "investments",
+            )
+            .delete()
+            .eq(
+              "user_id",
+              user_id,
+            )
+            .eq(
+              "is_demo",
+              true,
+            );
+
+        if (investError) {
+          throw investError;
+        }
+
+        /*
+         * Agora que as transações foram removidas,
+         * remove a conta de demonstração.
+         */
+
+        const {
+          error: accountError,
+        } =
+          await supabase
+            .from("accounts")
+            .delete()
+            .eq(
+              "user_id",
+              user_id,
+            )
+            .eq(
+              "name",
+              "Conta principal",
+            );
+
+        if (accountError) {
+          throw accountError;
+        }
+      },
+
+      onSuccess:
+        invalidate,
+    });
 
   return {
     create,
@@ -813,4 +1539,9 @@ export function useDemoData() {
   };
 }
 
-export const DEFAULT_DATE = todayISO();
+/* =========================================================
+   DATA PADRÃO
+   ========================================================= */
+
+export const DEFAULT_DATE =
+  todayISO();
