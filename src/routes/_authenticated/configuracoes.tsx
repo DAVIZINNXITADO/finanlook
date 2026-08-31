@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
@@ -18,7 +18,6 @@ import {
   User,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -63,6 +62,11 @@ function SettingsPage() {
 
   const { data: profile } = useProfile();
 
+  /*
+   * Tema global.
+   * Não usamos useState local aqui.
+   * O ThemeProvider controla toda a aplicação.
+   */
   const {
     theme,
     setTheme,
@@ -151,7 +155,8 @@ function SettingsPage() {
     const username =
       profileUsername
         .trim()
-        .replace(/^@/, "");
+        .replace(/^@/, "")
+        .toLowerCase();
 
     if (!name) {
       toast.error(
@@ -187,7 +192,9 @@ function SettingsPage() {
         );
       }
 
-      const { error } =
+      const {
+        error,
+      } =
         await supabase
           .from("profiles")
           .update({
@@ -196,12 +203,10 @@ function SettingsPage() {
               80,
             ),
 
-            username: username
-              .slice(
-                0,
-                40,
-              )
-              .toLowerCase(),
+            username: username.slice(
+              0,
+              40,
+            ),
           })
           .eq(
             "id",
@@ -223,9 +228,7 @@ function SettingsPage() {
       );
 
       setEditProfileOpen(false);
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       toast.error(
         "Não foi possível atualizar seu perfil.",
       );
@@ -271,7 +274,9 @@ function SettingsPage() {
     setSavingEmail(true);
 
     try {
-      const { error } =
+      const {
+        error,
+      } =
         await supabase.auth.updateUser({
           email,
         });
@@ -285,9 +290,7 @@ function SettingsPage() {
       );
 
       setEditEmailOpen(false);
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       toast.error(
         "Não foi possível alterar seu email.",
       );
@@ -309,9 +312,7 @@ function SettingsPage() {
       return;
     }
 
-    if (
-      newPassword.length < 6
-    ) {
+    if (newPassword.length < 6) {
       toast.error(
         "A senha precisa ter pelo menos 6 caracteres.",
       );
@@ -333,9 +334,12 @@ function SettingsPage() {
     setSavingPassword(true);
 
     try {
-      const { error } =
+      const {
+        error,
+      } =
         await supabase.auth.updateUser({
-          password: newPassword,
+          password:
+            newPassword,
         });
 
       if (error) {
@@ -351,9 +355,7 @@ function SettingsPage() {
       setShowPassword(false);
 
       setEditPasswordOpen(false);
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       toast.error(
         "Não foi possível alterar sua senha.",
       );
@@ -367,10 +369,7 @@ function SettingsPage() {
      ======================================================= */
 
   function changeTheme(
-    value:
-      | "light"
-      | "dark"
-      | "system",
+    value: "light" | "dark" | "system",
   ) {
     setTheme(value);
 
@@ -389,7 +388,9 @@ function SettingsPage() {
 
       queryClient.clear();
 
-      const { error } =
+      const {
+        error,
+      } =
         await supabase.auth.signOut();
 
       if (error) {
@@ -400,9 +401,7 @@ function SettingsPage() {
         to: "/auth",
         replace: true,
       });
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       toast.error(
         "Não foi possível sair da conta.",
       );
@@ -420,7 +419,9 @@ function SettingsPage() {
         subtitle="Gerencie sua conta e personalize sua experiência no FinanLook."
       />
 
-      {/* PERFIL */}
+      {/* =================================================
+          PERFIL
+         ================================================= */}
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
@@ -455,9 +456,7 @@ function SettingsPage() {
                 : "Configure seu nome e username"
             }
             action="Editar"
-            onClick={
-              openProfileDialog
-            }
+            onClick={openProfileDialog}
           />
 
           <SettingsRow
@@ -470,14 +469,14 @@ function SettingsPage() {
               "Configure seu email"
             }
             action="Alterar"
-            onClick={
-              openEmailDialog
-            }
+            onClick={openEmailDialog}
           />
         </div>
       </section>
 
-      {/* SEGURANÇA */}
+      {/* =================================================
+          SEGURANÇA
+         ================================================= */}
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
@@ -509,13 +508,14 @@ function SettingsPage() {
             setNewPassword("");
             setConfirmPassword("");
             setShowPassword(false);
-
             setEditPasswordOpen(true);
           }}
         />
       </section>
 
-      {/* APARÊNCIA */}
+      {/* =================================================
+          APARÊNCIA
+         ================================================= */}
 
       <section className="surface p-5">
         <div className="flex items-start gap-3">
@@ -576,7 +576,9 @@ function SettingsPage() {
         </div>
       </section>
 
-      {/* CONTA */}
+      {/* =================================================
+          CONTA
+         ================================================= */}
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
@@ -611,7 +613,9 @@ function SettingsPage() {
         />
       </section>
 
-      {/* DIALOG PERFIL */}
+      {/* =================================================
+          DIALOG PERFIL
+         ================================================= */}
 
       <Dialog
         open={editProfileOpen}
@@ -692,7 +696,9 @@ function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* DIALOG EMAIL */}
+      {/* =================================================
+          DIALOG EMAIL
+         ================================================= */}
 
       <Dialog
         open={editEmailOpen}
@@ -748,7 +754,9 @@ function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* DIALOG SENHA */}
+      {/* =================================================
+          DIALOG SENHA
+         ================================================= */}
 
       <Dialog
         open={editPasswordOpen}
@@ -923,7 +931,7 @@ function SettingsRow({
 }
 
 /* =========================================================
-   COMPONENTE: OPÇÃO DE TEMA
+   COMPONENTE: TEMA
    ========================================================= */
 
 function ThemeOption({
@@ -948,11 +956,11 @@ function ThemeOption({
           : "hover:bg-muted/50",
       )}
     >
-      {active ? (
+      {active && (
         <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <Check className="size-3" />
         </span>
-      ) : null}
+      )}
 
       {icon}
 
