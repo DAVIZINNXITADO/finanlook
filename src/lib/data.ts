@@ -46,13 +46,9 @@ export type AccountInput = {
    USUÁRIO ATUAL
    ========================================================= */
 
-async function getCurrentUserId(): Promise<
-  string
-> {
+async function getCurrentUserId(): Promise<string> {
   const {
-    data: {
-      user,
-    },
+    data: { user },
     error,
   } =
     await supabase.auth.getUser();
@@ -68,131 +64,6 @@ async function getCurrentUserId(): Promise<
   }
 
   return user.id;
-}
-
-/* =========================================================
-   CONTA PRINCIPAL AUTOMÁTICA
-   ========================================================= */
-
-/*
- * Nome da conta que aparece automaticamente
- * para um usuário novo.
- *
- * Ela é uma conta normal.
- *
- * Portanto o usuário pode:
- *
- * - editar
- * - alterar saldo
- * - criar outras contas
- * - excluir
- *
- * Não existe bloqueio especial.
- */
-
-const DEFAULT_ACCOUNT_NAME =
-  "Saldo principal";
-
-const DEFAULT_ACCOUNT_TYPE =
-  "conta";
-
-/*
- * Chave usada para saber se já tentamos criar
- * a conta automática neste navegador.
- *
- * Isso impede o seguinte problema:
- *
- * Usuário exclui todas as contas
- * ↓
- * query roda novamente
- * ↓
- * app recria Saldo principal
- *
- * Depois que o usuário já teve a primeira conta,
- * o app não recria automaticamente.
- */
-
-function getDefaultAccountStorageKey(
-  userId: string,
-) {
-  return `finanlook-default-account-created-${userId}`;
-}
-
-function hasCreatedDefaultAccount(
-  userId: string,
-) {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
-    return false;
-  }
-
-  return (
-    window.localStorage.getItem(
-      getDefaultAccountStorageKey(
-        userId,
-      ),
-    ) === "true"
-  );
-}
-
-function markDefaultAccountCreated(
-  userId: string,
-) {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
-    return;
-  }
-
-  window.localStorage.setItem(
-    getDefaultAccountStorageKey(
-      userId,
-    ),
-    "true",
-  );
-}
-
-/*
- * Cria a primeira conta automática.
- *
- * Só é usada quando:
- *
- * - usuário não possui nenhuma conta
- * - e a conta automática ainda nunca foi criada
- */
-async function createDefaultAccount(
-  userId: string,
-): Promise<Account> {
-  const {
-    data,
-    error,
-  } =
-    await supabase
-      .from("accounts")
-      .insert({
-        user_id: userId,
-        name:
-          DEFAULT_ACCOUNT_NAME,
-        type:
-          DEFAULT_ACCOUNT_TYPE,
-        initial_balance: 0,
-        balance_adjustment: 0,
-      })
-      .select()
-      .single();
-
-  if (error) {
-    throw error;
-  }
-
-  markDefaultAccountCreated(
-    userId,
-  );
-
-  return data;
 }
 
 /* =========================================================
@@ -216,9 +87,7 @@ export function useTransactions() {
         error,
       } =
         await supabase
-          .from(
-            "transactions",
-          )
+          .from("transactions")
           .select("*")
           .eq(
             "user_id",
@@ -247,7 +116,7 @@ export function useTransactions() {
 }
 
 /* =========================================================
-   CRIAR / EDITAR TRANSAÇÃO
+   SALVAR TRANSAÇÃO
    ========================================================= */
 
 export function useSaveTransaction() {
@@ -266,7 +135,8 @@ export function useSaveTransaction() {
         await getCurrentUserId();
 
       const payload = {
-        user_id: userId,
+        user_id:
+          userId,
 
         type:
           values.type,
@@ -284,10 +154,7 @@ export function useSaveTransaction() {
           values.date ??
           new Date()
             .toISOString()
-            .slice(
-              0,
-              10,
-            ),
+            .slice(0, 10),
 
         note:
           values.note ??
@@ -297,7 +164,267 @@ export function useSaveTransaction() {
           values.account_id ??
           null,
 
-        is_demo: false,
+        is_demo:
+          false,
+      };
+
+      if (id) {
+        const {
+          data,
+          error,
+        } =
+          await supabase
+            .from("transactions")
+            .update(payload)
+            .eq(
+              "id",
+              id,
+            )
+            .eq(
+              "user_id",
+              userId,
+            )
+            .select()
+            .single();
+
+        if (error) {
+          throw error;
+        }
+
+        return data;
+      }
+
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("transactions")
+          .insert(payload)
+          .select()
+          .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [
+          "transactions",
+        ],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [
+          "accounts",
+        ],
+      });
+    },
+  });
+}
+
+/* =========================================================
+   EXCLUIR TRANSAÇÃO
+   ========================================================= */
+
+export function useDeleteTransaction() {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      id: string,
+    ) => {
+      const userId =
+        await getCurrentUserId();
+
+      const {
+        error,
+      } =
+        await supabase
+          .from("transactions")
+          .delete()
+          .eq(
+            "id",
+            id,
+          )
+          .eq(
+            "user_id",
+            userId,
+          );
+
+      if (error) {
+        throw error;
+      }
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [
+          "transactions",
+        ],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [
+          "accounts",
+        ],
+      });
+    },
+  });
+}
+
+/* =========================================================
+   CONTAS
+   ========================================================= */
+
+export function useAccounts() {
+  return useQuery({
+    queryKey: [
+      "accounts",
+    ],
+
+    queryFn: async (): Promise<
+      Account[]
+    > => {
+      const userId =
+        await getCurrentUserId();
+
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("accounts")
+          .select("*")
+          .eq(
+            "user_id",
+            userId,
+          )
+          .order(
+            "created_at",
+            {
+              ascending: true,
+            },
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      return data ?? [];
+    },
+  });
+}
+
+/* =========================================================
+   CRIAR CONTA
+   ========================================================= */
+
+export function useCreateAccount() {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      values: AccountInput,
+    ) => {
+      const userId =
+        await getCurrentUserId();
+
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("accounts")
+          .insert({
+            user_id:
+              userId,
+
+            name:
+              values.name
+                .trim()
+                .slice(
+                  0,
+                  100,
+                ),
+
+            type:
+              values.type ??
+              "conta",
+
+            initial_balance:
+              values.initial_balance ??
+              0,
+
+            balance_adjustment:
+              values.balance_adjustment ??
+              0,
+          })
+          .select()
+          .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [
+          "accounts",
+        ],
+      });
+    },
+  });
+}
+
+/* =========================================================
+   EDITAR / CRIAR CONTA
+   ========================================================= */
+
+export function useSaveAccount() {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      values,
+    }: {
+      id?: string;
+      values: AccountInput;
+    }) => {
+      const userId =
+        await getCurrentUserId();
+
+      const payload = {
+        name:
+          values.name
+            .trim()
+            .slice(
+              0,
+              100,
+            ),
+
+        type:
+          values.type ??
+          "conta",
+
+        initial_balance:
+          values.initial_balance ??
+          0,
+
+        balance_adjustment:
+          values.balance_adjustment ??
+          0,
       };
 
       /*
@@ -310,9 +437,7 @@ export function useSaveTransaction() {
           error,
         } =
           await supabase
-            .from(
-              "transactions",
-            )
+            .from("accounts")
             .update(payload)
             .eq(
               "id",
@@ -341,316 +466,13 @@ export function useSaveTransaction() {
         error,
       } =
         await supabase
-          .from(
-            "transactions",
-          )
-          .insert(payload)
-          .select()
-          .single();
-
-      if (error) {
-        throw error;
-      }
-
-      return data;
-    },
-
-    onSuccess: async () => {
-      /*
-       * Atualiza movimentações.
-       */
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "transactions",
-        ],
-      });
-
-      /*
-       * Atualiza saldo das contas.
-       */
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "accounts",
-        ],
-      });
-    },
-  });
-}
-
-/* =========================================================
-   EXCLUIR TRANSAÇÃO
-   ========================================================= */
-
-export function useDeleteTransaction() {
-  const queryClient =
-    useQueryClient();
-
-  return useMutation({
-    mutationFn: async (
-      id: string,
-    ) => {
-      const userId =
-        await getCurrentUserId();
-
-      const {
-        error,
-      } =
-        await supabase
-          .from(
-            "transactions",
-          )
-          .delete()
-          .eq(
-            "id",
-            id,
-          )
-          .eq(
-            "user_id",
-            userId,
-          );
-
-      if (error) {
-        throw error;
-      }
-    },
-
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "transactions",
-        ],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "accounts",
-        ],
-      });
-    },
-  });
-}
-
-/* =========================================================
-   CONTAS
-   ========================================================= */
-
-export function useAccounts() {
-  return useQuery({
-    queryKey: [
-      "accounts",
-    ],
-
-    queryFn: async (): Promise<
-      Account[]
-    > => {
-      const userId =
-        await getCurrentUserId();
-
-      /*
-       * Busca todas as contas.
-       */
-
-      const {
-        data,
-        error,
-      } =
-        await supabase
-          .from(
-            "accounts",
-          )
-          .select("*")
-          .eq(
-            "user_id",
-            userId,
-          )
-          .order(
-            "created_at",
-            {
-              ascending: true,
-            },
-          );
-
-      if (error) {
-        throw error;
-      }
-
-      const accounts =
-        data ?? [];
-
-      /*
-       * Usuário já possui contas.
-       *
-       * Apenas retornamos.
-       */
-
-      if (
-        accounts.length > 0
-      ) {
-        /*
-         * Marca que o usuário já passou
-         * pela criação inicial.
-         */
-
-        markDefaultAccountCreated(
-          userId,
-        );
-
-        return accounts;
-      }
-
-      /*
-       * Não possui nenhuma conta.
-       *
-       * Verificamos se essa conta automática
-       * já foi criada anteriormente.
-       */
-
-      if (
-        hasCreatedDefaultAccount(
-          userId,
-        )
-      ) {
-        /*
-         * Usuário excluiu todas as contas.
-         *
-         * Não recriamos.
-         */
-
-        return [];
-      }
-
-      /*
-       * Usuário novo.
-       *
-       * Criamos Saldo principal.
-       */
-
-      const defaultAccount =
-        await createDefaultAccount(
-          userId,
-        );
-
-      return [
-        defaultAccount,
-      ];
-    },
-
-    /*
-     * Evita várias requisições enquanto
-     * a conta automática está sendo criada.
-     */
-
-    staleTime: 10_000,
-
-    retry: 1,
-  });
-}
-
-/* =========================================================
-   CRIAR / EDITAR CONTA
-   ========================================================= */
-
-export function useSaveAccount() {
-  const queryClient =
-    useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      values,
-    }: {
-      id?: string;
-      values: AccountInput;
-    }) => {
-      const userId =
-        await getCurrentUserId();
-
-      const name =
-        values.name
-          .trim()
-          .slice(
-            0,
-            100,
-          );
-
-      const payload = {
-        user_id:
-          userId,
-
-        name,
-
-        type:
-          values.type ??
-          "conta",
-
-        initial_balance:
-          values.initial_balance ??
-          0,
-
-        balance_adjustment:
-          values.balance_adjustment ??
-          0,
-      };
-
-      /*
-       * EDITAR CONTA
-       */
-
-      if (id) {
-        const {
-          data,
-          error,
-        } =
-          await supabase
-            .from(
-              "accounts",
-            )
-            .update({
-              name:
-                payload.name,
-
-              type:
-                payload.type,
-
-              initial_balance:
-                payload.initial_balance,
-
-              balance_adjustment:
-                payload.balance_adjustment,
-            })
-            .eq(
-              "id",
-              id,
-            )
-            .eq(
-              "user_id",
+          .from("accounts")
+          .insert({
+            user_id:
               userId,
-            )
-            .select()
-            .single();
 
-        if (error) {
-          throw error;
-        }
-
-        return data;
-      }
-
-      /*
-       * CRIAR NOVA CONTA
-       */
-
-      const {
-        data,
-        error,
-      } =
-        await supabase
-          .from(
-            "accounts",
-          )
-          .insert(payload)
+            ...payload,
+          })
           .select()
           .single();
 
@@ -658,21 +480,11 @@ export function useSaveAccount() {
         throw error;
       }
 
-      /*
-       * Se o usuário criou uma conta manualmente,
-       * consideramos que ele já passou da fase
-       * inicial.
-       */
-
-      markDefaultAccountCreated(
-        userId,
-      );
-
       return data;
     },
 
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
+    onSuccess: () => {
+      queryClient.invalidateQueries({
         queryKey: [
           "accounts",
         ],
@@ -697,10 +509,9 @@ export function useDeleteAccount() {
         await getCurrentUserId();
 
       /*
-       * Primeiro removemos o vínculo
-       * das movimentações.
+       * Desvincula movimentações.
        *
-       * Elas NÃO são excluídas.
+       * Elas continuam existindo.
        */
 
       const {
@@ -708,11 +519,10 @@ export function useDeleteAccount() {
           unlinkError,
       } =
         await supabase
-          .from(
-            "transactions",
-          )
+          .from("transactions")
           .update({
-            account_id: null,
+            account_id:
+              null,
           })
           .eq(
             "account_id",
@@ -723,26 +533,22 @@ export function useDeleteAccount() {
             userId,
           );
 
-      if (
-        unlinkError
-      ) {
+      if (unlinkError) {
         throw unlinkError;
       }
 
       /*
        * Exclui a conta.
        *
-       * Não existe nenhuma proteção
-       * especial para Saldo principal.
+       * Saldo principal não possui
+       * nenhuma proteção especial.
        */
 
       const {
         error,
       } =
         await supabase
-          .from(
-            "accounts",
-          )
+          .from("accounts")
           .delete()
           .eq(
             "id",
@@ -756,29 +562,16 @@ export function useDeleteAccount() {
       if (error) {
         throw error;
       }
-
-      /*
-       * Marca que a criação automática
-       * já aconteceu.
-       *
-       * Portanto, se o usuário excluir
-       * todas as contas, o app NÃO vai
-       * recriar Saldo principal.
-       */
-
-      markDefaultAccountCreated(
-        userId,
-      );
     },
 
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
+    onSuccess: () => {
+      queryClient.invalidateQueries({
         queryKey: [
           "accounts",
         ],
       });
 
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [
           "transactions",
         ],
@@ -788,13 +581,16 @@ export function useDeleteAccount() {
 }
 
 /* =========================================================
-   SALDOS DAS CONTAS
+   SALDOS
    ========================================================= */
 
 export type AccountWithBalance =
   Account & {
-    calculatedBalance: number;
-    transactionBalance: number;
+    calculatedBalance:
+      number;
+
+    transactionBalance:
+      number;
   };
 
 export function useAccountsWithBalances() {
@@ -805,32 +601,24 @@ export function useAccountsWithBalances() {
     useTransactions();
 
   const accounts =
-    accountsQuery.data ?? [];
+    accountsQuery.data ??
+    [];
 
   const transactions =
-    transactionsQuery.data ?? [];
+    transactionsQuery.data ??
+    [];
 
   const data =
     accounts.map(
       (
         account,
       ): AccountWithBalance => {
-        /*
-         * Soma todas as movimentações
-         * vinculadas à conta.
-         */
-
         const transactionBalance =
           transactions.reduce(
             (
               total,
               transaction,
             ) => {
-              /*
-               * Ignora movimentações
-               * de outras contas.
-               */
-
               if (
                 transaction.account_id !==
                 account.id
@@ -843,11 +631,6 @@ export function useAccountsWithBalances() {
                   transaction.amount,
                 );
 
-              /*
-               * Proteção contra valores
-               * inválidos.
-               */
-
               if (
                 !Number.isFinite(
                   amount,
@@ -855,10 +638,6 @@ export function useAccountsWithBalances() {
               ) {
                 return total;
               }
-
-              /*
-               * Entrada aumenta saldo.
-               */
 
               if (
                 transaction.type ===
@@ -870,10 +649,6 @@ export function useAccountsWithBalances() {
                 );
               }
 
-              /*
-               * Saída diminui saldo.
-               */
-
               return (
                 total -
                 amount
@@ -882,27 +657,15 @@ export function useAccountsWithBalances() {
             0,
           );
 
-        /*
-         * Saldo inicial.
-         */
-
         const initialBalance =
           Number(
             account.initial_balance,
           );
 
-        /*
-         * Ajuste manual.
-         */
-
         const balanceAdjustment =
           Number(
             account.balance_adjustment,
           );
-
-        /*
-         * Segurança contra null/NaN.
-         */
 
         const safeInitialBalance =
           Number.isFinite(
@@ -917,16 +680,6 @@ export function useAccountsWithBalances() {
           )
             ? balanceAdjustment
             : 0;
-
-        /*
-         * SALDO FINAL
-         *
-         * saldo inicial
-         * +
-         * ajuste manual
-         * +
-         * movimentações
-         */
 
         const calculatedBalance =
           safeInitialBalance +
@@ -968,13 +721,14 @@ export function useAccountsWithBalances() {
 }
 
 /* =========================================================
-   SALDO TOTAL DAS CONTAS
+   SALDO TOTAL
    ========================================================= */
 
 export function useTotalAccountBalance() {
   const {
     data:
       accounts = [],
+
     ...query
   } =
     useAccountsWithBalances();
@@ -999,7 +753,7 @@ export function useTotalAccountBalance() {
 }
 
 /* =========================================================
-   OUTROS DADOS DO FINANLOOK
+   OUTROS DADOS
    ========================================================= */
 
 export function useGoals() {
@@ -1018,9 +772,7 @@ export function useGoals() {
           error,
         } =
           await supabase
-            .from(
-              "goals",
-            )
+            .from("goals")
             .select("*")
             .eq(
               "user_id",
@@ -1029,7 +781,8 @@ export function useGoals() {
             .order(
               "created_at",
               {
-                ascending: false,
+                ascending:
+                  false,
               },
             );
 
@@ -1058,9 +811,7 @@ export function useInvestments() {
           error,
         } =
           await supabase
-            .from(
-              "investments",
-            )
+            .from("investments")
             .select("*")
             .eq(
               "user_id",
@@ -1069,7 +820,8 @@ export function useInvestments() {
             .order(
               "date",
               {
-                ascending: false,
+                ascending:
+                  false,
               },
             );
 
@@ -1098,9 +850,7 @@ export function useReserves() {
           error,
         } =
           await supabase
-            .from(
-              "reserves",
-            )
+            .from("reserves")
             .select("*")
             .eq(
               "user_id",
@@ -1109,7 +859,8 @@ export function useReserves() {
             .order(
               "created_at",
               {
-                ascending: false,
+                ascending:
+                  false,
               },
             );
 
@@ -1128,8 +879,7 @@ export function useMonthlyPlans(
   return useQuery({
     queryKey: [
       "monthly_plans",
-      month ??
-        null,
+      month ?? null,
     ],
 
     queryFn:
@@ -1163,7 +913,8 @@ export function useMonthlyPlans(
           await query.order(
             "category",
             {
-              ascending: true,
+              ascending:
+                true,
             },
           );
 
@@ -1182,8 +933,7 @@ export function useSalaryPlans(
   return useQuery({
     queryKey: [
       "salary_plans",
-      month ??
-        null,
+      month ?? null,
     ],
 
     queryFn:
@@ -1191,8 +941,11 @@ export function useSalaryPlans(
         const userId =
           await getCurrentUserId();
 
-        let query =
-          supabase
+        const {
+          data,
+          error,
+        } =
+          await supabase
             .from(
               "salary_plans",
             )
@@ -1200,26 +953,14 @@ export function useSalaryPlans(
             .eq(
               "user_id",
               userId,
-            );
-
-        if (month) {
-          query =
-            query.eq(
+            )
+            .order(
               "month",
-              month,
+              {
+                ascending:
+                  false,
+              },
             );
-        }
-
-        const {
-          data,
-          error,
-        } =
-          await query.order(
-            "month",
-            {
-              ascending: false,
-            },
-          );
 
         if (error) {
           throw error;
@@ -1246,9 +987,7 @@ export function useProfile() {
           error,
         } =
           await supabase
-            .from(
-              "profiles",
-            )
+            .from("profiles")
             .select("*")
             .eq(
               "id",
