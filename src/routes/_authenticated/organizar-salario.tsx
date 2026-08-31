@@ -1,43 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
+  Bot,
   Crown,
-  Pencil,
+  Edit3,
+  Minus,
   Plus,
+  Save,
   Sparkles,
   Trash2,
   Wallet,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PageHeader } from "@/components/PageHeader";
-import { useTransactions } from "@/lib/data";
+
 import {
-  addMonths,
-  currentMonthKey,
+  useSalaryPlan,
+  useSaveSalaryPlan,
+  useTotalAccountBalance,
+} from "@/lib/hooks";
+
+import {
   formatBRL,
-  monthLabel,
   parseAmount,
 } from "@/lib/finance";
 
@@ -52,378 +40,832 @@ export const Route = createFileRoute(
       {
         name: "description",
         content:
-          "Planeje e organize seu salário entre suas prioridades financeiras.",
-      },
-      {
-        property: "og:title",
-        content: "Organizar salário — FinanLook",
-      },
-      {
-        property: "og:description",
-        content:
-          "Organize seu dinheiro de forma manual ou automática.",
+          "Organize seu saldo atual entre despesas, lazer, investimentos e reserva de emergência.",
       },
     ],
   }),
+
   component: OrganizeSalaryPage,
 });
 
-type Organization = {
+/* =========================================================
+   TIPOS
+   ========================================================= */
+
+type OrganizationMode =
+  | "manual"
+  | "automatic";
+
+type Allocation = {
   id: string;
   name: string;
   emoji: string;
   amount: number;
-  isDefault?: boolean;
+  percentage: number;
+  custom?: boolean;
 };
 
-const DEFAULT_ORGANIZATIONS: Organization[] = [
+/* =========================================================
+   CATEGORIAS PADRÃO
+   ========================================================= */
+
+const DEFAULT_ALLOCATIONS: Allocation[] = [
   {
     id: "alimentacao",
     name: "Alimentação",
     emoji: "🍔",
     amount: 0,
-    isDefault: true,
+    percentage: 0,
   },
-  {
-    id: "moradia",
-    name: "Moradia",
-    emoji: "🏠",
-    amount: 0,
-    isDefault: true,
-  },
-  {
-    id: "transporte",
-    name: "Transporte",
-    emoji: "🚗",
-    amount: 0,
-    isDefault: true,
-  },
+
   {
     id: "contas",
     name: "Contas",
     emoji: "🧾",
     amount: 0,
-    isDefault: true,
+    percentage: 0,
   },
+
+  {
+    id: "transporte",
+    name: "Transporte",
+    emoji: "🚗",
+    amount: 0,
+    percentage: 0,
+  },
+
   {
     id: "lazer",
     name: "Lazer",
     emoji: "🎮",
     amount: 0,
-    isDefault: true,
+    percentage: 0,
   },
-  {
-    id: "compras",
-    name: "Compras",
-    emoji: "🛒",
-    amount: 0,
-    isDefault: true,
-  },
-  {
-    id: "saude",
-    name: "Saúde",
-    emoji: "🏥",
-    amount: 0,
-    isDefault: true,
-  },
-  {
-    id: "reserva",
-    name: "Reserva de emergência",
-    emoji: "🛟",
-    amount: 0,
-    isDefault: true,
-  },
+
   {
     id: "investimentos",
     name: "Investimentos",
     emoji: "📈",
     amount: 0,
-    isDefault: true,
+    percentage: 0,
   },
+
   {
-    id: "metas",
-    name: "Metas",
-    emoji: "🎯",
+    id: "reserva-emergencia",
+    name: "Reserva de emergência",
+    emoji: "🛟",
     amount: 0,
-    isDefault: true,
+    percentage: 0,
   },
 ];
 
-const EMOJIS = [
-  "💰",
-  "🎓",
-  "🐶",
-  "🎮",
-  "✈️",
-  "🏠",
-  "🚗",
-  "📱",
-  "🎁",
-  "💡",
-  "🛒",
-  "❤️",
-];
+/* =========================================================
+   MÊS
+   ========================================================= */
+
+function getCurrentMonth() {
+  return new Date()
+    .toISOString()
+    .slice(0, 7);
+}
+
+function formatMonth(month: string) {
+  if (!month) {
+    return "";
+  }
+
+  const [
+    year,
+    monthNumber,
+  ] =
+    month.split("-");
+
+  const date =
+    new Date(
+      Number(year),
+      Number(monthNumber) - 1,
+      1,
+    );
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      month: "long",
+      year: "numeric",
+    },
+  ).format(date);
+}
+
+/* =========================================================
+   PÁGINA
+   ========================================================= */
 
 function OrganizeSalaryPage() {
-  const { data: transactions = [] } = useTransactions();
+  const [month, setMonth] =
+    useState(
+      getCurrentMonth(),
+    );
 
-  const [selectedMonth, setSelectedMonth] = useState(
-    currentMonthKey(),
-  );
+  const {
+    data: currentBalance = 0,
+    isLoading: isLoadingBalance,
+  } =
+    useTotalAccountBalance();
 
-  const [organizations, setOrganizations] = useState<
-    Organization[]
-  >(DEFAULT_ORGANIZATIONS);
+  const {
+    data: savedPlan,
+    isLoading: isLoadingPlan,
+  } =
+    useSalaryPlan(month);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const savePlan =
+    useSaveSalaryPlan(month);
 
-  const [editing, setEditing] =
-    useState<Organization | null>(null);
+  const [
+    mode,
+    setMode,
+  ] =
+    useState<OrganizationMode>(
+      "manual",
+    );
 
-  const [newName, setNewName] = useState("");
-  const [newAmount, setNewAmount] = useState("");
-  const [newEmoji, setNewEmoji] = useState("💰");
+  const [
+    allocations,
+    setAllocations,
+  ] =
+    useState<Allocation[]>(
+      DEFAULT_ALLOCATIONS,
+    );
 
-  /*
-   * Entradas do mês selecionado.
-   *
-   * A organização usa apenas o dinheiro que entrou naquele mês
-   * como valor disponível para planejamento.
-   */
-  const monthIncome = useMemo(() => {
-    return transactions
-      .filter(
-        (transaction) =>
-          transaction.type === "entrada" &&
-          transaction.date.slice(0, 7) === selectedMonth,
-      )
-      .reduce(
-        (total, transaction) =>
-          total + Number(transaction.amount),
-        0,
+  const [
+    newCategoryName,
+    setNewCategoryName,
+  ] =
+    useState("");
+
+  /* =======================================================
+     CARREGAR PLANO SALVO
+     ======================================================= */
+
+  useEffect(() => {
+    if (!savedPlan) {
+      setAllocations(
+        DEFAULT_ALLOCATIONS,
       );
-  }, [transactions, selectedMonth]);
 
-  /*
-   * Total que o usuário já distribuiu.
-   */
-  const organizedAmount = useMemo(() => {
-    return organizations.reduce(
-      (total, organization) =>
-        total + organization.amount,
-      0,
-    );
-  }, [organizations]);
-
-  /*
-   * Dinheiro ainda não distribuído.
-   */
-  const remainingAmount = monthIncome - organizedAmount;
-
-  /*
-   * Porcentagem organizada.
-   */
-  const organizedPercentage =
-    monthIncome > 0
-      ? Math.min(
-          100,
-          Math.max(
-            0,
-            (organizedAmount / monthIncome) * 100,
-          ),
-        )
-      : 0;
-
-  function previousMonth() {
-    setSelectedMonth(
-      addMonths(selectedMonth, -1),
-    );
-  }
-
-  function nextMonth() {
-    setSelectedMonth(
-      addMonths(selectedMonth, 1),
-    );
-  }
-
-  function openNewOrganization() {
-    setEditing(null);
-    setNewName("");
-    setNewAmount("");
-    setNewEmoji("💰");
-    setDialogOpen(true);
-  }
-
-  function openEditOrganization(
-    organization: Organization,
-  ) {
-    setEditing(organization);
-    setNewName(organization.name);
-    setNewAmount(
-      String(organization.amount).replace(".", ","),
-    );
-    setNewEmoji(organization.emoji);
-    setDialogOpen(true);
-  }
-
-  function saveOrganization() {
-    const name = newName.trim();
-    const amount = parseAmount(newAmount);
-
-    if (!name) {
-      toast.error(
-        "Informe o nome da organização.",
-      );
       return;
     }
 
-    if (amount < 0) {
-      toast.error(
-        "O valor não pode ser negativo.",
-      );
-      return;
-    }
+    const saved =
+      savedPlan.allocations ??
+      {};
 
-    if (editing) {
-      setOrganizations((current) =>
-        current.map((organization) =>
-          organization.id === editing.id
-            ? {
-                ...organization,
-                name: name.slice(0, 60),
-                emoji: newEmoji,
-                amount,
-              }
-            : organization,
+    const restored =
+      DEFAULT_ALLOCATIONS.map(
+        (allocation) => {
+          const savedValue =
+            Number(
+              saved[
+                allocation.name
+              ] ?? 0,
+            );
+
+          const percentage =
+            currentBalance > 0
+              ? (
+                  savedValue /
+                  currentBalance
+                ) *
+                100
+              : 0;
+
+          return {
+            ...allocation,
+            amount:
+              Number.isFinite(
+                savedValue,
+              )
+                ? savedValue
+                : 0,
+
+            percentage,
+          };
+        },
+      );
+
+    /*
+     * Recupera categorias personalizadas
+     * que também estavam salvas.
+     */
+
+    const defaultNames =
+      new Set(
+        DEFAULT_ALLOCATIONS.map(
+          (item) =>
+            item.name,
         ),
       );
 
-      toast.success(
-        "Organização atualizada.",
-      );
-    } else {
-      const organization: Organization = {
-        id: crypto.randomUUID(),
-        name: name.slice(0, 60),
-        emoji: newEmoji,
-        amount,
-      };
+    const custom =
+      Object.entries(
+        saved,
+      )
+        .filter(
+          ([name]) =>
+            !defaultNames.has(
+              name,
+            ),
+        )
+        .map(
+          ([
+            name,
+            value,
+          ]) => {
+            const amount =
+              Number(
+                value,
+              ) || 0;
 
-      setOrganizations((current) => [
-        ...current,
-        organization,
-      ]);
+            return {
+              id:
+                `custom-${name}`,
 
-      toast.success(
-        "Nova organização adicionada.",
+              name,
+
+              emoji:
+                "✨",
+
+              amount,
+
+              percentage:
+                currentBalance > 0
+                  ? (
+                      amount /
+                      currentBalance
+                    ) *
+                    100
+                  : 0,
+
+              custom:
+                true,
+            };
+          },
+        );
+
+    setAllocations([
+      ...restored,
+      ...custom,
+    ]);
+  }, [
+    savedPlan,
+    month,
+    currentBalance,
+  ]);
+
+  /* =======================================================
+     TOTAIS
+     ======================================================= */
+
+  const totalAllocated =
+    useMemo(
+      () =>
+        allocations.reduce(
+          (
+            total,
+            allocation,
+          ) =>
+            total +
+            allocation.amount,
+          0,
+        ),
+      [
+        allocations,
+      ],
+    );
+
+  const remainingBalance =
+    currentBalance -
+    totalAllocated;
+
+  const allocationPercentage =
+    currentBalance > 0
+      ? (
+          totalAllocated /
+          currentBalance
+        ) *
+        100
+      : 0;
+
+  /* =======================================================
+     ATUALIZAR VALOR
+     ======================================================= */
+
+  function updateAmount(
+    id: string,
+    value: string,
+  ) {
+    const amount =
+      parseAmount(
+        value,
       );
+
+    setAllocations(
+      (current) =>
+        current.map(
+          (
+            allocation,
+          ) => {
+            if (
+              allocation.id !==
+              id
+            ) {
+              return allocation;
+            }
+
+            return {
+              ...allocation,
+
+              amount,
+
+              percentage:
+                currentBalance > 0
+                  ? (
+                      amount /
+                      currentBalance
+                    ) *
+                    100
+                  : 0,
+            };
+          },
+        ),
+    );
+  }
+
+  /* =======================================================
+     ATUALIZAR PORCENTAGEM
+     ======================================================= */
+
+  function updatePercentage(
+    id: string,
+    value: string,
+  ) {
+    const percentage =
+      Number(
+        value.replace(
+          ",",
+          ".",
+        ),
+      );
+
+    const safePercentage =
+      Number.isFinite(
+        percentage,
+      )
+        ? Math.max(
+            0,
+            percentage,
+          )
+        : 0;
+
+    const amount =
+      (
+        currentBalance *
+        safePercentage
+      ) /
+      100;
+
+    setAllocations(
+      (current) =>
+        current.map(
+          (
+            allocation,
+          ) => {
+            if (
+              allocation.id !==
+              id
+            ) {
+              return allocation;
+            }
+
+            return {
+              ...allocation,
+
+              amount,
+
+              percentage:
+                safePercentage,
+            };
+          },
+        ),
+    );
+  }
+
+  /* =======================================================
+     ADICIONAR PERSONALIZADA
+     ======================================================= */
+
+  function addCustomCategory() {
+    const name =
+      newCategoryName.trim();
+
+    if (!name) {
+      toast.error(
+        "Digite o nome da nova organização.",
+      );
+
+      return;
     }
 
-    setDialogOpen(false);
-  }
+    const alreadyExists =
+      allocations.some(
+        (allocation) =>
+          allocation.name
+            .toLowerCase() ===
+          name.toLowerCase(),
+      );
 
-  function removeOrganization(id: string) {
-    setOrganizations((current) =>
-      current.filter(
-        (organization) =>
-          organization.id !== id,
-      ),
+    if (alreadyExists) {
+      toast.error(
+        "Essa organização já existe.",
+      );
+
+      return;
+    }
+
+    const id =
+      `custom-${Date.now()}`;
+
+    setAllocations(
+      (current) => [
+        ...current,
+
+        {
+          id,
+
+          name:
+            name.slice(
+              0,
+              60,
+            ),
+
+          emoji:
+            "✨",
+
+          amount:
+            0,
+
+          percentage:
+            0,
+
+          custom:
+            true,
+        },
+      ],
     );
+
+    setNewCategoryName("");
 
     toast.success(
-      "Organização removida.",
+      "Nova organização adicionada.",
     );
   }
 
-  function automaticOrganization() {
+  /* =======================================================
+     REMOVER PERSONALIZADA
+     ======================================================= */
+
+  function removeCategory(
+    id: string,
+  ) {
+    setAllocations(
+      (current) =>
+        current.filter(
+          (
+            allocation,
+          ) =>
+            allocation.id !==
+            id,
+        ),
+    );
+  }
+
+  /* =======================================================
+     ORGANIZAÇÃO AUTOMÁTICA
+     ======================================================= */
+
+  function useAutomaticOrganization() {
+    /*
+     * Aqui entra a verificação real
+     * do plano Premium quando ela
+     * existir no perfil.
+     *
+     * Por enquanto o botão informa
+     * que a funcionalidade é Premium.
+     */
+
     toast.info(
-      "A organização automática será um recurso Premium.",
+      "A organização automática é um recurso Premium.",
+    );
+
+    setMode(
+      "automatic",
     );
   }
 
-  function clearAllValues() {
-    setOrganizations((current) =>
-      current.map((organization) => ({
-        ...organization,
-        amount: 0,
-      })),
+  /* =======================================================
+     LIMPAR
+     ======================================================= */
+
+  function clearAll() {
+    setAllocations(
+      (current) =>
+        current.map(
+          (
+            allocation,
+          ) => ({
+            ...allocation,
+            amount: 0,
+            percentage: 0,
+          }),
+        ),
     );
 
     toast.success(
-      "Os valores foram zerados.",
+      "Organização limpa.",
     );
   }
+
+  /* =======================================================
+     SALVAR
+     ======================================================= */
+
+  async function save() {
+    if (
+      currentBalance <= 0
+    ) {
+      toast.error(
+        "Você precisa ter saldo atual para organizar.",
+      );
+
+      return;
+    }
+
+    if (
+      totalAllocated >
+      currentBalance
+    ) {
+      toast.error(
+        "Você organizou mais dinheiro do que possui atualmente.",
+      );
+
+      return;
+    }
+
+    const allocationsObject =
+      allocations.reduce<
+        Record<
+          string,
+          number
+        >
+      >(
+        (
+          result,
+          allocation,
+        ) => {
+          result[
+            allocation.name
+          ] =
+            allocation.amount;
+
+          return result;
+        },
+        {},
+      );
+
+    try {
+      await savePlan.mutateAsync({
+        /*
+         * O income continua sendo
+         * obrigatório para a tabela,
+         * mas o planejamento usa
+         * o saldo atual real.
+         */
+
+        income:
+          currentBalance,
+
+        allocations:
+          allocationsObject,
+      });
+
+      toast.success(
+        "Organização salva com sucesso.",
+      );
+    } catch {
+      toast.error(
+        "Não foi possível salvar sua organização.",
+      );
+    }
+  }
+
+  /* =======================================================
+     LOADING
+     ======================================================= */
+
+  if (
+    isLoadingBalance ||
+    isLoadingPlan
+  ) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Organizar salário"
+          subtitle="Organize seu dinheiro de forma simples."
+        />
+
+        <p className="text-sm text-muted-foreground">
+          Carregando...
+        </p>
+      </div>
+    );
+  }
+
+  /* =======================================================
+     RENDER
+     ======================================================= */
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Organizar salário"
-        subtitle="Planeje como você quer distribuir seu dinheiro durante o mês."
+        subtitle="Distribua seu saldo atual entre o que é importante para você."
       />
 
-      {/* SELETOR DE MÊS */}
-      <section className="surface p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium">
-              Mês da organização
-            </p>
+      {/* =================================================
+          MÊS E SALDO
+         ================================================= */}
 
-            <p className="mt-1 text-xs text-muted-foreground">
-              Organize seu planejamento mensal.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1 rounded-xl border bg-card p-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Mês anterior"
-              onClick={previousMonth}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-
-            <div className="flex min-w-[170px] items-center justify-center gap-2 px-2 text-sm font-medium">
-              <CalendarDays className="size-4 text-muted-foreground" />
-
-              {monthLabel(selectedMonth)}
-            </div>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Próximo mês"
-              onClick={nextMonth}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* RESUMO FINANCEIRO */}
-      <section className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2">
         <div className="surface p-5">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
-              <Wallet className="size-5 text-primary" />
+            <div className="flex size-11 items-center justify-center rounded-xl bg-secondary">
+              📅
             </div>
 
             <div>
-              <p className="text-sm text-muted-foreground">
-                Disponível para organizar
+              <p className="text-sm font-semibold">
+                Mês da organização
               </p>
 
-              <p className="mt-1 text-xl font-bold">
-                {formatBRL(monthIncome)}
+              <p className="text-xs text-muted-foreground">
+                Escolha o período que deseja planejar.
               </p>
             </div>
           </div>
 
+          <Input
+            type="month"
+            className="mt-4 h-11"
+            value={month}
+            onChange={(event) =>
+              setMonth(
+                event.target.value,
+              )
+            }
+          />
+
           <p className="mt-3 text-xs text-muted-foreground">
-            Total das entradas em{" "}
-            {monthLabel(selectedMonth)}.
+            {formatMonth(
+              month,
+            )}
+          </p>
+        </div>
+
+        <div className="surface p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-secondary">
+              <Wallet className="size-5" />
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold">
+                Saldo atual disponível
+              </p>
+
+              <p className="text-xs text-muted-foreground">
+                Dinheiro atual somando todas as suas contas.
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-4 text-3xl font-bold">
+            {formatBRL(
+              currentBalance,
+            )}
+          </p>
+
+          <p className="mt-2 text-xs text-muted-foreground">
+            Esse valor considera saldo inicial, ajustes, entradas e saídas.
+          </p>
+        </div>
+      </div>
+
+      {/* =================================================
+          MODO
+         ================================================= */}
+
+      <div className="surface p-4">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button
+            type="button"
+            variant={
+              mode === "manual"
+                ? "default"
+                : "outline"
+            }
+            className="h-auto flex-1 justify-start gap-3 py-4"
+            onClick={() =>
+              setMode(
+                "manual",
+              )
+            }
+          >
+            <Edit3 className="size-5" />
+
+            <div className="text-left">
+              <p>
+                Organização manual
+              </p>
+
+              <p className="text-xs font-normal opacity-70">
+                Você decide exatamente quanto colocar em cada categoria.
+              </p>
+            </div>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto flex-1 justify-start gap-3 py-4"
+            onClick={
+              useAutomaticOrganization
+            }
+          >
+            <div className="relative">
+              <Bot className="size-5" />
+
+              <Crown className="absolute -right-3 -top-2 size-3" />
+            </div>
+
+            <div className="text-left">
+              <p className="flex items-center gap-2">
+                Organização automática
+
+                <span className="rounded-full border px-2 py-0.5 text-[10px]">
+                  PREMIUM
+                </span>
+              </p>
+
+              <p className="text-xs font-normal text-muted-foreground">
+                O FinanLook sugere uma divisão automática do seu dinheiro.
+              </p>
+            </div>
+          </Button>
+        </div>
+
+        {mode === "automatic" ? (
+          <div className="mt-4 rounded-xl border p-4">
+            <div className="flex items-start gap-3">
+              <Sparkles className="mt-0.5 size-5 shrink-0" />
+
+              <div>
+                <p className="text-sm font-semibold">
+                  Organização automática
+                </p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Este recurso estará disponível para usuários Premium.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {/* =================================================
+          RESUMO
+         ================================================= */}
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="surface p-5">
+          <p className="text-sm text-muted-foreground">
+            Saldo atual
+          </p>
+
+          <p className="mt-2 text-xl font-bold">
+            {formatBRL(
+              currentBalance,
+            )}
           </p>
         </div>
 
@@ -432,22 +874,17 @@ function OrganizeSalaryPage() {
             Já organizado
           </p>
 
-          <p className="mt-1 text-xl font-bold">
-            {formatBRL(organizedAmount)}
+          <p className="mt-2 text-xl font-bold">
+            {formatBRL(
+              totalAllocated,
+            )}
           </p>
 
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
-            <div
-              className="h-full rounded-full bg-primary transition-all"
-              style={{
-                width: `${organizedPercentage}%`,
-              }}
-            />
-          </div>
-
-          <p className="mt-2 text-xs text-muted-foreground">
-            {organizedPercentage.toFixed(0)}%
-            do dinheiro distribuído.
+          <p className="mt-1 text-xs text-muted-foreground">
+            {allocationPercentage.toFixed(
+              1,
+            )}
+            % do saldo atual
           </p>
         </div>
 
@@ -458,350 +895,289 @@ function OrganizeSalaryPage() {
 
           <p
             className={
-              remainingAmount >= 0
-                ? "mt-1 text-xl font-bold text-success"
-                : "mt-1 text-xl font-bold text-destructive"
+              remainingBalance < 0
+                ? "mt-2 text-xl font-bold text-destructive"
+                : "mt-2 text-xl font-bold text-success"
             }
           >
-            {formatBRL(remainingAmount)}
+            {formatBRL(
+              remainingBalance,
+            )}
           </p>
 
-          <p className="mt-3 text-xs text-muted-foreground">
-            {remainingAmount >= 0
-              ? "Valor que ainda pode ser organizado."
-              : "Você organizou mais dinheiro do que recebeu neste mês."}
+          <p className="mt-1 text-xs text-muted-foreground">
+            {remainingBalance < 0
+              ? "Você passou do saldo disponível."
+              : "Ainda disponível para organizar."}
           </p>
         </div>
-      </section>
+      </div>
 
-      {/* ORGANIZAÇÃO AUTOMÁTICA */}
-      <section className="surface overflow-hidden p-5">
-        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
-              <Sparkles className="size-6 text-primary" />
-            </div>
+      {/* =================================================
+          ORGANIZAÇÕES
+         ================================================= */}
 
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-display text-lg font-semibold">
-                  Organização automática
-                </h2>
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">
+            Como deseja dividir seu dinheiro?
+          </h2>
 
-                <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-                  <Crown className="size-3" />
-                  Premium
-                </span>
-              </div>
-
-              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-                O FinanLook analisa suas prioridades e
-                sugere automaticamente como distribuir seu
-                dinheiro entre gastos, reserva,
-                investimentos e outras categorias.
-              </p>
-            </div>
-          </div>
-
-          <Button
-            variant="outline"
-            className="h-11"
-            onClick={automaticOrganization}
-          >
-            <Sparkles className="size-4" />
-            Organizar automaticamente
-          </Button>
-        </div>
-      </section>
-
-      {/* ORGANIZAÇÃO MANUAL */}
-      <section className="surface p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="font-display text-lg font-semibold">
-              Organização manual
-            </h2>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Escolha quanto deseja separar para cada
-              prioridade.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearAllValues}
-            >
-              Zerar valores
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={openNewOrganization}
-            >
-              <Plus className="size-4" />
-              Nova organização
-            </Button>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Defina um valor ou uma porcentagem para cada organização.
+          </p>
         </div>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {organizations.map(
-            (organization) => {
-              const percentage =
-                monthIncome > 0
-                  ? (organization.amount /
-                      monthIncome) *
-                    100
-                  : 0;
-
-              return (
-                <div
-                  key={organization.id}
-                  className="rounded-2xl border p-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-xl">
-                      {organization.emoji}
+        <div className="space-y-3">
+          {allocations.map(
+            (
+              allocation,
+            ) => (
+              <div
+                key={
+                  allocation.id
+                }
+                className="surface p-4"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-lg">
+                      {
+                        allocation.emoji
+                      }
                     </span>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold">
-                            {organization.name}
-                          </p>
-
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {monthIncome > 0
-                              ? `${percentage.toFixed(
-                                  1,
-                                )}% do disponível`
-                              : "Aguardando entradas no mês"}
-                          </p>
-                        </div>
-
-                        <div className="flex shrink-0 gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Editar ${organization.name}`}
-                            onClick={() =>
-                              openEditOrganization(
-                                organization,
-                              )
-                            }
-                          >
-                            <Pencil className="size-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Remover ${organization.name}`}
-                            onClick={() =>
-                              removeOrganization(
-                                organization.id,
-                              )
-                            }
-                          >
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <p className="mt-4 text-lg font-bold">
-                        {formatBRL(
-                          organization.amount,
-                        )}
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">
+                        {
+                          allocation.name
+                        }
                       </p>
 
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{
-                            width: `${Math.min(
-                              100,
-                              Math.max(
-                                0,
-                                percentage,
-                              ),
-                            )}%`,
-                          }}
+                      <p className="text-xs text-muted-foreground">
+                        {
+                          allocation.percentage.toFixed(
+                            1,
+                          )
+                        }
+                        % do saldo atual
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2 lg:w-[360px]">
+                    <div>
+                      <Label className="text-xs">
+                        Valor
+                      </Label>
+
+                      <Input
+                        className="mt-1 h-10"
+                        inputMode="decimal"
+                        placeholder="0,00"
+                        value={
+                          allocation.amount > 0
+                            ? String(
+                                allocation.amount,
+                              ).replace(
+                                ".",
+                                ",",
+                              )
+                            : ""
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateAmount(
+                            allocation.id,
+                            event
+                              .target
+                              .value,
+                          )
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">
+                        Porcentagem
+                      </Label>
+
+                      <div className="relative mt-1">
+                        <Input
+                          className="h-10 pr-8"
+                          inputMode="decimal"
+                          placeholder="0"
+                          value={
+                            allocation.percentage >
+                            0
+                              ? allocation.percentage.toFixed(
+                                  1,
+                                )
+                              : ""
+                          }
+                          onChange={(
+                            event,
+                          ) =>
+                            updatePercentage(
+                              allocation.id,
+                              event
+                                .target
+                                .value,
+                            )
+                          }
                         />
+
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                          %
+                        </span>
                       </div>
                     </div>
                   </div>
+
+                  {allocation.custom ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Remover organização"
+                      onClick={() =>
+                        removeCategory(
+                          allocation.id,
+                        )
+                      }
+                    >
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  ) : null}
                 </div>
-              );
-            },
+              </div>
+            ),
           )}
         </div>
       </section>
 
-      {/* SIMULAÇÃO */}
-      <section className="surface p-5">
+      {/* =================================================
+          NOVA ORGANIZAÇÃO
+         ================================================= */}
+
+      <div className="surface p-5">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
-            <Wallet className="size-5 text-primary" />
+          <div className="flex size-11 items-center justify-center rounded-xl bg-secondary">
+            <Plus className="size-5" />
           </div>
 
           <div>
-            <h2 className="font-display text-lg font-semibold">
-              Como ficaria seu dinheiro
+            <h2 className="font-semibold">
+              Nova organização personalizada
             </h2>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              Simulação baseada na sua organização atual.
+            <p className="text-sm text-muted-foreground">
+              Crie uma categoria que combine com a sua vida.
             </p>
           </div>
         </div>
 
-        <div className="mt-5 divide-y divide-border rounded-xl border">
-          <div className="flex items-center justify-between gap-4 p-4">
-            <span className="text-sm">
-              Entradas do mês
-            </span>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Input
+            className="h-11 flex-1"
+            placeholder="Ex.: Estudos, Pets, Viagem..."
+            value={
+              newCategoryName
+            }
+            onChange={(
+              event,
+            ) =>
+              setNewCategoryName(
+                event.target.value,
+              )
+            }
+            onKeyDown={(
+              event,
+            ) => {
+              if (
+                event.key ===
+                "Enter"
+              ) {
+                event.preventDefault();
 
-            <span className="font-semibold text-success">
-              {formatBRL(monthIncome)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between gap-4 p-4">
-            <span className="text-sm">
-              Total organizado
-            </span>
-
-            <span className="font-semibold">
-              {formatBRL(organizedAmount)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between gap-4 p-4">
-            <span className="text-sm font-medium">
-              Restante para organizar
-            </span>
-
-            <span
-              className={
-                remainingAmount >= 0
-                  ? "font-bold text-success"
-                  : "font-bold text-destructive"
+                addCustomCategory();
               }
-            >
-              {formatBRL(remainingAmount)}
-            </span>
-          </div>
+            }}
+          />
+
+          <Button
+            type="button"
+            className="h-11"
+            onClick={
+              addCustomCategory
+            }
+          >
+            <Plus className="size-4" />
+            Adicionar
+          </Button>
         </div>
+      </div>
 
-        <p className="mt-4 text-xs text-muted-foreground">
-          Esta organização é um planejamento. Ela não
-          altera automaticamente suas movimentações ou o
-          saldo real das suas contas.
-        </p>
-      </section>
+      {/* =================================================
+          AVISO DE EXCESSO
+         ================================================= */}
 
-      {/* DIALOG */}
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editing
-                ? "Editar organização"
-                : "Nova organização"}
-            </DialogTitle>
+      {remainingBalance < 0 ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+          <p className="font-semibold text-destructive">
+            Você organizou mais dinheiro do que possui.
+          </p>
 
-            <DialogDescription>
-              Escolha um nome e o valor que deseja separar
-              neste mês.
-            </DialogDescription>
-          </DialogHeader>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Reduza{" "}
+            {formatBRL(
+              Math.abs(
+                remainingBalance,
+              ),
+            )}{" "}
+            das categorias antes de salvar.
+          </p>
+        </div>
+      ) : null}
 
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="organization-name">
-                Nome
-              </Label>
+      {/* =================================================
+          AÇÕES
+         ================================================= */}
 
-              <Input
-                id="organization-name"
-                className="h-11"
-                placeholder="Ex.: Curso"
-                value={newName}
-                onChange={(event) =>
-                  setNewName(event.target.value)
-                }
-              />
-            </div>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11"
+          onClick={
+            clearAll
+          }
+        >
+          <Minus className="size-4" />
+          Limpar valores
+        </Button>
 
-            <div className="space-y-1.5">
-              <Label>Ícone</Label>
+        <Button
+          type="button"
+          className="h-11"
+          disabled={
+            savePlan.isPending ||
+            currentBalance <= 0 ||
+            totalAllocated >
+              currentBalance
+          }
+          onClick={() =>
+            void save()
+          }
+        >
+          <Save className="size-4" />
 
-              <Select
-                value={newEmoji}
-                onValueChange={setNewEmoji}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {EMOJIS.map((emoji) => (
-                    <SelectItem
-                      key={emoji}
-                      value={emoji}
-                    >
-                      {emoji}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="organization-amount">
-                Valor para separar
-              </Label>
-
-              <Input
-                id="organization-amount"
-                className="h-11"
-                inputMode="decimal"
-                placeholder="500,00"
-                value={newAmount}
-                onChange={(event) =>
-                  setNewAmount(event.target.value)
-                }
-              />
-
-              {newAmount ? (
-                <p className="text-xs text-muted-foreground">
-                  {formatBRL(
-                    parseAmount(newAmount),
-                  )}
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              className="h-11 w-full"
-              onClick={saveOrganization}
-            >
-              {editing
-                ? "Salvar alterações"
-                : "Adicionar organização"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {savePlan.isPending
+            ? "Salvando..."
+            : "Salvar organização"}
+        </Button>
+      </div>
     </div>
   );
 }
