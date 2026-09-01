@@ -212,14 +212,6 @@ export function AppShell({
           to="/visao-geral"
           className="mb-6 flex items-center gap-2 px-2"
         >
-          {/*
-           * favicon.png
-           *
-           * Coloque o arquivo em:
-           *
-           * public/favicon.png
-           */}
-
           <img
             src="/favicon.png"
             alt="FinanLook"
@@ -278,114 +270,154 @@ export function AppShell({
       </aside>
 
       {/* =================================================
-          HEADER MOBILE
+          ÁREA PRINCIPAL
          ================================================= */}
 
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur md:hidden">
-        <Link
-          to="/visao-geral"
-          className="flex min-w-0 items-center gap-2"
-        >
-          <img
-            src="/favicon.png"
-            alt="FinanLook"
-            className="size-8 shrink-0 rounded-lg object-contain"
-          />
+      <div className="min-w-0 flex-1">
+        {/* ===============================================
+            HEADER MOBILE
+           =============================================== */}
 
-          <span className="truncate font-display text-base font-semibold">
-            FinanLook
-          </span>
-        </Link>
-
-        {/* MENU */}
-
-        <Sheet
-          open={menuOpen}
-          onOpenChange={
-            setMenuOpen
-          }
-        >
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Abrir menu"
-            >
-              <Menu className="size-5" />
-            </Button>
-          </SheetTrigger>
-
-          <SheetContent
-            side="right"
-            className="flex w-[85vw] max-w-xs flex-col p-4"
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur md:hidden">
+          <Link
+            to="/visao-geral"
+            className="flex min-w-0 items-center gap-2"
           >
-            <SheetTitle className="font-display">
-              Menu
-            </SheetTitle>
+            <img
+              src="/favicon.png"
+              alt="FinanLook"
+              className="size-8 shrink-0 rounded-lg object-contain"
+            />
 
-            {/* USUÁRIO */}
+            <span className="truncate font-display text-base font-semibold">
+              FinanLook
+            </span>
+          </Link>
 
-            <div className="mt-4 rounded-xl bg-secondary p-3">
-              <p className="truncate text-sm font-medium">
-                {profile?.name ||
-                  "Você"}
-              </p>
+          <Sheet
+            open={menuOpen}
+            onOpenChange={
+              setMenuOpen
+            }
+          >
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Abrir menu"
+              >
+                <Menu className="size-5" />
+              </Button>
+            </SheetTrigger>
 
-              <p className="truncate text-xs text-muted-foreground">
-                {profile?.username
-                  ? `@${profile.username}`
-                  : ""}
-              </p>
-            </div>
-
-            {/* NAVEGAÇÃO */}
-
-            <nav className="mt-4 flex flex-1 flex-col gap-1 overflow-y-auto">
-              {NAV.map(
-                (item) => (
-                  <NavItem
-                    key={item.to}
-                    {...item}
-                    active={
-                      pathname ===
-                      item.to
-                    }
-                    onNavigate={() =>
-                      setMenuOpen(
-                        false,
-                      )
-                    }
-                  />
-                ),
-              )}
-            </nav>
-
-            {/* LOGOUT */}
-
-            <Button
-              variant="outline"
-              className="mt-4 w-full"
-              onClick={() =>
-                void signOut()
-              }
+            <SheetContent
+              side="right"
+              className="flex w-[85vw] max-w-xs flex-col p-4"
             >
-              <LogOut className="size-4" />
+              <SheetTitle className="font-display">
+                Menu
+              </SheetTitle>
 
-              Sair da conta
-            </Button>
-          </SheetContent>
-        </Sheet>
-      </header>
+              {/* USUÁRIO */}
 
-      {/* =================================================
-          CONTEÚDO PRINCIPAL
-         ================================================= */}
+              <div className="mt-4 rounded-xl bg-secondary p-3">
+                <p className="truncate text-sm font-medium">
+                  {profile?.name ||
+                    "Você"}
+                </p>
 
-      <main className="w-full min-w-0 flex-1 px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8">
-        <div className="mx-auto w-full max-w-5xl space-y-6">
-          {children}
-        </div>
-      </main>
+                <p className="truncate text-xs text-muted-foreground">
+                  {profile?.username
+                    ? `@${profile.username}`
+                    : ""}
+                </p>
+              </div>
+
+              {/* NAVEGAÇÃO */}
+
+              <nav className="mt-4 flex flex-1 flex-col gap-1 overflow-y-auto">
+                {NAV.map(
+                  (item) => (
+                    <NavItem
+                      key={item.to}
+                      {...item}
+                      active={
+                        pathname ===
+                        item.to
+                      }
+                      onNavigate={() =>
+                        setMenuOpen(
+                          false,
+                        )
+                      }
+                    />
+                  ),
+                )}
+              </nav>
+
+              {/* LOGOUT */}
+
+              <Button
+                variant="outline"
+                className="mt-4 w-full"
+                onClick={() =>
+                  void signOut()
+                }
+              >
+                <LogOut className="size-4" />
+
+                Sair da conta
+              </Button>
+            </SheetContent>
+          </Sheet>
+        </header>
+
+        {/* ===============================================
+            CONTEÚDO
+           =============================================== */}
+
+        <main className="w-full px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8">
+          <div className="mx-auto w-full max-w-5xl space-y-6">
+            {children}
+
+            {/* ===========================================
+                RODAPÉ
+               =========================================== */}
+
+            <footer className="mt-12 border-t border-border pt-6">
+              <div className="flex flex-col items-center justify-between gap-4 pb-4 text-center sm:flex-row sm:text-left">
+                <p className="text-xs text-muted-foreground">
+                  © {new Date().getFullYear()} FinanLook.
+                  Todos os direitos reservados.
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+                  <Link
+                    to="/politica-de-privacidade"
+                    className="transition-colors hover:text-foreground"
+                  >
+                    Política de Privacidade
+                  </Link>
+
+                  <Link
+                    to="/termos-de-uso"
+                    className="transition-colors hover:text-foreground"
+                  >
+                    Termos de Uso
+                  </Link>
+
+                  <Link
+                    to="/cookies"
+                    className="transition-colors hover:text-foreground"
+                  >
+                    Cookies
+                  </Link>
+                </div>
+              </div>
+            </footer>
+          </div>
+        </main>
+      </div>
 
       {/* =================================================
           NAVEGAÇÃO MOBILE
