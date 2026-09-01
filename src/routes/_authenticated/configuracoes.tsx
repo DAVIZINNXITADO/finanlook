@@ -9,12 +9,19 @@ import {
 } from "react";
 
 import {
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import {
+  toast,
+} from "sonner";
+
+import {
   Check,
   ChevronRight,
   Eye,
   EyeOff,
-  KeyRound,
-  Laptop,
+  LockKeyhole,
   LogOut,
   Mail,
   Monitor,
@@ -22,20 +29,10 @@ import {
   Palette,
   Save,
   ShieldCheck,
-  Smartphone,
   Sun,
   Trash2,
   User,
-  X,
 } from "lucide-react";
-
-import {
-  useQueryClient,
-} from "@tanstack/react-query";
-
-import {
-  toast,
-} from "sonner";
 
 import {
   PageHeader,
@@ -81,53 +78,60 @@ import {
 } from "@/lib/utils";
 
 
-export const Route = createFileRoute(
-  "/_authenticated/configuracoes",
-)({
-  head: () => ({
-    meta: [
-      {
-        title: "Configurações — FinanLook",
-      },
-      {
-        name: "description",
-        content:
-          "Gerencie sua conta, segurança e preferências no FinanLook.",
-      },
-    ],
-  }),
+export const Route =
+  createFileRoute(
+    "/_authenticated/configuracoes",
+  )({
+    head: () => ({
+      meta: [
+        {
+          title:
+            "Configurações — FinanLook",
+        },
+        {
+          name:
+            "description",
+          content:
+            "Gerencie sua conta e preferências no FinanLook.",
+        },
+      ],
+    }),
 
-  component: SettingsPage,
-});
+    component:
+      SettingsPage,
+  });
 
 
 function maskEmail(
   email: string,
 ) {
-  const parts =
+  if (!email) {
+    return "";
+  }
+
+  const [
+    username,
+    domain,
+  ] =
     email.split("@");
 
-  if (
-    parts.length !== 2 ||
-    !parts[0] ||
-    !parts[1]
-  ) {
+  if (!domain) {
     return email;
   }
 
-  const name =
-    parts[0];
-
-  const domain =
-    parts[1];
-
-  if (
-    name.length <= 2
-  ) {
-    return `${name[0] ?? ""}****@${domain}`;
+  if (username.length <= 2) {
+    return `${username[0] ?? ""}****@${domain}`;
   }
 
-  return `${name[0]}****${name.at(-1)}@${domain}`;
+  const first =
+    username[0];
+
+  const last =
+    username[
+      username.length - 1
+    ];
+
+  return `${first}****${last}@${domain}`;
 }
 
 
@@ -155,12 +159,12 @@ function SettingsPage() {
     useTheme();
 
 
-  const username =
-    profile?.username ??
-    "";
-
   const accountEmail =
     authUser?.email ??
+    "";
+
+  const accountUsername =
+    profile?.username ??
     "";
 
 
@@ -177,24 +181,6 @@ function SettingsPage() {
     useState(false);
 
   const [
-    appearanceOpen,
-    setAppearanceOpen,
-  ] =
-    useState(false);
-
-  const [
-    sessionsOpen,
-    setSessionsOpen,
-  ] =
-    useState(false);
-
-  const [
-    deleteOpen,
-    setDeleteOpen,
-  ] =
-    useState(false);
-
-  const [
     emailOpen,
     setEmailOpen,
   ] =
@@ -206,6 +192,17 @@ function SettingsPage() {
   ] =
     useState(false);
 
+  const [
+    deleteOpen,
+    setDeleteOpen,
+  ] =
+    useState(false);
+
+  const [
+    deleteStep,
+    setDeleteStep,
+  ] =
+    useState(1);
 
   const [
     profileName,
@@ -219,13 +216,17 @@ function SettingsPage() {
   ] =
     useState("");
 
+  const [
+    currentEmail,
+    setCurrentEmail,
+  ] =
+    useState("");
 
   const [
     newEmail,
     setNewEmail,
   ] =
     useState("");
-
 
   const [
     newPassword,
@@ -245,19 +246,17 @@ function SettingsPage() {
   ] =
     useState(false);
 
-
   const [
-    sessionUsername,
-    setSessionUsername,
+    deleteUsernameFirst,
+    setDeleteUsernameFirst,
   ] =
     useState("");
 
   const [
-    deleteUsername,
-    setDeleteUsername,
+    deleteUsernameFinal,
+    setDeleteUsernameFinal,
   ] =
     useState("");
-
 
   const [
     savingProfile,
@@ -278,14 +277,8 @@ function SettingsPage() {
     useState(false);
 
   const [
-    signingOut,
-    setSigningOut,
-  ] =
-    useState(false);
-
-  const [
-    deleting,
-    setDeleting,
+    deletingAccount,
+    setDeletingAccount,
   ] =
     useState(false);
 
@@ -301,42 +294,9 @@ function SettingsPage() {
         "",
     );
 
-    setProfileOpen(true);
-  }
-
-
-  function openSecurity() {
-    setSecurityOpen(true);
-  }
-
-
-  function openEmail() {
-    setNewEmail(
-      accountEmail,
+    setProfileOpen(
+      true,
     );
-
-    setEmailOpen(true);
-  }
-
-
-  function openPassword() {
-    setNewPassword("");
-    setConfirmPassword("");
-    setShowPassword(false);
-
-    setPasswordOpen(true);
-  }
-
-
-  function openSessions() {
-    setSessionUsername("");
-    setSessionsOpen(true);
-  }
-
-
-  function openDelete() {
-    setDeleteUsername("");
-    setDeleteOpen(true);
   }
 
 
@@ -344,7 +304,7 @@ function SettingsPage() {
     const name =
       profileName.trim();
 
-    const newUsername =
+    const username =
       profileUsername
         .trim()
         .replace(
@@ -354,20 +314,25 @@ function SettingsPage() {
         .toLowerCase();
 
 
-    if (
-      name.length < 2
-    ) {
+    if (!name) {
       toast.error(
-        "Informe um nome com pelo menos 2 caracteres.",
+        "Informe seu nome.",
       );
 
       return;
     }
 
 
-    if (
-      newUsername.length < 3
-    ) {
+    if (!username) {
+      toast.error(
+        "Informe seu nome de usuário.",
+      );
+
+      return;
+    }
+
+
+    if (username.length < 3) {
       toast.error(
         "O nome de usuário precisa ter pelo menos 3 caracteres.",
       );
@@ -378,7 +343,7 @@ function SettingsPage() {
 
     if (
       !/^[a-zA-Z0-9._-]+$/.test(
-        newUsername,
+        username,
       )
     ) {
       toast.error(
@@ -389,19 +354,21 @@ function SettingsPage() {
     }
 
 
-    setSavingProfile(true);
+    setSavingProfile(
+      true,
+    );
 
 
     try {
       const {
         data,
-        error: userError,
+        error: authError,
       } =
         await supabase.auth.getUser();
 
 
       if (
-        userError ||
+        authError ||
         !data.user
       ) {
         throw new Error(
@@ -414,7 +381,9 @@ function SettingsPage() {
         error,
       } =
         await supabase
-          .from("profiles")
+          .from(
+            "profiles",
+          )
           .update({
             name:
               name.slice(
@@ -423,7 +392,7 @@ function SettingsPage() {
               ),
 
             username:
-              newUsername.slice(
+              username.slice(
                 0,
                 40,
               ),
@@ -450,27 +419,83 @@ function SettingsPage() {
         "Perfil atualizado com sucesso.",
       );
 
-      setProfileOpen(false);
+
+      setProfileOpen(
+        false,
+      );
     } catch {
       toast.error(
         "Não foi possível atualizar seu perfil.",
       );
     } finally {
-      setSavingProfile(false);
+      setSavingProfile(
+        false,
+      );
     }
   }
 
 
+  function openEmail() {
+    setCurrentEmail(
+      "",
+    );
+
+    setNewEmail(
+      "",
+    );
+
+    setEmailOpen(
+      true,
+    );
+  }
+
+
   async function saveEmail() {
-    const email =
+    const current =
+      currentEmail
+        .trim()
+        .toLowerCase();
+
+    const next =
       newEmail
         .trim()
         .toLowerCase();
 
 
+    if (!current) {
+      toast.error(
+        "Informe o e-mail atual.",
+      );
+
+      return;
+    }
+
+
     if (
-      !email ||
-      !email.includes("@")
+      current !==
+      accountEmail.toLowerCase()
+    ) {
+      toast.error(
+        "O e-mail atual informado não corresponde à sua conta.",
+      );
+
+      return;
+    }
+
+
+    if (!next) {
+      toast.error(
+        "Informe o novo e-mail.",
+      );
+
+      return;
+    }
+
+
+    if (
+      !next.includes(
+        "@",
+      )
     ) {
       toast.error(
         "Informe um e-mail válido.",
@@ -480,7 +505,21 @@ function SettingsPage() {
     }
 
 
-    setSavingEmail(true);
+    if (
+      next ===
+      accountEmail.toLowerCase()
+    ) {
+      toast.error(
+        "O novo e-mail precisa ser diferente do atual.",
+      );
+
+      return;
+    }
+
+
+    setSavingEmail(
+      true,
+    );
 
 
     try {
@@ -488,7 +527,8 @@ function SettingsPage() {
         error,
       } =
         await supabase.auth.updateUser({
-          email,
+          email:
+            next,
         });
 
 
@@ -498,23 +538,65 @@ function SettingsPage() {
 
 
       toast.success(
-        "Enviamos uma confirmação para o novo e-mail.",
+        "Enviamos uma confirmação para concluir a alteração do seu e-mail.",
       );
 
-      setEmailOpen(false);
+
+      setEmailOpen(
+        false,
+      );
+
+      setCurrentEmail(
+        "",
+      );
+
+      setNewEmail(
+        "",
+      );
     } catch {
       toast.error(
-        "Não foi possível alterar seu e-mail.",
+        "Não foi possível solicitar a alteração do e-mail.",
       );
     } finally {
-      setSavingEmail(false);
+      setSavingEmail(
+        false,
+      );
     }
   }
 
 
+  function openPassword() {
+    setNewPassword(
+      "",
+    );
+
+    setConfirmPassword(
+      "",
+    );
+
+    setShowPassword(
+      false,
+    );
+
+    setPasswordOpen(
+      true,
+    );
+  }
+
+
   async function savePassword() {
+    if (!newPassword) {
+      toast.error(
+        "Informe uma nova senha.",
+      );
+
+      return;
+    }
+
+
     if (
-      newPassword.length < 6
+      newPassword.length <
+      6
     ) {
       toast.error(
         "A senha precisa ter pelo menos 6 caracteres.",
@@ -536,7 +618,9 @@ function SettingsPage() {
     }
 
 
-    setSavingPassword(true);
+    setSavingPassword(
+      true,
+    );
 
 
     try {
@@ -559,17 +643,25 @@ function SettingsPage() {
       );
 
 
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowPassword(false);
+      setPasswordOpen(
+        false,
+      );
 
-      setPasswordOpen(false);
+      setNewPassword(
+        "",
+      );
+
+      setConfirmPassword(
+        "",
+      );
     } catch {
       toast.error(
         "Não foi possível alterar sua senha.",
       );
     } finally {
-      setSavingPassword(false);
+      setSavingPassword(
+        false,
+      );
     }
   }
 
@@ -577,54 +669,26 @@ function SettingsPage() {
   function changeTheme(
     value: Theme,
   ) {
-    setTheme(value);
+    setTheme(
+      value,
+    );
 
-    const label =
+
+    const name =
       value === "light"
-        ? "claro"
+        ? "tema claro"
         : value === "dark"
-          ? "escuro"
-          : "do sistema";
+          ? "tema escuro"
+          : "tema do sistema";
+
 
     toast.success(
-      `Aparência alterada para tema ${label}.`,
+      `Aparência alterada para ${name}.`,
     );
   }
 
 
-  async function confirmSignOut() {
-    if (
-      !username
-    ) {
-      toast.error(
-        "Não foi possível confirmar seu nome de usuário.",
-      );
-
-      return;
-    }
-
-
-    if (
-      sessionUsername
-        .trim()
-        .replace(
-          /^@/,
-          "",
-        )
-        .toLowerCase() !==
-      username.toLowerCase()
-    ) {
-      toast.error(
-        "Digite exatamente o seu nome de usuário para confirmar.",
-      );
-
-      return;
-    }
-
-
-    setSigningOut(true);
-
-
+  async function signOut() {
     try {
       await queryClient.cancelQueries();
 
@@ -643,90 +707,168 @@ function SettingsPage() {
 
 
       await navigate({
-        to: "/auth",
-        replace: true,
+        to:
+          "/auth",
+
+        search: {
+          modo:
+            "entrar",
+        },
+
+        replace:
+          true,
       });
     } catch {
       toast.error(
         "Não foi possível sair da conta.",
       );
-    } finally {
-      setSigningOut(false);
     }
   }
 
 
-  async function confirmDelete() {
-    if (
-      !username
-    ) {
-      toast.error(
-        "Não foi possível confirmar seu nome de usuário.",
-      );
+  function openDeleteAccount() {
+    setDeleteStep(
+      1,
+    );
 
-      return;
-    }
+    setDeleteUsernameFirst(
+      "",
+    );
+
+    setDeleteUsernameFinal(
+      "",
+    );
+
+    setDeleteOpen(
+      true,
+    );
+  }
 
 
-    if (
-      deleteUsername
+  function confirmDeleteStepOne() {
+    const typed =
+      deleteUsernameFirst
         .trim()
         .replace(
           /^@/,
           "",
         )
-        .toLowerCase() !==
-      username.toLowerCase()
+        .toLowerCase();
+
+
+    if (
+      typed !==
+      accountUsername.toLowerCase()
     ) {
       toast.error(
-        "Digite exatamente o seu nome de usuário para confirmar.",
+        "O nome de usuário não corresponde à sua conta.",
       );
 
       return;
     }
 
 
-    setDeleting(true);
+    setDeleteStep(
+      2,
+    );
+
+    setDeleteUsernameFinal(
+      "",
+    );
+  }
+
+
+  async function deleteAccount() {
+    const typed =
+      deleteUsernameFinal
+        .trim()
+        .replace(
+          /^@/,
+          "",
+        )
+        .toLowerCase();
+
+
+    if (
+      typed !==
+      accountUsername.toLowerCase()
+    ) {
+      toast.error(
+        "O nome de usuário não corresponde à sua conta.",
+      );
+
+      return;
+    }
+
+
+    setDeletingAccount(
+      true,
+    );
 
 
     try {
-      /*
-       * A exclusão definitiva da conta deve ser feita
-       * por uma função segura no backend.
-       *
-       * Aqui deixamos a confirmação pronta para conectar
-       * quando você criar a função no Supabase.
-       */
+      const {
+        error,
+      } =
+        await supabase.functions.invoke(
+          "delete-account",
+        );
 
+
+      if (error) {
+        throw error;
+      }
+
+
+      await supabase.auth.signOut();
+
+      queryClient.clear();
+
+
+      toast.success(
+        "Sua conta foi excluída.",
+      );
+
+
+      await navigate({
+        to:
+          "/",
+
+        replace:
+          true,
+      });
+    } catch {
       toast.error(
-        "A exclusão da conta ainda precisa ser conectada ao backend.",
+        "Não foi possível excluir sua conta.",
       );
     } finally {
-      setDeleting(false);
+      setDeletingAccount(
+        false,
+      );
     }
   }
 
 
   return (
     <div className="space-y-6">
-
       <PageHeader
         title="Configurações"
         subtitle="Gerencie sua conta e personalize sua experiência no FinanLook."
       />
 
 
-      <section className="grid gap-4 md:grid-cols-2">
-
+      <section className="grid gap-4 lg:grid-cols-2">
 
         <SettingsCard
           icon={
             <User className="size-6" />
           }
           title="Perfil"
-          description="Altere seu nome e nome de usuário."
-          action="Configurar"
-          onClick={openProfile}
+          description="Atualize seu nome e nome de usuário."
+          buttonText="Configurar"
+          onClick={
+            openProfile
+          }
         />
 
 
@@ -736,8 +878,12 @@ function SettingsPage() {
           }
           title="Conta e segurança"
           description="Gerencie seu e-mail, senha e informações de acesso."
-          action="Configurar"
-          onClick={openSecurity}
+          buttonText="Configurar"
+          onClick={() =>
+            setSecurityOpen(
+              true,
+            )
+          }
         />
 
 
@@ -747,121 +893,172 @@ function SettingsPage() {
           }
           title="Aparência"
           description="Personalize como o FinanLook aparece para você."
-          action="Configurar"
+          buttonText="Personalizar"
           onClick={() =>
-            setAppearanceOpen(true)
+            document
+              .getElementById(
+                "appearance",
+              )
+              ?.scrollIntoView({
+                behavior:
+                  "smooth",
+              })
           }
         />
-
-
-        <SettingsCard
-          icon={
-            <Laptop className="size-6" />
-          }
-          title="Gerenciar sessões"
-          description="Controle a sessão atual e saia da sua conta."
-          action="Abrir"
-          variant="success"
-          onClick={openSessions}
-        />
-
 
       </section>
 
 
-      <section className="surface overflow-hidden">
+      <section
+        id="appearance"
+        className="surface p-5"
+      >
+        <div className="flex items-start gap-3">
 
-        <div className="border-b p-5">
-
-          <div className="flex items-center gap-3">
-
-            <div className="flex size-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
-
-              <Trash2 className="size-5" />
-
-            </div>
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <Palette className="size-5 text-primary" />
+          </div>
 
 
-            <div>
+          <div>
+            <h2 className="font-display text-lg font-semibold">
+              Aparência
+            </h2>
 
-              <h2 className="font-display text-lg font-semibold">
-                Zona de perigo
-              </h2>
-
-              <p className="text-sm text-muted-foreground">
-                Ações importantes relacionadas à sua conta.
-              </p>
-
-            </div>
-
+            <p className="mt-1 text-sm text-muted-foreground">
+              Escolha como deseja visualizar o FinanLook.
+            </p>
           </div>
 
         </div>
 
 
-        <button
-          type="button"
-          onClick={openDelete}
-          className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-destructive/5"
-        >
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
 
-          <div className="flex min-w-0 items-center gap-3">
-
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
-
-              <Trash2 className="size-5" />
-
-            </div>
-
-
-            <div className="min-w-0">
-
-              <p className="font-medium text-destructive">
-                Excluir minha conta
-              </p>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Remover permanentemente sua conta e seus dados.
-              </p>
-
-            </div>
-
-          </div>
+          <ThemeOption
+            icon={
+              <Sun className="size-5" />
+            }
+            title="Claro"
+            description="Sempre usar aparência clara"
+            active={
+              theme ===
+              "light"
+            }
+            onClick={() =>
+              changeTheme(
+                "light",
+              )
+            }
+          />
 
 
-          <ChevronRight className="size-5 shrink-0 text-destructive" />
+          <ThemeOption
+            icon={
+              <Moon className="size-5" />
+            }
+            title="Escuro"
+            description="Sempre usar aparência escura"
+            active={
+              theme ===
+              "dark"
+            }
+            onClick={() =>
+              changeTheme(
+                "dark",
+              )
+            }
+          />
 
-        </button>
 
+          <ThemeOption
+            icon={
+              <Monitor className="size-5" />
+            }
+            title="Sistema"
+            description="Seguir o dispositivo"
+            active={
+              theme ===
+              "system"
+            }
+            onClick={() =>
+              changeTheme(
+                "system",
+              )
+            }
+          />
+
+        </div>
       </section>
 
 
-      {/* PERFIL */}
+      <section>
+        <div className="mb-3">
+          <h2 className="font-display text-lg font-semibold">
+            Conta
+          </h2>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ações relacionadas à sua conta.
+          </p>
+        </div>
+
+
+        <div className="grid gap-4 sm:grid-cols-2">
+
+          <DangerCard
+            icon={
+              <LogOut className="size-6" />
+            }
+            title="Sair da conta"
+            description="Encerrar sua sessão neste dispositivo."
+            buttonText="Sair da conta"
+            onClick={() =>
+              void signOut()
+            }
+          />
+
+
+          <DangerCard
+            icon={
+              <Trash2 className="size-6" />
+            }
+            title="Excluir conta"
+            description="Remover permanentemente sua conta e seus dados."
+            buttonText="Excluir conta"
+            onClick={
+              openDeleteAccount
+            }
+          />
+
+        </div>
+      </section>
+
 
       <Dialog
-        open={profileOpen}
-        onOpenChange={setProfileOpen}
+        open={
+          profileOpen
+        }
+        onOpenChange={
+          setProfileOpen
+        }
       >
-
         <DialogContent className="sm:max-w-md">
 
           <DialogHeader>
-
             <DialogTitle>
-              Perfil
+              Editar perfil
             </DialogTitle>
 
             <DialogDescription>
-              Atualize as informações que aparecem na sua conta.
+              Atualize as informações exibidas na sua conta.
             </DialogDescription>
-
           </DialogHeader>
 
 
           <div className="space-y-4">
 
             <div className="space-y-1.5">
-
               <Label htmlFor="profile-name">
                 Nome
               </Label>
@@ -869,21 +1066,23 @@ function SettingsPage() {
               <Input
                 id="profile-name"
                 className="h-11"
-                value={profileName}
-                onChange={(event) =>
+                value={
+                  profileName
+                }
+                onChange={(
+                  event,
+                ) =>
                   setProfileName(
                     event.target.value,
                   )
                 }
-                maxLength={80}
                 placeholder="Seu nome"
+                maxLength={80}
               />
-
             </div>
 
 
             <div className="space-y-1.5">
-
               <Label htmlFor="profile-username">
                 Nome de usuário
               </Label>
@@ -897,37 +1096,36 @@ function SettingsPage() {
                 <Input
                   id="profile-username"
                   className="h-11 pl-7"
-                  value={profileUsername}
-                  onChange={(event) =>
+                  value={
+                    profileUsername
+                  }
+                  onChange={(
+                    event,
+                  ) =>
                     setProfileUsername(
                       event.target.value,
                     )
                   }
-                  maxLength={40}
                   placeholder="seuusername"
+                  maxLength={40}
                 />
 
               </div>
-
-              <p className="text-xs text-muted-foreground">
-                Use letras, números, ponto, hífen ou underline.
-              </p>
-
             </div>
 
           </div>
 
 
           <DialogFooter>
-
             <Button
               className="h-11 w-full"
-              disabled={savingProfile}
+              disabled={
+                savingProfile
+              }
               onClick={() =>
                 void saveProfile()
               }
             >
-
               <Save className="size-4" />
 
               {savingProfile
@@ -935,208 +1133,209 @@ function SettingsPage() {
                 : "Salvar alterações"}
 
             </Button>
-
           </DialogFooter>
 
         </DialogContent>
-
       </Dialog>
 
 
-      {/* CONTA E SEGURANÇA */}
-
       <Dialog
-        open={securityOpen}
-        onOpenChange={setSecurityOpen}
+        open={
+          securityOpen
+        }
+        onOpenChange={
+          setSecurityOpen
+        }
       >
-
         <DialogContent className="sm:max-w-md">
 
           <DialogHeader>
-
             <DialogTitle>
               Conta e segurança
             </DialogTitle>
 
             <DialogDescription>
-              Gerencie as informações usadas para acessar sua conta.
+              Gerencie suas informações e credenciais de acesso.
             </DialogDescription>
-
           </DialogHeader>
 
 
-          <div className="space-y-3">
+          <div className="divide-y rounded-xl border">
 
-            <button
-              type="button"
+            <SettingsRow
+              icon={
+                <Mail className="size-5" />
+              }
+              title="E-mail"
+              description={
+                maskEmail(
+                  accountEmail,
+                ) ||
+                "Nenhum e-mail disponível"
+              }
+              action="Alterar"
               onClick={() => {
-                setSecurityOpen(false);
+                setSecurityOpen(
+                  false,
+                );
+
                 openEmail();
               }}
-              className="flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/50"
-            >
-
-              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Mail className="size-5" />
-              </div>
+            />
 
 
-              <div className="min-w-0 flex-1">
-
-                <p className="font-medium">
-                  E-mail
-                </p>
-
-                <p className="mt-1 truncate text-sm text-muted-foreground">
-                  {maskEmail(accountEmail)}
-                </p>
-
-              </div>
-
-
-              <ChevronRight className="size-5 text-muted-foreground" />
-
-            </button>
-
-
-            <button
-              type="button"
+            <SettingsRow
+              icon={
+                <LockKeyhole className="size-5" />
+              }
+              title="Senha"
+              description="Altere sua senha de acesso."
+              action="Alterar"
               onClick={() => {
-                setSecurityOpen(false);
+                setSecurityOpen(
+                  false,
+                );
+
                 openPassword();
               }}
-              className="flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/50"
-            >
-
-              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <KeyRound className="size-5" />
-              </div>
-
-
-              <div className="flex-1">
-
-                <p className="font-medium">
-                  Senha
-                </p>
-
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Altere sua senha de acesso.
-                </p>
-
-              </div>
-
-
-              <ChevronRight className="size-5 text-muted-foreground" />
-
-            </button>
+            />
 
           </div>
 
         </DialogContent>
-
       </Dialog>
 
 
-      {/* EMAIL */}
-
       <Dialog
-        open={emailOpen}
-        onOpenChange={setEmailOpen}
+        open={
+          emailOpen
+        }
+        onOpenChange={
+          setEmailOpen
+        }
       >
-
         <DialogContent className="sm:max-w-md">
 
           <DialogHeader>
-
             <DialogTitle>
               Alterar e-mail
             </DialogTitle>
 
             <DialogDescription>
-              Você receberá uma confirmação no novo endereço de e-mail.
+              Confirme o e-mail atual e informe o novo endereço que deseja utilizar.
             </DialogDescription>
-
-          </DialogHeader>
-
-
-          <div className="space-y-1.5">
-
-            <Label htmlFor="new-email">
-              Novo e-mail
-            </Label>
-
-            <Input
-              id="new-email"
-              type="email"
-              className="h-11"
-              value={newEmail}
-              onChange={(event) =>
-                setNewEmail(
-                  event.target.value,
-                )
-              }
-              placeholder="voce@email.com"
-              maxLength={160}
-            />
-
-          </div>
-
-
-          <DialogFooter>
-
-            <Button
-              className="h-11 w-full"
-              disabled={savingEmail}
-              onClick={() =>
-                void saveEmail()
-              }
-            >
-
-              <Mail className="size-4" />
-
-              {savingEmail
-                ? "Alterando..."
-                : "Alterar e-mail"}
-
-            </Button>
-
-          </DialogFooter>
-
-        </DialogContent>
-
-      </Dialog>
-
-
-      {/* SENHA */}
-
-      <Dialog
-        open={passwordOpen}
-        onOpenChange={setPasswordOpen}
-      >
-
-        <DialogContent className="sm:max-w-md">
-
-          <DialogHeader>
-
-            <DialogTitle>
-              Alterar senha
-            </DialogTitle>
-
-            <DialogDescription>
-              Escolha uma nova senha para proteger sua conta.
-            </DialogDescription>
-
           </DialogHeader>
 
 
           <div className="space-y-4">
 
             <div className="space-y-1.5">
+              <Label htmlFor="current-email">
+                E-mail atual
+              </Label>
 
+              <Input
+                id="current-email"
+                type="email"
+                className="h-11"
+                value={
+                  currentEmail
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setCurrentEmail(
+                    event.target.value,
+                  )
+                }
+                placeholder="Digite seu e-mail atual"
+                autoComplete="email"
+              />
+            </div>
+
+
+            <div className="space-y-1.5">
+              <Label htmlFor="new-email">
+                Novo e-mail
+              </Label>
+
+              <Input
+                id="new-email"
+                type="email"
+                className="h-11"
+                value={
+                  newEmail
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setNewEmail(
+                    event.target.value,
+                  )
+                }
+                placeholder="Digite seu novo e-mail"
+                autoComplete="email"
+              />
+            </div>
+
+
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Uma confirmação será enviada para concluir a alteração.
+            </p>
+
+          </div>
+
+
+          <DialogFooter>
+            <Button
+              className="h-11 w-full"
+              disabled={
+                savingEmail
+              }
+              onClick={() =>
+                void saveEmail()
+              }
+            >
+              <Mail className="size-4" />
+
+              {savingEmail
+                ? "Enviando..."
+                : "Continuar"}
+
+            </Button>
+          </DialogFooter>
+
+        </DialogContent>
+      </Dialog>
+
+
+      <Dialog
+        open={
+          passwordOpen
+        }
+        onOpenChange={
+          setPasswordOpen
+        }
+      >
+        <DialogContent className="sm:max-w-md">
+
+          <DialogHeader>
+            <DialogTitle>
+              Alterar senha
+            </DialogTitle>
+
+            <DialogDescription>
+              Escolha uma nova senha para acessar sua conta.
+            </DialogDescription>
+          </DialogHeader>
+
+
+          <div className="space-y-4">
+
+            <div className="space-y-1.5">
               <Label htmlFor="new-password">
                 Nova senha
               </Label>
-
 
               <div className="relative">
 
@@ -1147,13 +1346,17 @@ function SettingsPage() {
                       ? "text"
                       : "password"
                   }
-                  value={newPassword}
-                  onChange={(event) =>
+                  className="h-11 pr-11"
+                  value={
+                    newPassword
+                  }
+                  onChange={(
+                    event,
+                  ) =>
                     setNewPassword(
                       event.target.value,
                     )
                   }
-                  className="h-11 pr-11"
                   autoComplete="new-password"
                   maxLength={1000}
                 />
@@ -1167,29 +1370,25 @@ function SettingsPage() {
                         !current,
                     )
                   }
-                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground"
+                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground"
                   aria-label={
                     showPassword
                       ? "Ocultar senha"
                       : "Mostrar senha"
                   }
                 >
-
                   {showPassword ? (
                     <EyeOff className="size-4" />
                   ) : (
                     <Eye className="size-4" />
                   )}
-
                 </button>
 
               </div>
-
             </div>
 
 
             <div className="space-y-1.5">
-
               <Label htmlFor="confirm-password">
                 Confirmar nova senha
               </Label>
@@ -1201,358 +1400,221 @@ function SettingsPage() {
                     ? "text"
                     : "password"
                 }
-                value={confirmPassword}
-                onChange={(event) =>
+                className="h-11"
+                value={
+                  confirmPassword
+                }
+                onChange={(
+                  event,
+                ) =>
                   setConfirmPassword(
                     event.target.value,
                   )
                 }
-                className="h-11"
                 autoComplete="new-password"
                 maxLength={1000}
               />
-
             </div>
 
           </div>
 
 
           <DialogFooter>
-
             <Button
               className="h-11 w-full"
-              disabled={savingPassword}
+              disabled={
+                savingPassword
+              }
               onClick={() =>
                 void savePassword()
               }
             >
-
-              <KeyRound className="size-4" />
+              <LockKeyhole className="size-4" />
 
               {savingPassword
                 ? "Alterando..."
                 : "Alterar senha"}
 
             </Button>
-
           </DialogFooter>
 
         </DialogContent>
-
       </Dialog>
 
 
-      {/* APARÊNCIA */}
-
       <Dialog
-        open={appearanceOpen}
-        onOpenChange={setAppearanceOpen}
+        open={
+          deleteOpen
+        }
+        onOpenChange={
+          setDeleteOpen
+        }
       >
-
-        <DialogContent className="sm:max-w-lg">
-
-          <DialogHeader>
-
-            <DialogTitle>
-              Aparência
-            </DialogTitle>
-
-            <DialogDescription>
-              Escolha como deseja visualizar o FinanLook.
-            </DialogDescription>
-
-          </DialogHeader>
-
-
-          <div className="grid gap-3 sm:grid-cols-3">
-
-            <ThemeOption
-              icon={
-                <Sun className="size-5" />
-              }
-              title="Claro"
-              description="Sempre claro"
-              active={
-                theme ===
-                "light"
-              }
-              onClick={() =>
-                changeTheme(
-                  "light",
-                )
-              }
-            />
-
-
-            <ThemeOption
-              icon={
-                <Moon className="size-5" />
-              }
-              title="Escuro"
-              description="Sempre escuro"
-              active={
-                theme ===
-                "dark"
-              }
-              onClick={() =>
-                changeTheme(
-                  "dark",
-                )
-              }
-            />
-
-
-            <ThemeOption
-              icon={
-                <Monitor className="size-5" />
-              }
-              title="Sistema"
-              description="Seguir dispositivo"
-              active={
-                theme ===
-                "system"
-              }
-              onClick={() =>
-                changeTheme(
-                  "system",
-                )
-              }
-            />
-
-          </div>
-
-        </DialogContent>
-
-      </Dialog>
-
-
-      {/* GERENCIAR SESSÕES */}
-
-      <Dialog
-        open={sessionsOpen}
-        onOpenChange={setSessionsOpen}
-      >
-
         <DialogContent className="sm:max-w-md">
 
-          <DialogHeader>
+          {deleteStep === 1 ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  Excluir conta
+                </DialogTitle>
 
-            <DialogTitle>
-              Gerenciar sessões
-            </DialogTitle>
-
-            <DialogDescription>
-              Você está gerenciando a sessão atual da sua conta.
-            </DialogDescription>
-
-          </DialogHeader>
+                <DialogDescription>
+                  Esta ação iniciará o processo de exclusão permanente da sua conta.
+                </DialogDescription>
+              </DialogHeader>
 
 
-          <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4">
+              <div className="space-y-4">
 
-            <div className="flex items-start gap-3">
+                <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
 
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10 text-green-600 dark:text-green-400">
+                  <p className="text-sm font-medium text-destructive">
+                    Atenção
+                  </p>
 
-                <Smartphone className="size-5" />
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Esta é uma ação sensível e será necessário confirmar sua identidade em duas etapas.
+                  </p>
+
+                </div>
+
+
+                <div className="space-y-1.5">
+
+                  <Label htmlFor="delete-username-first">
+                    Confirme seu nome de usuário
+                  </Label>
+
+                  <p className="text-sm text-muted-foreground">
+                    Digite exatamente:
+                  </p>
+
+                  <p className="font-semibold">
+                    @{accountUsername}
+                  </p>
+
+                  <Input
+                    id="delete-username-first"
+                    className="h-11"
+                    value={
+                      deleteUsernameFirst
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setDeleteUsernameFirst(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Digite seu username"
+                    autoComplete="off"
+                  />
+
+                </div>
 
               </div>
 
 
-              <div>
+              <DialogFooter>
+                <Button
+                  variant="destructive"
+                  className="h-11 w-full"
+                  onClick={
+                    confirmDeleteStepOne
+                  }
+                >
+                  Continuar
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  Confirmação final
+                </DialogTitle>
 
-                <p className="font-medium">
-                  Sessão atual
-                </p>
+                <DialogDescription>
+                  Para concluir, confirme novamente seu nome de usuário.
+                </DialogDescription>
+              </DialogHeader>
 
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Esta é a sessão que está sendo usada agora.
-                </p>
+
+              <div className="space-y-4">
+
+                <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+
+                  <p className="text-sm font-medium text-destructive">
+                    Esta ação é permanente.
+                  </p>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Após confirmar, sua conta será enviada para exclusão.
+                  </p>
+
+                </div>
+
+
+                <div className="space-y-1.5">
+
+                  <Label htmlFor="delete-username-final">
+                    Digite novamente
+                  </Label>
+
+                  <p className="text-sm text-muted-foreground">
+                    Confirme:
+                  </p>
+
+                  <p className="font-semibold">
+                    @{accountUsername}
+                  </p>
+
+                  <Input
+                    id="delete-username-final"
+                    className="h-11"
+                    value={
+                      deleteUsernameFinal
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setDeleteUsernameFinal(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Digite seu username novamente"
+                    autoComplete="off"
+                  />
+
+                </div>
 
               </div>
 
-            </div>
 
-          </div>
+              <DialogFooter>
+                <Button
+                  variant="destructive"
+                  className="h-11 w-full"
+                  disabled={
+                    deletingAccount
+                  }
+                  onClick={() =>
+                    void deleteAccount()
+                  }
+                >
+                  <Trash2 className="size-4" />
 
+                  {deletingAccount
+                    ? "Excluindo..."
+                    : "Excluir minha conta"}
 
-          <div className="space-y-2">
-
-            <Label htmlFor="session-username">
-              Confirme seu nome de usuário
-            </Label>
-
-
-            <p className="text-sm text-muted-foreground">
-              Para sair da sua conta, digite exatamente:
-              {" "}
-              <strong>
-                {username
-                  ? `@${username}`
-                  : "seu nome de usuário"}
-              </strong>
-            </p>
-
-
-            <Input
-              id="session-username"
-              value={sessionUsername}
-              onChange={(event) =>
-                setSessionUsername(
-                  event.target.value,
-                )
-              }
-              className="h-11"
-              placeholder={
-                username
-                  ? username
-                  : "Seu nome de usuário"
-              }
-            />
-
-          </div>
-
-
-          <DialogFooter>
-
-            <Button
-              variant="outline"
-              className="h-11 w-full"
-              onClick={() =>
-                setSessionsOpen(false)
-              }
-              disabled={signingOut}
-            >
-              Cancelar
-            </Button>
-
-
-            <Button
-              className="h-11 w-full bg-green-600 hover:bg-green-700"
-              disabled={signingOut}
-              onClick={() =>
-                void confirmSignOut()
-              }
-            >
-
-              <LogOut className="size-4" />
-
-              {signingOut
-                ? "Saindo..."
-                : "Sair da conta"}
-
-            </Button>
-
-          </DialogFooter>
+                </Button>
+              </DialogFooter>
+            </>
+          )}
 
         </DialogContent>
-
-      </Dialog>
-
-
-      {/* EXCLUIR CONTA */}
-
-      <Dialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      >
-
-        <DialogContent className="sm:max-w-md">
-
-          <DialogHeader>
-
-            <DialogTitle className="text-destructive">
-              Excluir minha conta
-            </DialogTitle>
-
-            <DialogDescription>
-              Esta é uma ação permanente. Confira cuidadosamente antes de continuar.
-            </DialogDescription>
-
-          </DialogHeader>
-
-
-          <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-
-            <p className="text-sm leading-relaxed">
-              Para confirmar esta ação, digite exatamente o seu nome de usuário.
-            </p>
-
-          </div>
-
-
-          <div className="space-y-2">
-
-            <Label htmlFor="delete-username">
-              Confirme seu nome de usuário
-            </Label>
-
-
-            <p className="text-sm text-muted-foreground">
-              Digite:
-              {" "}
-              <strong>
-                {username
-                  ? `@${username}`
-                  : "seu nome de usuário"}
-              </strong>
-            </p>
-
-
-            <Input
-              id="delete-username"
-              value={deleteUsername}
-              onChange={(event) =>
-                setDeleteUsername(
-                  event.target.value,
-                )
-              }
-              className="h-11"
-              placeholder={
-                username
-                  ? username
-                  : "Seu nome de usuário"
-              }
-            />
-
-          </div>
-
-
-          <DialogFooter>
-
-            <Button
-              variant="outline"
-              className="h-11 w-full"
-              onClick={() =>
-                setDeleteOpen(false)
-              }
-              disabled={deleting}
-            >
-              Cancelar
-            </Button>
-
-
-            <Button
-              variant="destructive"
-              className="h-11 w-full"
-              disabled={deleting}
-              onClick={() =>
-                void confirmDelete()
-              }
-            >
-
-              <Trash2 className="size-4" />
-
-              {deleting
-                ? "Excluindo..."
-                : "Excluir minha conta"}
-
-            </Button>
-
-          </DialogFooter>
-
-        </DialogContent>
-
       </Dialog>
 
     </div>
@@ -1564,70 +1626,135 @@ function SettingsCard({
   icon,
   title,
   description,
+  buttonText,
+  onClick,
+}: {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  buttonText: string;
+  onClick: () => void;
+}) {
+  return (
+    <section className="surface p-5">
+      <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        {icon}
+      </div>
+
+
+      <h2 className="mt-4 font-display text-lg font-semibold">
+        {title}
+      </h2>
+
+
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
+
+
+      <Button
+        variant="ghost"
+        className="mt-4 px-0 text-primary hover:bg-transparent hover:text-primary"
+        onClick={onClick}
+      >
+        {buttonText}
+
+        <ChevronRight className="size-4" />
+      </Button>
+    </section>
+  );
+}
+
+
+function DangerCard({
+  icon,
+  title,
+  description,
+  buttonText,
+  onClick,
+}: {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  buttonText: string;
+  onClick: () => void;
+}) {
+  return (
+    <section className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5">
+
+      <div className="flex size-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+        {icon}
+      </div>
+
+
+      <h2 className="mt-4 font-display text-lg font-semibold text-destructive">
+        {title}
+      </h2>
+
+
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
+
+
+      <Button
+        variant="outline"
+        className="mt-4 w-full border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+        onClick={onClick}
+      >
+        {buttonText}
+      </Button>
+
+    </section>
+  );
+}
+
+
+function SettingsRow({
+  icon,
+  title,
+  description,
   action,
   onClick,
-  variant = "default",
 }: {
   icon: ReactNode;
   title: string;
   description: string;
   action: string;
   onClick: () => void;
-  variant?: "default" | "success";
 }) {
-  const isSuccess =
-    variant ===
-    "success";
-
-
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "surface group flex min-h-48 flex-col items-start p-6 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
-        isSuccess &&
-          "border-green-500/20 hover:border-green-500/40",
-      )}
+      className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/40"
     >
 
-      <div
-        className={cn(
-          "flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary",
-          isSuccess &&
-            "bg-green-500/10 text-green-600 dark:text-green-400",
-        )}
-      >
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
         {icon}
       </div>
 
 
-      <div className="mt-5">
+      <div className="min-w-0 flex-1">
 
-        <h2 className="font-display text-lg font-semibold">
+        <p className="font-medium">
           {title}
-        </h2>
+        </p>
 
-        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-1 truncate text-sm text-muted-foreground">
           {description}
         </p>
 
       </div>
 
 
-      <div
-        className={cn(
-          "mt-auto flex items-center gap-1 pt-5 text-sm font-medium text-primary",
-          isSuccess &&
-            "text-green-600 dark:text-green-400",
-        )}
-      >
+      <div className="flex items-center gap-1 text-sm font-medium text-primary">
 
         <span>
           {action}
         </span>
 
-        <ChevronRight className="size-4 transition-transform group-hover:translate-x-1" />
+        <ChevronRight className="size-4" />
 
       </div>
 
@@ -1654,7 +1781,7 @@ function ThemeOption({
       type="button"
       onClick={onClick}
       className={cn(
-        "relative flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all",
+        "relative flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all",
 
         active
           ? "border-primary bg-primary/10 text-primary shadow-sm"
@@ -1664,9 +1791,7 @@ function ThemeOption({
 
       {active ? (
         <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-
           <Check className="size-3" />
-
         </span>
       ) : null}
 
