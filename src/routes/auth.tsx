@@ -40,229 +40,189 @@ import {
 } from "@/components/ui/label";
 
 
-const searchSchema =
-  z.object({
-    modo: z
-      .enum([
-        "entrar",
-        "cadastro",
-      ])
-      .optional()
-      .catch(
-        "entrar",
-      ),
-  });
+const searchSchema = z.object({
+  modo: z
+    .enum([
+      "entrar",
+      "cadastro",
+    ])
+    .optional()
+    .catch("entrar"),
+});
 
 
-export const Route =
-  createFileRoute(
-    "/auth",
-  )({
-    validateSearch:
-      searchSchema,
+export const Route = createFileRoute(
+  "/auth",
+)({
+  validateSearch: searchSchema,
 
-    head: () => ({
-      meta: [
-        {
-          title:
-            "Entrar no FinanLook",
-        },
-        {
-          name:
-            "description",
-          content:
-            "Entre ou crie sua conta no FinanLook para organizar sua vida financeira de forma simples.",
-        },
-        {
-          property:
-            "og:title",
-          content:
-            "Entrar no FinanLook",
-        },
-        {
-          property:
-            "og:description",
-          content:
-            "Acesse sua conta ou crie uma nova conta no FinanLook.",
-        },
-      ],
-    }),
-
-    component:
-      AuthPage,
-  });
-
-
-const signUpSchema =
-  z
-    .object({
-      name:
-        z
-          .string()
-          .trim()
-          .min(
-            2,
-            "Informe seu nome",
-          )
-          .max(
-            24,
-            "O nome pode ter no máximo 24 caracteres",
-          ),
-
-      username:
-        z
-          .string()
-          .trim()
-          .min(
-            3,
-            "O nome de usuário precisa ter pelo menos 3 caracteres",
-          )
-          .max(
-            24,
-            "O nome de usuário pode ter no máximo 24 caracteres",
-          )
-          .regex(
-            /^[a-zA-Z0-9._-]+$/,
-            "Use apenas letras, números, ponto, hífen ou underline",
-          ),
-
-      email:
-        z
-          .string()
-          .trim()
-          .email(
-            "E-mail inválido",
-          )
-          .max(
-            160,
-            "O e-mail pode ter no máximo 160 caracteres",
-          ),
-
-      password:
-        z
-          .string()
-          .min(
-            6,
-            "A senha precisa ter pelo menos 6 caracteres",
-          )
-          .max(
-            1000,
-            "A senha pode ter no máximo 1.000 caracteres",
-          ),
-
-      confirm:
-        z
-          .string()
-          .max(
-            1000,
-            "A confirmação pode ter no máximo 1.000 caracteres",
-          ),
-    })
-    .refine(
-      (
-        value,
-      ) =>
-        value.password ===
-        value.confirm,
+  head: () => ({
+    meta: [
       {
-        message:
-          "As senhas não são iguais",
-        path: [
-          "confirm",
-        ],
+        title: "Entrar no FinanLook",
       },
-    );
+      {
+        name: "description",
+        content:
+          "Entre ou crie sua conta no FinanLook para organizar sua vida financeira de forma simples.",
+      },
+      {
+        property: "og:title",
+        content: "Entrar no FinanLook",
+      },
+      {
+        property: "og:description",
+        content:
+          "Acesse sua conta ou crie uma nova conta no FinanLook.",
+      },
+    ],
+  }),
+
+  component: AuthPage,
+});
+
+
+const signUpSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(
+        2,
+        "Informe seu nome",
+      )
+      .max(
+        24,
+        "O nome pode ter no máximo 24 caracteres",
+      ),
+
+    username: z
+      .string()
+      .trim()
+      .min(
+        3,
+        "O nome de usuário precisa ter pelo menos 3 caracteres",
+      )
+      .max(
+        24,
+        "O nome de usuário pode ter no máximo 24 caracteres",
+      )
+      .regex(
+        /^[a-zA-Z0-9._-]+$/,
+        "Use apenas letras, números, ponto, hífen ou underline",
+      ),
+
+    email: z
+      .string()
+      .trim()
+      .email(
+        "E-mail inválido",
+      )
+      .max(
+        160,
+        "O e-mail pode ter no máximo 160 caracteres",
+      ),
+
+    password: z
+      .string()
+      .min(
+        6,
+        "A senha precisa ter pelo menos 6 caracteres",
+      )
+      .max(
+        1000,
+        "A senha pode ter no máximo 1.000 caracteres",
+      ),
+
+    confirm: z
+      .string()
+      .max(
+        1000,
+        "A confirmação pode ter no máximo 1.000 caracteres",
+      ),
+  })
+  .refine(
+    (value) =>
+      value.password ===
+      value.confirm,
+    {
+      message:
+        "As senhas não são iguais",
+      path: [
+        "confirm",
+      ],
+    },
+  );
 
 
 function AuthPage() {
   const {
     modo,
-  } =
-    Route.useSearch();
+  } = Route.useSearch();
 
   const navigate =
     useNavigate();
 
   const isSignUp =
-    modo ===
-    "cadastro";
+    modo === "cadastro";
 
 
   const [
     loading,
     setLoading,
-  ] =
-    useState(false);
+  ] = useState(false);
 
 
   const [
     showPassword,
     setShowPassword,
-  ] =
-    useState(false);
+  ] = useState(false);
 
 
   const [
     showConfirmPassword,
     setShowConfirmPassword,
-  ] =
-    useState(false);
+  ] = useState(false);
 
 
   const [
     showRecovery,
     setShowRecovery,
-  ] =
-    useState(false);
+  ] = useState(false);
 
 
   const [
     recoveryLoading,
     setRecoveryLoading,
-  ] =
-    useState(false);
+  ] = useState(false);
 
 
   const [
     recoveryEmail,
     setRecoveryEmail,
-  ] =
-    useState("");
+  ] = useState("");
 
 
   const [
     form,
     setForm,
-  ] =
-    useState({
-      name:
-        "",
-      username:
-        "",
-      email:
-        "",
-      password:
-        "",
-      confirm:
-        "",
-    });
+  ] = useState({
+    name: "",
+    username: "",
+    email: "",
+    password: "",
+    confirm: "",
+  });
 
 
   function update(
-    key:
-      keyof typeof form,
-    value:
-      string,
+    key: keyof typeof form,
+    value: string,
   ) {
-    setForm(
-      (
-        previous,
-      ) => ({
-        ...previous,
-        [key]:
-          value,
-      }),
-    );
+    setForm((previous) => ({
+      ...previous,
+      [key]: value,
+    }));
   }
 
 
@@ -272,13 +232,10 @@ function AuthPage() {
 
   async function handleSignUp() {
     const parsed =
-      signUpSchema.safeParse(
-        form,
-      );
+      signUpSchema.safeParse(form);
 
-    if (
-      !parsed.success
-    ) {
+
+    if (!parsed.success) {
       toast.error(
         parsed.error.issues[0]
           ?.message ??
@@ -289,9 +246,7 @@ function AuthPage() {
     }
 
 
-    setLoading(
-      true,
-    );
+    setLoading(true);
 
 
     try {
@@ -321,31 +276,22 @@ function AuthPage() {
         });
 
 
-      if (
-        error
-      ) {
+      if (error) {
         throw error;
       }
 
 
-      if (
-        !data.session
-      ) {
+      if (!data.session) {
         toast.success(
           "Conta criada! Confirme seu e-mail para entrar.",
         );
 
-        await navigate({
-          to:
-            "/auth",
-
+        navigate({
+          to: "/auth",
           search: {
-            modo:
-              "entrar",
+            modo: "entrar",
           },
-
-          replace:
-            true,
+          replace: true,
         });
 
         return;
@@ -357,13 +303,10 @@ function AuthPage() {
       );
 
 
-      await navigate({
-        to:
-          "/bem-vindo",
+      navigate({
+        to: "/bem-vindo",
       });
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       const message =
         error instanceof Error
           ? error.message
@@ -379,9 +322,7 @@ function AuthPage() {
               "Não foi possível criar sua conta.",
       );
     } finally {
-      setLoading(
-        false,
-      );
+      setLoading(false);
     }
   }
 
@@ -397,9 +338,7 @@ function AuthPage() {
         .toLowerCase();
 
 
-    if (
-      !email
-    ) {
+    if (!email) {
       toast.error(
         "Informe seu e-mail.",
       );
@@ -408,9 +347,7 @@ function AuthPage() {
     }
 
 
-    if (
-      !form.password
-    ) {
+    if (!form.password) {
       toast.error(
         "Informe sua senha.",
       );
@@ -431,9 +368,7 @@ function AuthPage() {
     }
 
 
-    setLoading(
-      true,
-    );
+    setLoading(true);
 
 
     try {
@@ -447,9 +382,7 @@ function AuthPage() {
         });
 
 
-      if (
-        error
-      ) {
+      if (error) {
         throw error;
       }
 
@@ -459,18 +392,15 @@ function AuthPage() {
       );
 
 
-      await navigate({
-        to:
-          "/visao-geral",
+      navigate({
+        to: "/visao-geral",
       });
     } catch {
       toast.error(
         "E-mail ou senha incorretos.",
       );
     } finally {
-      setLoading(
-        false,
-      );
+      setLoading(false);
     }
   }
 
@@ -486,9 +416,7 @@ function AuthPage() {
         .toLowerCase();
 
 
-    if (
-      !email
-    ) {
+    if (!email) {
       toast.error(
         "Informe seu e-mail.",
       );
@@ -497,10 +425,15 @@ function AuthPage() {
     }
 
 
+    const emailSchema =
+      z.string().email(
+        "Informe um e-mail válido.",
+      );
+
+
     if (
-      !email.includes(
-        "@",
-      )
+      !emailSchema.safeParse(email)
+        .success
     ) {
       toast.error(
         "Informe um e-mail válido.",
@@ -510,9 +443,7 @@ function AuthPage() {
     }
 
 
-    setRecoveryLoading(
-      true,
-    );
+    setRecoveryLoading(true);
 
 
     try {
@@ -522,21 +453,13 @@ function AuthPage() {
         await supabase.auth.resetPasswordForEmail(
           email,
           {
-            /*
-             * IMPORTANTE:
-             * Esta rota precisa existir em:
-             *
-             * src/routes/nova-senha.tsx
-             */
             redirectTo:
               `${window.location.origin}/nova-senha`,
           },
         );
 
 
-      if (
-        error
-      ) {
+      if (error) {
         throw error;
       }
 
@@ -546,25 +469,16 @@ function AuthPage() {
       );
 
 
-      setRecoveryEmail(
-        "",
-      );
-
-      setShowRecovery(
-        false,
-      );
-    } catch (
-      error,
-    ) {
+      setRecoveryEmail("");
+      setShowRecovery(false);
+    } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível enviar o e-mail de recuperação.",
       );
     } finally {
-      setRecoveryLoading(
-        false,
-      );
+      setRecoveryLoading(false);
     }
   }
 
@@ -573,9 +487,7 @@ function AuthPage() {
      TELA DE RECUPERAÇÃO
      ===================================================== */
 
-  if (
-    showRecovery
-  ) {
+  if (showRecovery) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-5 py-10">
 
@@ -598,9 +510,7 @@ function AuthPage() {
           <div className="border-b bg-primary/[0.03] px-6 py-7 text-center">
 
             <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
-
               <KeyRound className="size-6 text-primary" />
-
             </div>
 
 
@@ -618,11 +528,8 @@ function AuthPage() {
 
           <form
             className="space-y-5 p-6"
-            onSubmit={(
-              event,
-            ) => {
+            onSubmit={(event) => {
               event.preventDefault();
-
               void handlePasswordRecovery();
             }}
           >
@@ -642,21 +549,15 @@ function AuthPage() {
                 <Input
                   id="recovery-email"
                   type="email"
-                  value={
-                    recoveryEmail
-                  }
-                  onChange={(
-                    event,
-                  ) =>
+                  value={recoveryEmail}
+                  onChange={(event) =>
                     setRecoveryEmail(
                       event.target.value,
                     )
                   }
                   placeholder="seuemail@exemplo.com"
                   autoComplete="email"
-                  maxLength={
-                    160
-                  }
+                  maxLength={160}
                   className="h-11 pl-10"
                 />
 
@@ -673,9 +574,7 @@ function AuthPage() {
             <Button
               type="submit"
               className="h-11 w-full"
-              disabled={
-                recoveryLoading
-              }
+              disabled={recoveryLoading}
             >
               <Mail className="size-4" />
 
@@ -693,9 +592,7 @@ function AuthPage() {
         <button
           type="button"
           onClick={() =>
-            setShowRecovery(
-              false,
-            )
+            setShowRecovery(false)
           }
           className="mt-6 text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
@@ -733,20 +630,16 @@ function AuthPage() {
         <div className="border-b bg-primary/[0.03] px-6 py-6">
 
           <h1 className="font-display text-2xl font-semibold">
-
             {isSignUp
               ? "Criar sua conta"
               : "Bem-vindo de volta"}
-
           </h1>
 
 
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-
             {isSignUp
               ? "Comece a organizar sua vida financeira de um jeito simples."
               : "Entre na sua conta para continuar organizando seu dinheiro."}
-
           </p>
 
         </div>
@@ -754,16 +647,15 @@ function AuthPage() {
 
         <form
           className="space-y-4 p-6"
-          onSubmit={(
-            event,
-          ) => {
+          onSubmit={(event) => {
             event.preventDefault();
 
-            void (
-              isSignUp
-                ? handleSignUp()
-                : handleSignIn()
-            );
+            if (isSignUp) {
+              void handleSignUp();
+              return;
+            }
+
+            void handleSignIn();
           }}
         >
 
@@ -773,12 +665,8 @@ function AuthPage() {
               <Field
                 id="name"
                 label="Nome"
-                value={
-                  form.name
-                }
-                onChange={(
-                  value,
-                ) =>
+                value={form.name}
+                onChange={(value) =>
                   update(
                     "name",
                     value,
@@ -787,21 +675,15 @@ function AuthPage() {
                 placeholder="Seu primeiro nome"
                 helperText="Como você gostaria de ser chamado?"
                 autoComplete="given-name"
-                maxLength={
-                  24
-                }
+                maxLength={24}
               />
 
 
               <Field
                 id="username"
                 label="Nome de usuário"
-                value={
-                  form.username
-                }
-                onChange={(
-                  value,
-                ) =>
+                value={form.username}
+                onChange={(value) =>
                   update(
                     "username",
                     value,
@@ -810,9 +692,7 @@ function AuthPage() {
                 placeholder="seuusername"
                 helperText="Use letras, números, ponto, hífen ou underline."
                 autoComplete="username"
-                maxLength={
-                  24
-                }
+                maxLength={24}
               />
 
             </>
@@ -823,12 +703,8 @@ function AuthPage() {
             id="email"
             label="E-mail"
             type="email"
-            value={
-              form.email
-            }
-            onChange={(
-              value,
-            ) =>
+            value={form.email}
+            onChange={(value) =>
               update(
                 "email",
                 value,
@@ -837,21 +713,15 @@ function AuthPage() {
             placeholder="seuemail@exemplo.com"
             helperText="Use um e-mail que você tenha acesso."
             autoComplete="email"
-            maxLength={
-              160
-            }
+            maxLength={160}
           />
 
 
           <PasswordField
             id="password"
             label="Senha"
-            value={
-              form.password
-            }
-            onChange={(
-              value,
-            ) =>
+            value={form.password}
+            onChange={(value) =>
               update(
                 "password",
                 value,
@@ -868,14 +738,10 @@ function AuthPage() {
                 ? "new-password"
                 : "current-password"
             }
-            showPassword={
-              showPassword
-            }
+            showPassword={showPassword}
             onToggleVisibility={() =>
               setShowPassword(
-                (
-                  previous,
-                ) =>
+                (previous) =>
                   !previous,
               )
             }
@@ -892,9 +758,7 @@ function AuthPage() {
                     form.email,
                   );
 
-                  setShowRecovery(
-                    true,
-                  );
+                  setShowRecovery(true);
                 }}
                 className="text-xs font-medium text-primary underline-offset-4 hover:underline"
               >
@@ -909,12 +773,8 @@ function AuthPage() {
             <PasswordField
               id="confirm"
               label="Confirmar senha"
-              value={
-                form.confirm
-              }
-              onChange={(
-                value,
-              ) =>
+              value={form.confirm}
+              onChange={(value) =>
                 update(
                   "confirm",
                   value,
@@ -923,14 +783,10 @@ function AuthPage() {
               placeholder="Repita sua senha"
               helperText="Digite novamente a mesma senha."
               autoComplete="new-password"
-              showPassword={
-                showConfirmPassword
-              }
+              showPassword={showConfirmPassword}
               onToggleVisibility={() =>
                 setShowConfirmPassword(
-                  (
-                    previous,
-                  ) =>
+                  (previous) =>
                     !previous,
                 )
               }
@@ -941,17 +797,13 @@ function AuthPage() {
           <Button
             type="submit"
             className="h-11 w-full"
-            disabled={
-              loading
-            }
+            disabled={loading}
           >
-
             {loading
               ? "Aguarde..."
               : isSignUp
                 ? "Criar minha conta"
                 : "Entrar na minha conta"}
-
           </Button>
 
         </form>
@@ -976,11 +828,9 @@ function AuthPage() {
           }}
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
-
           {isSignUp
             ? "Entrar"
             : "Criar conta"}
-
         </Link>
 
       </p>
@@ -1005,38 +855,19 @@ function PasswordField({
   showPassword,
   onToggleVisibility,
 }: {
-  id:
-    string;
-
-  label:
-    string;
-
-  value:
-    string;
-
-  onChange:
-    (
-      value:
-        string,
-    ) => void;
-
-  placeholder?:
-    string;
-
-  helperText?:
-    string;
-
-  autoComplete?:
-    string;
-
-  showPassword:
-    boolean;
-
-  onToggleVisibility:
-    () => void;
+  id: string;
+  label: string;
+  value: string;
+  onChange: (
+    value: string,
+  ) => void;
+  placeholder?: string;
+  helperText?: string;
+  autoComplete?: string;
+  showPassword: boolean;
+  onToggleVisibility: () => void;
 }) {
-  const maxLength =
-    1000;
+  const maxLength = 1000;
 
 
   return (
@@ -1049,11 +880,9 @@ function PasswordField({
         </Label>
 
 
-        {value.length >
-        0 ? (
+        {value.length > 0 ? (
           <span className="text-xs text-muted-foreground">
-            {value.length}/
-            {maxLength}
+            {value.length}/{maxLength}
           </span>
         ) : null}
 
@@ -1069,21 +898,11 @@ function PasswordField({
               ? "text"
               : "password"
           }
-          value={
-            value
-          }
-          placeholder={
-            placeholder
-          }
-          autoComplete={
-            autoComplete
-          }
-          maxLength={
-            maxLength
-          }
-          onChange={(
-            event,
-          ) =>
+          value={value}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          maxLength={maxLength}
+          onChange={(event) =>
             onChange(
               event.target.value,
             )
@@ -1094,9 +913,7 @@ function PasswordField({
 
         <button
           type="button"
-          onClick={
-            onToggleVisibility
-          }
+          onClick={onToggleVisibility}
           aria-label={
             showPassword
               ? "Ocultar senha"
@@ -1136,42 +953,23 @@ function Field({
   label,
   value,
   onChange,
-  type =
-    "text",
+  type = "text",
   placeholder,
   helperText,
   autoComplete,
   maxLength,
 }: {
-  id:
-    string;
-
-  label:
-    string;
-
-  value:
-    string;
-
-  onChange:
-    (
-      value:
-        string,
-    ) => void;
-
-  type?:
-    string;
-
-  placeholder?:
-    string;
-
-  helperText?:
-    string;
-
-  autoComplete?:
-    string;
-
-  maxLength?:
-    number;
+  id: string;
+  label: string;
+  value: string;
+  onChange: (
+    value: string,
+  ) => void;
+  type?: string;
+  placeholder?: string;
+  helperText?: string;
+  autoComplete?: string;
+  maxLength?: number;
 }) {
   return (
     <div className="space-y-1.5">
@@ -1183,12 +981,10 @@ function Field({
         </Label>
 
 
-        {value.length >
-          0 &&
+        {value.length > 0 &&
         maxLength ? (
           <span className="text-xs text-muted-foreground">
-            {value.length}/
-            {maxLength}
+            {value.length}/{maxLength}
           </span>
         ) : null}
 
@@ -1197,24 +993,12 @@ function Field({
 
       <Input
         id={id}
-        type={
-          type
-        }
-        value={
-          value
-        }
-        placeholder={
-          placeholder
-        }
-        autoComplete={
-          autoComplete
-        }
-        maxLength={
-          maxLength
-        }
-        onChange={(
-          event,
-        ) =>
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        maxLength={maxLength}
+        onChange={(event) =>
           onChange(
             event.target.value,
           )
