@@ -35,7 +35,6 @@ import {
   ThemeProvider,
 } from "@/components/theme-provider";
 
-
 /* =========================================================
    NOT FOUND
    ========================================================= */
@@ -44,7 +43,6 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-
         <h1 className="text-7xl font-bold text-foreground">
           404
         </h1>
@@ -65,12 +63,10 @@ function NotFoundComponent() {
             Voltar ao início
           </Link>
         </div>
-
       </div>
     </div>
   );
 }
-
 
 /* =========================================================
    ERROR
@@ -88,7 +84,6 @@ function ErrorComponent({
   const router =
     useRouter();
 
-
   useEffect(() => {
     reportLovableError(
       error,
@@ -101,12 +96,9 @@ function ErrorComponent({
     error,
   ]);
 
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-
       <div className="max-w-md text-center">
-
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Esta página não carregou
         </h1>
@@ -116,11 +108,11 @@ function ErrorComponent({
         </p>
 
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-
           <button
             type="button"
             onClick={() => {
               router.invalidate();
+
               reset();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
@@ -128,22 +120,17 @@ function ErrorComponent({
             Tentar novamente
           </button>
 
-
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Ir para o início
           </a>
-
         </div>
-
       </div>
-
     </div>
   );
 }
-
 
 /* =========================================================
    ROOT ROUTE
@@ -151,27 +138,22 @@ function ErrorComponent({
 
 export const Route =
   createRootRouteWithContext<{
-    queryClient: QueryClient;
+    queryClient:
+      QueryClient;
   }>()({
     head: () => ({
       meta: [
-
         {
-          charSet: "utf-8",
+          charSet:
+            "utf-8",
         },
 
         {
-          name: "viewport",
-          content: "width=device-width, initial-scale=1",
-        },
+          name:
+            "viewport",
 
-        /*
-         * VERIFICAÇÃO DO GOOGLE SEARCH CONSOLE
-         */
-        {
-          name: "google-site-verification",
           content:
-            "VK0PT-k_adJyurxKQVkrXVHbsE357zimIqLryvIq0XI",
+            "width=device-width, initial-scale=1",
         },
 
         {
@@ -180,59 +162,100 @@ export const Route =
         },
 
         {
-          name: "description",
+          name:
+            "description",
+
           content:
             "Controle entradas, gastos, reserva de emergência e metas em um app simples de organização financeira pessoal.",
         },
 
+        /* ===============================================
+           GOOGLE SEARCH CONSOLE
+           =============================================== */
+
         {
-          property: "og:type",
-          content: "website",
+          name:
+            "google-site-verification",
+
+          content:
+            "kuKLKt9PqbWRMxCvAkaD0OU1uEutcJqxkRl5OKUYxTI",
+        },
+
+        /* ===============================================
+           SEO / REDES SOCIAIS
+           =============================================== */
+
+        {
+          property:
+            "og:type",
+
+          content:
+            "website",
         },
 
         {
-          name: "twitter:card",
-          content: "summary_large_image",
-        },
+          name:
+            "twitter:card",
 
+          content:
+            "summary_large_image",
+        },
       ],
 
       links: [
-
         {
-          rel: "stylesheet",
-          href: appCss,
+          rel:
+            "stylesheet",
+
+          href:
+            appCss,
         },
 
         {
-          rel: "preconnect",
-          href: "https://fonts.googleapis.com",
+          rel:
+            "preconnect",
+
+          href:
+            "https://fonts.googleapis.com",
         },
 
         {
-          rel: "preconnect",
-          href: "https://fonts.gstatic.com",
-          crossOrigin: "anonymous",
+          rel:
+            "preconnect",
+
+          href:
+            "https://fonts.gstatic.com",
+
+          crossOrigin:
+            "anonymous",
         },
 
         {
-          rel: "stylesheet",
+          rel:
+            "stylesheet",
+
           href:
             "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
         },
 
         {
-          rel: "icon",
-          href: "/favicon.png",
-          type: "image/png",
-        },
+          rel:
+            "icon",
 
+          href:
+            "/favicon.png",
+
+          type:
+            "image/png",
+        },
       ],
     }),
 
-    shellComponent: RootShell,
+    shellComponent:
+      RootShell,
 
-    component: RootComponent,
+    component:
+      RootComponent,
 
     notFoundComponent:
       NotFoundComponent,
@@ -241,7 +264,6 @@ export const Route =
       ErrorComponent,
   });
 
-
 /* =========================================================
    HTML SHELL
    ========================================================= */
@@ -249,27 +271,23 @@ export const Route =
 function RootShell({
   children,
 }: {
-  children: ReactNode;
+  children:
+    ReactNode;
 }) {
   return (
     <html lang="pt-BR">
-
       <head>
         <HeadContent />
       </head>
 
       <body>
-
         {children}
 
         <Scripts />
-
       </body>
-
     </html>
   );
 }
-
 
 /* =========================================================
    ROOT COMPONENT
@@ -281,10 +299,8 @@ function RootComponent() {
   } =
     Route.useRouteContext();
 
-
   const router =
     useRouter();
-
 
   useEffect(() => {
     const {
@@ -294,18 +310,18 @@ function RootComponent() {
         (
           event,
         ) => {
-
           if (
-            event !== "SIGNED_IN" &&
-            event !== "SIGNED_OUT" &&
-            event !== "USER_UPDATED"
+            event !==
+              "SIGNED_IN" &&
+            event !==
+              "SIGNED_OUT" &&
+            event !==
+              "USER_UPDATED"
           ) {
             return;
           }
 
-
           void router.invalidate();
-
 
           if (
             event !==
@@ -313,45 +329,30 @@ function RootComponent() {
           ) {
             void queryClient.invalidateQueries();
           }
-
         },
       );
 
-
     return () =>
       data.subscription.unsubscribe();
-
   }, [
     router,
     queryClient,
   ]);
 
-
   return (
     <QueryClientProvider
-      client={queryClient}
+      client={
+        queryClient
+      }
     >
-
       <ThemeProvider>
-
-        {/* =================================================
-            ROTAS
-           ================================================= */}
-
         <Outlet />
-
-
-        {/* =================================================
-            NOTIFICAÇÕES
-           ================================================= */}
 
         <Toaster
           position="top-center"
           richColors
         />
-
       </ThemeProvider>
-
     </QueryClientProvider>
   );
 }
