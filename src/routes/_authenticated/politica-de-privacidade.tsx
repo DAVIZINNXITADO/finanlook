@@ -4,6 +4,39 @@ import { ArrowLeft, ShieldCheck } from "lucide-react";
 export const Route = createFileRoute(
   "/politica-de-privacidade",
 )({
+  head: () => ({
+    meta: [
+      {
+        title:
+          "Política de Privacidade — FinanLook",
+      },
+      {
+        name:
+          "description",
+        content:
+          "Conheça como o FinanLook coleta, utiliza, armazena e protege informações dos usuários.",
+      },
+      {
+        property:
+          "og:title",
+        content:
+          "Política de Privacidade — FinanLook",
+      },
+      {
+        property:
+          "og:description",
+        content:
+          "Saiba como o FinanLook trata e protege as informações dos usuários.",
+      },
+      {
+        property:
+          "og:type",
+        content:
+          "website",
+      },
+    ],
+  }),
+
   component: PrivacyPolicyPage,
 });
 
@@ -82,33 +115,12 @@ function PrivacyPolicyPage() {
               </p>
 
               <ul className="mt-3 list-disc space-y-1 pl-5">
-                <li>
-                  fornecer e manter as funcionalidades do
-                  FinanLook;
-                </li>
-
-                <li>
-                  identificar e autenticar usuários;
-                </li>
-
-                <li>
-                  permitir o armazenamento das informações
-                  cadastradas pelo usuário;
-                </li>
-
-                <li>
-                  melhorar a experiência e o funcionamento da
-                  plataforma;
-                </li>
-
-                <li>
-                  prevenir fraudes, abusos e problemas de
-                  segurança;
-                </li>
-
-                <li>
-                  cumprir obrigações legais quando aplicável.
-                </li>
+                <li>fornecer e manter as funcionalidades do FinanLook;</li>
+                <li>identificar e autenticar usuários;</li>
+                <li>permitir o armazenamento das informações cadastradas pelo usuário;</li>
+                <li>melhorar a experiência e o funcionamento da plataforma;</li>
+                <li>prevenir fraudes, abusos e problemas de segurança;</li>
+                <li>cumprir obrigações legais quando aplicável.</li>
               </ul>
             </section>
 
@@ -121,8 +133,7 @@ function PrivacyPolicyPage() {
                 O FinanLook permite que o usuário registre e
                 organize informações financeiras pessoais.
                 Esses dados são utilizados exclusivamente para
-                disponibilizar as funcionalidades da
-                plataforma.
+                disponibilizar as funcionalidades da plataforma.
               </p>
 
               <p className="mt-2">
@@ -140,15 +151,13 @@ function PrivacyPolicyPage() {
               <p className="mt-2">
                 O FinanLook pode utilizar cookies e tecnologias
                 semelhantes para manter sessões, lembrar
-                preferências e melhorar o funcionamento da
-                plataforma.
+                preferências e melhorar o funcionamento da plataforma.
               </p>
 
               <p className="mt-2">
                 Caso sejam utilizados serviços de publicidade
                 ou análise, cookies adicionais poderão ser
-                utilizados conforme as políticas desses
-                serviços.
+                utilizados conforme as políticas desses serviços.
               </p>
             </section>
 
@@ -159,15 +168,13 @@ function PrivacyPolicyPage() {
 
               <p className="mt-2">
                 O FinanLook poderá exibir anúncios para ajudar
-                a financiar e manter o funcionamento da
-                plataforma.
+                a financiar e manter o funcionamento da plataforma.
               </p>
 
               <p className="mt-2">
                 Serviços de publicidade de terceiros podem
                 utilizar tecnologias próprias para medir o
-                desempenho dos anúncios e apresentar conteúdo
-                publicitário.
+                desempenho dos anúncios e apresentar conteúdo publicitário.
               </p>
             </section>
 
@@ -179,10 +186,9 @@ function PrivacyPolicyPage() {
               <p className="mt-2">
                 Não vendemos informações pessoais dos usuários.
                 Informações poderão ser compartilhadas apenas
-                quando necessário para o funcionamento da
-                plataforma, prestação de serviços por
-                fornecedores confiáveis ou cumprimento de
-                obrigações legais.
+                quando necessário para o funcionamento da plataforma,
+                prestação de serviços por fornecedores confiáveis ou
+                cumprimento de obrigações legais.
               </p>
             </section>
 
@@ -206,10 +212,9 @@ function PrivacyPolicyPage() {
 
               <p className="mt-2">
                 Dependendo da legislação aplicável, você pode
-                possuir direitos relacionados aos seus dados
-                pessoais, incluindo acesso, correção,
-                atualização ou exclusão de determinadas
-                informações.
+                possuir direitos relacionados aos seus dados pessoais,
+                incluindo acesso, correção, atualização ou exclusão
+                de determinadas informações.
               </p>
             </section>
 
@@ -219,9 +224,9 @@ function PrivacyPolicyPage() {
               </h2>
 
               <p className="mt-2">
-                Esta Política de Privacidade poderá ser
-                atualizada periodicamente. Recomendamos que os
-                usuários consultem esta página regularmente.
+                Esta Política de Privacidade poderá ser atualizada
+                periodicamente. Recomendamos que os usuários consultem
+                esta página regularmente.
               </p>
             </section>
 
@@ -231,9 +236,9 @@ function PrivacyPolicyPage() {
               </h2>
 
               <p className="mt-2">
-                Caso tenha dúvidas sobre esta Política de
-                Privacidade, entre em contato pelos canais
-                disponibilizados pelo FinanLook.
+                Caso tenha dúvidas sobre esta Política de Privacidade,
+                entre em contato pelos canais disponibilizados pelo
+                FinanLook.
               </p>
             </section>
           </div>
