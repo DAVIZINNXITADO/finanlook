@@ -51,9 +51,7 @@ const searchSchema = z.object({
 });
 
 
-export const Route = createFileRoute(
-  "/auth",
-)({
+export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
 
   head: () => ({
@@ -143,8 +141,7 @@ const signUpSchema = z
   })
   .refine(
     (value) =>
-      value.password ===
-      value.confirm,
+      value.password === value.confirm,
     {
       message:
         "As senhas não são iguais",
@@ -160,8 +157,7 @@ function AuthPage() {
     modo,
   } = Route.useSearch();
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const isSignUp =
     modo === "cadastro";
@@ -226,10 +222,6 @@ function AuthPage() {
   }
 
 
-  /* =====================================================
-     CADASTRO
-     ===================================================== */
-
   async function handleSignUp() {
     const parsed =
       signUpSchema.safeParse(form);
@@ -237,8 +229,7 @@ function AuthPage() {
 
     if (!parsed.success) {
       toast.error(
-        parsed.error.issues[0]
-          ?.message ??
+        parsed.error.issues[0]?.message ??
           "Verifique os dados informados.",
       );
 
@@ -253,27 +244,23 @@ function AuthPage() {
       const {
         data,
         error,
-      } =
-        await supabase.auth.signUp({
-          email:
-            parsed.data.email,
+      } = await supabase.auth.signUp({
+        email: parsed.data.email,
+        password: parsed.data.password,
 
-          password:
-            parsed.data.password,
+        options: {
+          emailRedirectTo:
+            window.location.origin,
 
-          options: {
-            emailRedirectTo:
-              window.location.origin,
+          data: {
+            name:
+              parsed.data.name,
 
-            data: {
-              name:
-                parsed.data.name,
-
-              username:
-                parsed.data.username.toLowerCase(),
-            },
+            username:
+              parsed.data.username.toLowerCase(),
           },
-        });
+        },
+      });
 
 
       if (error) {
@@ -286,11 +273,14 @@ function AuthPage() {
           "Conta criada! Confirme seu e-mail para entrar.",
         );
 
-        navigate({
+
+        await navigate({
           to: "/auth",
+
           search: {
             modo: "entrar",
           },
+
           replace: true,
         });
 
@@ -303,7 +293,7 @@ function AuthPage() {
       );
 
 
-      navigate({
+      await navigate({
         to: "/bem-vindo",
       });
     } catch (error) {
@@ -319,17 +309,13 @@ function AuthPage() {
         )
           ? "Este e-mail já possui uma conta. Tente entrar."
           : message ||
-              "Não foi possível criar sua conta.",
+            "Não foi possível criar sua conta.",
       );
     } finally {
       setLoading(false);
     }
   }
 
-
-  /* =====================================================
-     LOGIN
-     ===================================================== */
 
   async function handleSignIn() {
     const email =
@@ -392,7 +378,7 @@ function AuthPage() {
       );
 
 
-      navigate({
+      await navigate({
         to: "/visao-geral",
       });
     } catch {
@@ -404,10 +390,6 @@ function AuthPage() {
     }
   }
 
-
-  /* =====================================================
-     RECUPERAR SENHA
-     ===================================================== */
 
   async function handlePasswordRecovery() {
     const email =
@@ -425,16 +407,7 @@ function AuthPage() {
     }
 
 
-    const emailSchema =
-      z.string().email(
-        "Informe um e-mail válido.",
-      );
-
-
-    if (
-      !emailSchema.safeParse(email)
-        .success
-    ) {
+    if (!email.includes("@")) {
       toast.error(
         "Informe um e-mail válido.",
       );
@@ -470,6 +443,7 @@ function AuthPage() {
 
 
       setRecoveryEmail("");
+
       setShowRecovery(false);
     } catch (error) {
       toast.error(
@@ -482,10 +456,6 @@ function AuthPage() {
     }
   }
 
-
-  /* =====================================================
-     TELA DE RECUPERAÇÃO
-     ===================================================== */
 
   if (showRecovery) {
     return (
@@ -510,7 +480,9 @@ function AuthPage() {
           <div className="border-b bg-primary/[0.03] px-6 py-7 text-center">
 
             <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+
               <KeyRound className="size-6 text-primary" />
+
             </div>
 
 
@@ -604,10 +576,6 @@ function AuthPage() {
   }
 
 
-  /* =====================================================
-     TELA PRINCIPAL
-     ===================================================== */
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-5 py-10">
 
@@ -630,16 +598,20 @@ function AuthPage() {
         <div className="border-b bg-primary/[0.03] px-6 py-6">
 
           <h1 className="font-display text-2xl font-semibold">
+
             {isSignUp
               ? "Criar sua conta"
               : "Bem-vindo de volta"}
+
           </h1>
 
 
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+
             {isSignUp
               ? "Comece a organizar sua vida financeira de um jeito simples."
               : "Entre na sua conta para continuar organizando seu dinheiro."}
+
           </p>
 
         </div>
@@ -652,10 +624,9 @@ function AuthPage() {
 
             if (isSignUp) {
               void handleSignUp();
-              return;
+            } else {
+              void handleSignIn();
             }
-
-            void handleSignIn();
           }}
         >
 
@@ -741,8 +712,7 @@ function AuthPage() {
             showPassword={showPassword}
             onToggleVisibility={() =>
               setShowPassword(
-                (previous) =>
-                  !previous,
+                (previous) => !previous,
               )
             }
           />
@@ -786,8 +756,7 @@ function AuthPage() {
               showPassword={showConfirmPassword}
               onToggleVisibility={() =>
                 setShowConfirmPassword(
-                  (previous) =>
-                    !previous,
+                  (previous) => !previous,
                 )
               }
             />
@@ -799,11 +768,13 @@ function AuthPage() {
             className="h-11 w-full"
             disabled={loading}
           >
+
             {loading
               ? "Aguarde..."
               : isSignUp
                 ? "Criar minha conta"
                 : "Entrar na minha conta"}
+
           </Button>
 
         </form>
@@ -828,9 +799,11 @@ function AuthPage() {
           }}
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
+
           {isSignUp
             ? "Entrar"
             : "Criar conta"}
+
         </Link>
 
       </p>
