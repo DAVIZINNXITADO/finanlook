@@ -34,7 +34,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/data";
+import { useProfile, useUser } from "@/lib/data";
+import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute(
@@ -56,16 +57,17 @@ export const Route = createFileRoute(
   component: SettingsPage,
 });
 
-type Theme = "light" | "dark" | "system";
-
 function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: profile } = useProfile();
+  const { data: authUser } = useUser();
 
-  const [theme, setTheme] =
-    useState<Theme>("system");
+  const { theme, setTheme } = useTheme();
+
+  const accountEmail =
+    authUser?.email ?? "";
 
   const [
     editProfileOpen,
@@ -252,7 +254,7 @@ function SettingsPage() {
 
   function openEmailDialog() {
     setNewEmail(
-      profile?.email ?? "",
+      accountEmail,
     );
 
     setEditEmailOpen(true);
@@ -389,14 +391,6 @@ function SettingsPage() {
   ) {
     setTheme(value);
 
-    /*
-     * Por enquanto a preferência fica
-     * nesta página. Quando conectarmos
-     * a preferência global do tema,
-     * esse estado pode ser integrado
-     * ao ThemeProvider.
-     */
-
     toast.success(
       "Preferência de aparência atualizada.",
     );
@@ -484,7 +478,7 @@ function SettingsPage() {
             }
             title="Email"
             description={
-              profile?.email ??
+              accountEmail ||
               "Configure seu email"
             }
             action="Alterar"
