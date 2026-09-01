@@ -1,244 +1,294 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import {
+  createFileRoute,
+} from "@tanstack/react-router";
 
-export const Route = createFileRoute(
-  "/politica-de-privacidade",
-)({
-  component: PrivacyPolicyPage,
-});
+export const Route =
+  createFileRoute(
+    "/_authenticated/termos-de-privacidade",
+  )({
+    component: TermosDeUso,
+  });
 
-function PrivacyPolicyPage() {
+function TermosDeUso() {
+  const lastUpdated =
+    "31 de agosto de 2026";
+
   return (
-    <div className="min-h-screen bg-background">
-      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-        <Link
-          to="/"
-          className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
+    <div className="mx-auto max-w-4xl space-y-8">
+      {/* CABEÇALHO */}
 
-          Voltar ao início
-        </Link>
+      <div>
+        <p className="text-sm font-medium text-primary">
+          DOCUMENTOS LEGAIS
+        </p>
 
-        <div className="surface p-6 sm:p-10">
-          <div className="flex items-center gap-3">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
-              <ShieldCheck className="size-6 text-primary" />
-            </div>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+          Termos de Uso
+        </h1>
 
-            <div>
-              <h1 className="font-display text-2xl font-bold sm:text-3xl">
-                Política de Privacidade
-              </h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Última atualização: {lastUpdated}
+        </p>
+      </div>
 
-              <p className="mt-1 text-sm text-muted-foreground">
-                Última atualização: 31 de agosto de 2026
-              </p>
-            </div>
-          </div>
+      {/* INTRODUÇÃO */}
 
-          <div className="mt-8 space-y-8 text-sm leading-7 text-muted-foreground">
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                1. Introdução
-              </h2>
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          1. Aceitação dos Termos
+        </h2>
 
-              <p className="mt-2">
-                Esta Política de Privacidade explica como o
-                FinanLook coleta, utiliza, armazena e protege
-                determinadas informações dos usuários durante
-                a utilização da plataforma.
-              </p>
-            </section>
+        <p className="leading-7 text-muted-foreground">
+          Ao acessar ou utilizar o FinanLook, você concorda
+          com estes Termos de Uso. Caso não concorde com
+          alguma parte destes termos, não utilize a
+          plataforma.
+        </p>
+      </section>
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                2. Informações que podemos coletar
-              </h2>
+      {/* SERVIÇO */}
 
-              <p className="mt-2">
-                Dependendo das funcionalidades utilizadas,
-                podemos coletar informações fornecidas pelo
-                próprio usuário, como nome, endereço de email,
-                username e informações relacionadas à
-                organização financeira inseridas na plataforma.
-              </p>
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          2. Sobre o FinanLook
+        </h2>
 
-              <p className="mt-2">
-                Também podemos coletar informações técnicas
-                necessárias para o funcionamento e segurança
-                do serviço, como dados do navegador e
-                informações relacionadas à sessão.
-              </p>
-            </section>
+        <p className="leading-7 text-muted-foreground">
+          O FinanLook é uma plataforma de organização
+          financeira pessoal que permite registrar
+          movimentações, acompanhar contas, organizar
+          receitas e despesas, definir metas, acompanhar
+          reservas e utilizar recursos de planejamento
+          financeiro.
+        </p>
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                3. Como utilizamos as informações
-              </h2>
+        <p className="leading-7 text-muted-foreground">
+          As informações apresentadas na plataforma têm
+          finalidade informativa e de organização pessoal.
+          O FinanLook não presta consultoria financeira,
+          jurídica, contábil ou de investimentos.
+        </p>
+      </section>
 
-              <p className="mt-2">
-                As informações podem ser utilizadas para:
-              </p>
+      {/* CONTA */}
 
-              <ul className="mt-3 list-disc space-y-1 pl-5">
-                <li>
-                  fornecer e manter as funcionalidades do
-                  FinanLook;
-                </li>
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          3. Conta do Usuário
+        </h2>
 
-                <li>
-                  identificar e autenticar usuários;
-                </li>
+        <p className="leading-7 text-muted-foreground">
+          Algumas funcionalidades podem exigir a criação de
+          uma conta. Você é responsável por fornecer
+          informações corretas e por manter a segurança das
+          credenciais utilizadas para acessar sua conta.
+        </p>
 
-                <li>
-                  permitir o armazenamento das informações
-                  cadastradas pelo usuário;
-                </li>
+        <p className="leading-7 text-muted-foreground">
+          Você não deve compartilhar suas credenciais de
+          acesso com terceiros nem utilizar a conta de outra
+          pessoa sem autorização.
+        </p>
+      </section>
 
-                <li>
-                  melhorar a experiência e o funcionamento da
-                  plataforma;
-                </li>
+      {/* RESPONSABILIDADES */}
 
-                <li>
-                  prevenir fraudes, abusos e problemas de
-                  segurança;
-                </li>
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          4. Responsabilidades do Usuário
+        </h2>
 
-                <li>
-                  cumprir obrigações legais quando aplicável.
-                </li>
-              </ul>
-            </section>
+        <p className="leading-7 text-muted-foreground">
+          Ao utilizar o FinanLook, você concorda em utilizar
+          a plataforma de forma legal e responsável.
+        </p>
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                4. Dados financeiros
-              </h2>
+        <ul className="list-disc space-y-2 pl-6 text-muted-foreground">
+          <li>
+            Fornecer informações verdadeiras quando
+            necessário.
+          </li>
 
-              <p className="mt-2">
-                O FinanLook permite que o usuário registre e
-                organize informações financeiras pessoais.
-                Esses dados são utilizados exclusivamente para
-                disponibilizar as funcionalidades da
-                plataforma.
-              </p>
+          <li>
+            Não utilizar a plataforma para atividades
+            ilegais ou fraudulentas.
+          </li>
 
-              <p className="mt-2">
-                O usuário é responsável pelas informações que
-                cadastra e deve evitar inserir dados
-                desnecessariamente sensíveis.
-              </p>
-            </section>
+          <li>
+            Não tentar acessar sistemas, dados ou contas sem
+            autorização.
+          </li>
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                5. Cookies e tecnologias semelhantes
-              </h2>
+          <li>
+            Não interferir no funcionamento, segurança ou
+            disponibilidade da plataforma.
+          </li>
+        </ul>
+      </section>
 
-              <p className="mt-2">
-                O FinanLook pode utilizar cookies e tecnologias
-                semelhantes para manter sessões, lembrar
-                preferências e melhorar o funcionamento da
-                plataforma.
-              </p>
+      {/* DADOS FINANCEIROS */}
 
-              <p className="mt-2">
-                Caso sejam utilizados serviços de publicidade
-                ou análise, cookies adicionais poderão ser
-                utilizados conforme as políticas desses
-                serviços.
-              </p>
-            </section>
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          5. Informações Financeiras
+        </h2>
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                6. Publicidade
-              </h2>
+        <p className="leading-7 text-muted-foreground">
+          As informações financeiras registradas no
+          FinanLook são fornecidas pelo próprio usuário.
+          Portanto, o usuário é responsável pela exatidão e
+          atualização das informações inseridas na
+          plataforma.
+        </p>
 
-              <p className="mt-2">
-                O FinanLook poderá exibir anúncios para ajudar
-                a financiar e manter o funcionamento da
-                plataforma.
-              </p>
+        <p className="leading-7 text-muted-foreground">
+          O FinanLook não garante resultados financeiros,
+          rentabilidade, ganhos ou qualquer resultado
+          específico decorrente da utilização da plataforma
+          ou de suas ferramentas de simulação.
+        </p>
+      </section>
 
-              <p className="mt-2">
-                Serviços de publicidade de terceiros podem
-                utilizar tecnologias próprias para medir o
-                desempenho dos anúncios e apresentar conteúdo
-                publicitário.
-              </p>
-            </section>
+      {/* INVESTIMENTOS */}
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                7. Compartilhamento de informações
-              </h2>
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          6. Simulações e Investimentos
+        </h2>
 
-              <p className="mt-2">
-                Não vendemos informações pessoais dos usuários.
-                Informações poderão ser compartilhadas apenas
-                quando necessário para o funcionamento da
-                plataforma, prestação de serviços por
-                fornecedores confiáveis ou cumprimento de
-                obrigações legais.
-              </p>
-            </section>
+        <p className="leading-7 text-muted-foreground">
+          Recursos relacionados a investimentos, projeções,
+          cálculos ou simulações possuem caráter
+          exclusivamente informativo e educacional.
+        </p>
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                8. Segurança
-              </h2>
+        <p className="leading-7 text-muted-foreground">
+          Os resultados apresentados podem variar conforme
+          os dados utilizados, condições de mercado e outros
+          fatores. Simulações não representam garantia de
+          rentabilidade ou desempenho futuro.
+        </p>
 
-              <p className="mt-2">
-                Adotamos medidas razoáveis para proteger as
-                informações armazenadas na plataforma.
-                Entretanto, nenhum sistema digital pode
-                garantir segurança absoluta.
-              </p>
-            </section>
+        <p className="leading-7 text-muted-foreground">
+          Antes de tomar decisões financeiras ou de
+          investimento, considere buscar informações
+          atualizadas e, quando necessário, orientação de um
+          profissional qualificado.
+        </p>
+      </section>
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                9. Seus direitos
-              </h2>
+      {/* DISPONIBILIDADE */}
 
-              <p className="mt-2">
-                Dependendo da legislação aplicável, você pode
-                possuir direitos relacionados aos seus dados
-                pessoais, incluindo acesso, correção,
-                atualização ou exclusão de determinadas
-                informações.
-              </p>
-            </section>
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          7. Disponibilidade da Plataforma
+        </h2>
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                10. Alterações nesta política
-              </h2>
+        <p className="leading-7 text-muted-foreground">
+          Buscamos manter o FinanLook disponível e
+          funcionando corretamente. Entretanto, a
+          plataforma pode passar por manutenção,
+          atualizações ou apresentar indisponibilidades
+          temporárias.
+        </p>
 
-              <p className="mt-2">
-                Esta Política de Privacidade poderá ser
-                atualizada periodicamente. Recomendamos que os
-                usuários consultem esta página regularmente.
-              </p>
-            </section>
+        <p className="leading-7 text-muted-foreground">
+          Não garantimos que o serviço estará disponível de
+          forma ininterrupta ou livre de erros em todos os
+          momentos.
+        </p>
+      </section>
 
-            <section>
-              <h2 className="text-lg font-semibold text-foreground">
-                11. Contato
-              </h2>
+      {/* ALTERAÇÕES */}
 
-              <p className="mt-2">
-                Caso tenha dúvidas sobre esta Política de
-                Privacidade, entre em contato pelos canais
-                disponibilizados pelo FinanLook.
-              </p>
-            </section>
-          </div>
-        </div>
-      </main>
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          8. Alterações na Plataforma
+        </h2>
+
+        <p className="leading-7 text-muted-foreground">
+          O FinanLook poderá modificar, adicionar ou remover
+          funcionalidades da plataforma para melhorias,
+          manutenção, segurança ou evolução do serviço.
+        </p>
+      </section>
+
+      {/* SUSPENSÃO */}
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          9. Suspensão ou Encerramento
+        </h2>
+
+        <p className="leading-7 text-muted-foreground">
+          Poderemos restringir ou suspender o acesso à
+          plataforma em casos de uso que violem estes Termos
+          de Uso, comprometam a segurança do serviço ou
+          infrinjam a legislação aplicável.
+        </p>
+      </section>
+
+      {/* PRIVACIDADE */}
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          10. Privacidade
+        </h2>
+
+        <p className="leading-7 text-muted-foreground">
+          O tratamento de dados pessoais e outras
+          informações relacionadas ao uso da plataforma é
+          descrito em nossa Política de Privacidade.
+        </p>
+      </section>
+
+      {/* COOKIES */}
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          11. Cookies
+        </h2>
+
+        <p className="leading-7 text-muted-foreground">
+          O FinanLook poderá utilizar cookies e tecnologias
+          semelhantes para o funcionamento e aprimoramento
+          da plataforma. Mais informações podem ser
+          encontradas na Política de Cookies.
+        </p>
+      </section>
+
+      {/* TERMOS */}
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          12. Alterações nestes Termos
+        </h2>
+
+        <p className="leading-7 text-muted-foreground">
+          Estes Termos de Uso poderão ser atualizados
+          periodicamente. Quando isso acontecer, a data da
+          última atualização será modificada nesta página.
+        </p>
+
+        <p className="leading-7 text-muted-foreground">
+          Recomendamos que você consulte esta página
+          regularmente para acompanhar eventuais mudanças.
+        </p>
+      </section>
+
+      {/* CONTATO */}
+
+      <section className="rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-xl font-semibold">
+          13. Contato
+        </h2>
+
+        <p className="mt-3 leading-7 text-muted-foreground">
+          Caso tenha dúvidas sobre estes Termos de Uso,
+          entre em contato pelos canais oficiais
+          disponibilizados pelo FinanLook.
+        </p>
+      </section>
     </div>
   );
 }
