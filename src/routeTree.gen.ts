@@ -19,6 +19,7 @@ import { Route as AuthenticatedInvestimentosRouteImport } from './routes/_authen
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
 import { Route as AuthenticatedOrganizarSalarioRouteImport } from './routes/_authenticated/organizar-salario'
+import { Route as AuthenticatedPlanejamentoRouteImport } from './routes/_authenticated/planejamento'
 import { Route as AuthenticatedReservaRouteImport } from './routes/_authenticated/reserva'
 import { Route as AuthenticatedVisaoGeralRouteImport } from './routes/_authenticated/visao-geral'
 
@@ -75,6 +76,12 @@ const AuthenticatedOrganizarSalarioRoute =
     path: '/organizar-salario',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlanejamentoRoute =
+  AuthenticatedPlanejamentoRouteImport.update({
+    id: '/planejamento',
+    path: '/planejamento',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReservaRoute = AuthenticatedReservaRouteImport.update({
   id: '/reserva',
   path: '/reserva',
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/metas': typeof AuthenticatedMetasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
+  '/planejamento': typeof AuthenticatedPlanejamentoRoute
   '/reserva': typeof AuthenticatedReservaRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/metas': typeof AuthenticatedMetasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
+  '/planejamento': typeof AuthenticatedPlanejamentoRoute
   '/reserva': typeof AuthenticatedReservaRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/_authenticated/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
+  '/_authenticated/planejamento': typeof AuthenticatedPlanejamentoRoute
   '/_authenticated/reserva': typeof AuthenticatedReservaRoute
   '/_authenticated/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/metas'
     | '/movimentacoes'
     | '/organizar-salario'
+    | '/planejamento'
     | '/reserva'
     | '/visao-geral'
   fileRoutesByTo: FileRoutesByTo
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/metas'
     | '/movimentacoes'
     | '/organizar-salario'
+    | '/planejamento'
     | '/reserva'
     | '/visao-geral'
   id:
@@ -166,6 +178,7 @@ export interface FileRouteTypes {
     | '/_authenticated/metas'
     | '/_authenticated/movimentacoes'
     | '/_authenticated/organizar-salario'
+    | '/_authenticated/planejamento'
     | '/_authenticated/reserva'
     | '/_authenticated/visao-geral'
   fileRoutesById: FileRoutesById
@@ -248,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizarSalarioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/planejamento': {
+      id: '/_authenticated/planejamento'
+      path: '/planejamento'
+      fullPath: '/planejamento'
+      preLoaderRoute: typeof AuthenticatedPlanejamentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reserva': {
       id: '/_authenticated/reserva'
       path: '/reserva'
@@ -273,6 +293,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
   AuthenticatedOrganizarSalarioRoute: typeof AuthenticatedOrganizarSalarioRoute
+  AuthenticatedPlanejamentoRoute: typeof AuthenticatedPlanejamentoRoute
   AuthenticatedReservaRoute: typeof AuthenticatedReservaRoute
   AuthenticatedVisaoGeralRoute: typeof AuthenticatedVisaoGeralRoute
 }
@@ -285,6 +306,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
   AuthenticatedOrganizarSalarioRoute: AuthenticatedOrganizarSalarioRoute,
+  AuthenticatedPlanejamentoRoute: AuthenticatedPlanejamentoRoute,
   AuthenticatedReservaRoute: AuthenticatedReservaRoute,
   AuthenticatedVisaoGeralRoute: AuthenticatedVisaoGeralRoute,
 }
