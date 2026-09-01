@@ -207,8 +207,12 @@ function OrganizeSalaryPage() {
     }
 
     const saved =
-      savedPlan.allocations ??
-      {};
+      (savedPlan.allocations ??
+        {}) as Record<
+        string,
+        number | undefined
+      >;
+
 
     const restored =
       DEFAULT_ALLOCATIONS.map(
