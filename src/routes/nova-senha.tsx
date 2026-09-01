@@ -5,8 +5,8 @@ import {
 } from "@tanstack/react-router";
 
 import {
+  FormEvent,
   useState,
-  type FormEvent,
 } from "react";
 
 import {
@@ -35,10 +35,6 @@ import {
   supabase,
 } from "@/integrations/supabase/client";
 
-/* =========================================================
-   ROTA
-   ========================================================= */
-
 export const Route =
   createFileRoute(
     "/nova-senha",
@@ -49,24 +45,12 @@ export const Route =
           title:
             "Nova senha — FinanLook",
         },
-
-        {
-          name:
-            "description",
-
-          content:
-            "Crie uma nova senha para acessar sua conta FinanLook.",
-        },
       ],
     }),
 
     component:
       NewPasswordPage,
   });
-
-/* =========================================================
-   PÁGINA
-   ========================================================= */
 
 function NewPasswordPage() {
   const navigate =
@@ -96,12 +80,8 @@ function NewPasswordPage() {
   ] =
     useState(false);
 
-  /* =======================================================
-     SALVAR NOVA SENHA
-     ======================================================= */
-
   async function handleSubmit(
-    event: FormEvent,
+    event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
@@ -134,9 +114,7 @@ function NewPasswordPage() {
       return;
     }
 
-    setLoading(
-      true,
-    );
+    setLoading(true);
 
     try {
       const {
@@ -154,63 +132,34 @@ function NewPasswordPage() {
         "Senha alterada com sucesso.",
       );
 
-      setPassword(
-        "",
-      );
-
-      setConfirmPassword(
-        "",
-      );
-
-      setShowPassword(
-        false,
-      );
-
       await navigate({
-        to:
-          "/auth",
-
-        replace:
-          true,
+        to: "/auth",
+        search: {
+          modo: "entrar",
+        },
+        replace: true,
       });
     } catch (
       error,
     ) {
-      console.error(
-        error,
-      );
+      console.error(error);
 
       toast.error(
         "Não foi possível alterar sua senha. Solicite um novo link de recuperação.",
       );
     } finally {
-      setLoading(
-        false,
-      );
+      setLoading(false);
     }
   }
-
-  /* =======================================================
-     RENDER
-     ======================================================= */
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="surface w-full max-w-md p-6 sm:p-8">
-
-        {/* =================================================
-            ÍCONE
-           ================================================= */}
-
         <div className="flex justify-center">
           <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10">
             <KeyRound className="size-6 text-primary" />
           </div>
         </div>
-
-        {/* =================================================
-            CABEÇALHO
-           ================================================= */}
 
         <div className="mt-5 text-center">
           <h1 className="font-display text-2xl font-semibold">
@@ -222,18 +171,10 @@ function NewPasswordPage() {
           </p>
         </div>
 
-        {/* =================================================
-            FORMULÁRIO
-           ================================================= */}
-
         <form
           className="mt-6 space-y-5"
-          onSubmit={
-            handleSubmit
-          }
+          onSubmit={handleSubmit}
         >
-          {/* NOVA SENHA */}
-
           <div className="space-y-2">
             <Label htmlFor="password">
               Nova senha
@@ -249,9 +190,7 @@ function NewPasswordPage() {
                 }
                 autoComplete="new-password"
                 className="h-11 pr-11"
-                value={
-                  password
-                }
+                value={password}
                 onChange={(
                   event,
                 ) =>
@@ -260,9 +199,6 @@ function NewPasswordPage() {
                   )
                 }
                 placeholder="Digite sua nova senha"
-                disabled={
-                  loading
-                }
               />
 
               <button
@@ -275,10 +211,7 @@ function NewPasswordPage() {
                       !current,
                   )
                 }
-                disabled={
-                  loading
-                }
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground"
                 aria-label={
                   showPassword
                     ? "Ocultar senha"
@@ -294,8 +227,6 @@ function NewPasswordPage() {
             </div>
           </div>
 
-          {/* CONFIRMAR SENHA */}
-
           <div className="space-y-2">
             <Label htmlFor="confirm-password">
               Confirmar nova senha
@@ -310,9 +241,7 @@ function NewPasswordPage() {
               }
               autoComplete="new-password"
               className="h-11"
-              value={
-                confirmPassword
-              }
+              value={confirmPassword}
               onChange={(
                 event,
               ) =>
@@ -321,20 +250,13 @@ function NewPasswordPage() {
                 )
               }
               placeholder="Digite novamente"
-              disabled={
-                loading
-              }
             />
           </div>
-
-          {/* SALVAR */}
 
           <Button
             type="submit"
             className="h-11 w-full"
-            disabled={
-              loading
-            }
+            disabled={loading}
           >
             <KeyRound className="size-4" />
 
@@ -344,20 +266,16 @@ function NewPasswordPage() {
           </Button>
         </form>
 
-        {/* =================================================
-            VOLTAR
-           ================================================= */}
-
         <Button
           asChild
           variant="ghost"
           className="mt-3 w-full"
-          disabled={
-            loading
-          }
         >
           <Link
             to="/auth"
+            search={{
+              modo: "entrar",
+            }}
           >
             Voltar para entrar
           </Link>
