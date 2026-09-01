@@ -92,7 +92,9 @@ function ErrorComponent({
           "tanstack_root_error_component",
       },
     );
-  }, [error]);
+  }, [
+    error,
+  ]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -107,6 +109,7 @@ function ErrorComponent({
 
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
+            type="button"
             onClick={() => {
               router.invalidate();
 
@@ -230,6 +233,23 @@ export const Route =
             "image/png",
         },
       ],
+
+      /* ===============================================
+         GOOGLE ADSENSE
+         =============================================== */
+
+      scripts: [
+        {
+          async:
+            true,
+
+          src:
+            "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8390455641519303",
+
+          crossOrigin:
+            "anonymous",
+        },
+      ],
     }),
 
     shellComponent:
@@ -327,15 +347,7 @@ function RootComponent() {
       }
     >
       <ThemeProvider>
-        {/* =================================================
-            ROTAS
-           ================================================= */}
-
         <Outlet />
-
-        {/* =================================================
-            NOTIFICAÇÕES
-           ================================================= */}
 
         <Toaster
           position="top-center"
