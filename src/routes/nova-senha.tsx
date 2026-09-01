@@ -5,8 +5,8 @@ import {
 } from "@tanstack/react-router";
 
 import {
-  FormEvent,
   useState,
+  type FormEvent,
 } from "react";
 
 import {
@@ -35,55 +35,50 @@ import {
   supabase,
 } from "@/integrations/supabase/client";
 
+
 export const Route =
-  createFileRoute(
-    "/nova-senha",
-  )({
+  createFileRoute("/nova-senha")({
     head: () => ({
       meta: [
         {
-          title:
-            "Nova senha — FinanLook",
+          title: "Nova senha — FinanLook",
         },
       ],
     }),
 
-    component:
-      NewPasswordPage,
+    component: NewPasswordPage,
   });
 
+
 function NewPasswordPage() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const [
     password,
     setPassword,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     confirmPassword,
     setConfirmPassword,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     showPassword,
     setShowPassword,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     loading,
     setLoading,
-  ] =
-    useState(false);
+  ] = useState(false);
+
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
+
 
     if (!password) {
       toast.error(
@@ -93,9 +88,8 @@ function NewPasswordPage() {
       return;
     }
 
-    if (
-      password.length < 6
-    ) {
+
+    if (password.length < 6) {
       toast.error(
         "A senha precisa ter pelo menos 6 caracteres.",
       );
@@ -103,10 +97,8 @@ function NewPasswordPage() {
       return;
     }
 
-    if (
-      password !==
-      confirmPassword
-    ) {
+
+    if (password !== confirmPassword) {
       toast.error(
         "As senhas não coincidem.",
       );
@@ -114,34 +106,38 @@ function NewPasswordPage() {
       return;
     }
 
+
     setLoading(true);
+
 
     try {
       const {
         error,
-      } =
-        await supabase.auth.updateUser({
-          password,
-        });
+      } = await supabase.auth.updateUser({
+        password,
+      });
+
 
       if (error) {
         throw error;
       }
 
+
       toast.success(
         "Senha alterada com sucesso.",
       );
 
+
       await navigate({
         to: "/auth",
+
         search: {
           modo: "entrar",
         },
+
         replace: true,
       });
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       console.error(error);
 
       toast.error(
@@ -152,35 +148,49 @@ function NewPasswordPage() {
     }
   }
 
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+
       <div className="surface w-full max-w-md p-6 sm:p-8">
+
         <div className="flex justify-center">
+
           <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10">
             <KeyRound className="size-6 text-primary" />
           </div>
+
         </div>
 
+
         <div className="mt-5 text-center">
+
           <h1 className="font-display text-2xl font-semibold">
             Criar nova senha
           </h1>
 
+
           <p className="mt-2 text-sm text-muted-foreground">
             Escolha uma nova senha para acessar sua conta FinanLook.
           </p>
+
         </div>
+
 
         <form
           className="mt-6 space-y-5"
           onSubmit={handleSubmit}
         >
+
           <div className="space-y-2">
+
             <Label htmlFor="password">
               Nova senha
             </Label>
 
+
             <div className="relative">
+
               <Input
                 id="password"
                 type={
@@ -191,9 +201,7 @@ function NewPasswordPage() {
                 autoComplete="new-password"
                 className="h-11 pr-11"
                 value={password}
-                onChange={(
-                  event,
-                ) =>
+                onChange={(event) =>
                   setPassword(
                     event.target.value,
                   )
@@ -201,13 +209,12 @@ function NewPasswordPage() {
                 placeholder="Digite sua nova senha"
               />
 
+
               <button
                 type="button"
                 onClick={() =>
                   setShowPassword(
-                    (
-                      current,
-                    ) =>
+                    (current) =>
                       !current,
                   )
                 }
@@ -218,19 +225,26 @@ function NewPasswordPage() {
                     : "Mostrar senha"
                 }
               >
+
                 {showPassword ? (
                   <EyeOff className="size-4" />
                 ) : (
                   <Eye className="size-4" />
                 )}
+
               </button>
+
             </div>
+
           </div>
 
+
           <div className="space-y-2">
+
             <Label htmlFor="confirm-password">
               Confirmar nova senha
             </Label>
+
 
             <Input
               id="confirm-password"
@@ -242,35 +256,41 @@ function NewPasswordPage() {
               autoComplete="new-password"
               className="h-11"
               value={confirmPassword}
-              onChange={(
-                event,
-              ) =>
+              onChange={(event) =>
                 setConfirmPassword(
                   event.target.value,
                 )
               }
               placeholder="Digite novamente"
             />
+
           </div>
+
 
           <Button
             type="submit"
             className="h-11 w-full"
             disabled={loading}
           >
+
             <KeyRound className="size-4" />
+
 
             {loading
               ? "Alterando senha..."
               : "Salvar nova senha"}
+
           </Button>
+
         </form>
+
 
         <Button
           asChild
           variant="ghost"
           className="mt-3 w-full"
         >
+
           <Link
             to="/auth"
             search={{
@@ -279,8 +299,11 @@ function NewPasswordPage() {
           >
             Voltar para entrar
           </Link>
+
         </Button>
+
       </div>
+
     </div>
   );
 }
