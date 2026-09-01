@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import {
   Check,
   ChevronRight,
@@ -12,19 +13,30 @@ import {
   Monitor,
   Moon,
   Palette,
-  Pencil,
   Save,
   ShieldCheck,
   Sun,
   User,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+
+import {
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
+import {
+  Button,
+} from "@/components/ui/button";
+
+import {
+  Input,
+} from "@/components/ui/input";
+
+import {
+  Label,
+} from "@/components/ui/label";
+
 import {
   Dialog,
   DialogContent,
@@ -33,10 +45,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
-import { useProfile, useUser } from "@/lib/data";
-import { useTheme, type Theme } from "@/components/ThemeProvider";
-import { cn } from "@/lib/utils";
+
+import {
+  supabase,
+} from "@/integrations/supabase/client";
+
+import {
+  useProfile,
+  useUser,
+} from "@/lib/data";
+
+import {
+  useTheme,
+  type Theme,
+} from "@/components/theme-provider";
+
+import {
+  cn,
+} from "@/lib/utils";
+
+/* =========================================================
+   ROTA
+   ========================================================= */
 
 export const Route = createFileRoute(
   "/_authenticated/configuracoes",
@@ -44,30 +74,58 @@ export const Route = createFileRoute(
   head: () => ({
     meta: [
       {
-        title: "Configurações — FinanLook",
+        title:
+          "Configurações — FinanLook",
       },
+
       {
-        name: "description",
+        name:
+          "description",
+
         content:
-          "Gerencie sua conta e suas preferências no FinanLook.",
+          "Gerencie sua conta, segurança e preferências de aparência no FinanLook.",
       },
     ],
   }),
 
-  component: SettingsPage,
+  component:
+    SettingsPage,
 });
 
+/* =========================================================
+   PÁGINA
+   ========================================================= */
+
 function SettingsPage() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const navigate =
+    useNavigate();
 
-  const { data: profile } = useProfile();
-  const { data: authUser } = useUser();
+  const queryClient =
+    useQueryClient();
 
-  const { theme, setTheme } = useTheme();
+  const {
+    data: profile,
+  } =
+    useProfile();
+
+  const {
+    data: authUser,
+  } =
+    useUser();
+
+  const {
+    theme,
+    setTheme,
+  } =
+    useTheme();
 
   const accountEmail =
-    authUser?.email ?? "";
+    authUser?.email ??
+    "";
+
+  /* =======================================================
+     ESTADOS DOS DIALOGS
+     ======================================================= */
 
   const [
     editProfileOpen,
@@ -87,6 +145,10 @@ function SettingsPage() {
   ] =
     useState(false);
 
+  /* =======================================================
+     PERFIL
+     ======================================================= */
+
   const [
     profileName,
     setProfileName,
@@ -99,11 +161,19 @@ function SettingsPage() {
   ] =
     useState("");
 
+  /* =======================================================
+     EMAIL
+     ======================================================= */
+
   const [
     newEmail,
     setNewEmail,
   ] =
     useState("");
+
+  /* =======================================================
+     SENHA
+     ======================================================= */
 
   const [
     newPassword,
@@ -122,6 +192,10 @@ function SettingsPage() {
     setShowPassword,
   ] =
     useState(false);
+
+  /* =======================================================
+     LOADING
+     ======================================================= */
 
   const [
     savingProfile,
@@ -147,14 +221,18 @@ function SettingsPage() {
 
   function openProfileDialog() {
     setProfileName(
-      profile?.name ?? "",
+      profile?.name ??
+        "",
     );
 
     setProfileUsername(
-      profile?.username ?? "",
+      profile?.username ??
+        "",
     );
 
-    setEditProfileOpen(true);
+    setEditProfileOpen(
+      true,
+    );
   }
 
   async function saveProfile() {
@@ -167,7 +245,8 @@ function SettingsPage() {
         .replace(
           /^@/,
           "",
-        );
+        )
+        .toLowerCase();
 
     if (!name) {
       toast.error(
@@ -185,7 +264,9 @@ function SettingsPage() {
       return;
     }
 
-    setSavingProfile(true);
+    setSavingProfile(
+      true,
+    );
 
     try {
       const {
@@ -198,26 +279,30 @@ function SettingsPage() {
         authError ||
         !authData.user
       ) {
-        throw new Error();
+        throw new Error(
+          "Usuário não autenticado.",
+        );
       }
 
       const {
         error,
       } =
         await supabase
-          .from("profiles")
+          .from(
+            "profiles",
+          )
           .update({
-            name: name.slice(
-              0,
-              80,
-            ),
+            name:
+              name.slice(
+                0,
+                80,
+              ),
 
-            username: username
-              .slice(
+            username:
+              username.slice(
                 0,
                 40,
-              )
-              .toLowerCase(),
+              ),
           })
           .eq(
             "id",
@@ -238,13 +323,17 @@ function SettingsPage() {
         "Perfil atualizado com sucesso.",
       );
 
-      setEditProfileOpen(false);
+      setEditProfileOpen(
+        false,
+      );
     } catch {
       toast.error(
         "Não foi possível atualizar seu perfil.",
       );
     } finally {
-      setSavingProfile(false);
+      setSavingProfile(
+        false,
+      );
     }
   }
 
@@ -257,7 +346,9 @@ function SettingsPage() {
       accountEmail,
     );
 
-    setEditEmailOpen(true);
+    setEditEmailOpen(
+      true,
+    );
   }
 
   async function saveEmail() {
@@ -275,7 +366,9 @@ function SettingsPage() {
     }
 
     if (
-      !email.includes("@")
+      !email.includes(
+        "@",
+      )
     ) {
       toast.error(
         "Informe um email válido.",
@@ -284,7 +377,9 @@ function SettingsPage() {
       return;
     }
 
-    setSavingEmail(true);
+    setSavingEmail(
+      true,
+    );
 
     try {
       const {
@@ -302,13 +397,17 @@ function SettingsPage() {
         "Enviamos uma confirmação para o novo email.",
       );
 
-      setEditEmailOpen(false);
+      setEditEmailOpen(
+        false,
+      );
     } catch {
       toast.error(
         "Não foi possível alterar seu email.",
       );
     } finally {
-      setSavingEmail(false);
+      setSavingEmail(
+        false,
+      );
     }
   }
 
@@ -326,7 +425,8 @@ function SettingsPage() {
     }
 
     if (
-      newPassword.length < 6
+      newPassword.length <
+      6
     ) {
       toast.error(
         "A senha precisa ter pelo menos 6 caracteres.",
@@ -346,7 +446,9 @@ function SettingsPage() {
       return;
     }
 
-    setSavingPassword(true);
+    setSavingPassword(
+      true,
+    );
 
     try {
       const {
@@ -365,8 +467,17 @@ function SettingsPage() {
         "Senha alterada com sucesso.",
       );
 
-      setNewPassword("");
-      setConfirmPassword("");
+      setNewPassword(
+        "",
+      );
+
+      setConfirmPassword(
+        "",
+      );
+
+      setShowPassword(
+        false,
+      );
 
       setEditPasswordOpen(
         false,
@@ -389,15 +500,31 @@ function SettingsPage() {
   function changeTheme(
     value: Theme,
   ) {
-    setTheme(value);
+    if (
+      value ===
+      theme
+    ) {
+      return;
+    }
+
+    setTheme(
+      value,
+    );
+
+    const themeName =
+      value === "light"
+        ? "tema claro"
+        : value === "dark"
+          ? "tema escuro"
+          : "tema do sistema";
 
     toast.success(
-      "Preferência de aparência atualizada.",
+      `Aparência alterada para ${themeName}.`,
     );
   }
 
   /* =======================================================
-     SAIR
+     LOGOUT
      ======================================================= */
 
   async function signOut() {
@@ -406,11 +533,21 @@ function SettingsPage() {
 
       queryClient.clear();
 
-      await supabase.auth.signOut();
+      const {
+        error,
+      } =
+        await supabase.auth.signOut();
+
+      if (error) {
+        throw error;
+      }
 
       navigate({
-        to: "/auth",
-        replace: true,
+        to:
+          "/auth",
+
+        replace:
+          true,
       });
     } catch {
       toast.error(
@@ -447,7 +584,7 @@ function SettingsPage() {
               </h2>
 
               <p className="text-sm text-muted-foreground">
-                Informações públicas da sua conta.
+                Informações da sua conta.
               </p>
             </div>
           </div>
@@ -462,7 +599,8 @@ function SettingsPage() {
             description={
               profile
                 ? `${profile.name || "Você"} • @${
-                    profile.username ?? ""
+                    profile.username ??
+                    ""
                   }`
                 : "Configure seu nome e username"
             }
@@ -512,25 +650,31 @@ function SettingsPage() {
           </div>
         </div>
 
-        <div>
-          <SettingsRow
-            icon={
-              <LockKeyhole className="size-5" />
-            }
-            title="Senha"
-            description="Altere sua senha de acesso."
-            action="Alterar"
-            onClick={() => {
-              setNewPassword("");
-              setConfirmPassword("");
-              setShowPassword(false);
+        <SettingsRow
+          icon={
+            <LockKeyhole className="size-5" />
+          }
+          title="Senha"
+          description="Altere sua senha de acesso."
+          action="Alterar"
+          onClick={() => {
+            setNewPassword(
+              "",
+            );
 
-              setEditPasswordOpen(
-                true,
-              );
-            }}
-          />
-        </div>
+            setConfirmPassword(
+              "",
+            );
+
+            setShowPassword(
+              false,
+            );
+
+            setEditPasswordOpen(
+              true,
+            );
+          }}
+        />
       </section>
 
       {/* =================================================
@@ -560,6 +704,7 @@ function SettingsPage() {
               <Sun className="size-5" />
             }
             title="Claro"
+            description="Sempre usar aparência clara"
             active={
               theme ===
               "light"
@@ -576,6 +721,7 @@ function SettingsPage() {
               <Moon className="size-5" />
             }
             title="Escuro"
+            description="Sempre usar aparência escura"
             active={
               theme ===
               "dark"
@@ -592,6 +738,7 @@ function SettingsPage() {
               <Monitor className="size-5" />
             }
             title="Sistema"
+            description="Seguir o dispositivo"
             active={
               theme ===
               "system"
@@ -647,7 +794,9 @@ function SettingsPage() {
          ================================================= */}
 
       <Dialog
-        open={editProfileOpen}
+        open={
+          editProfileOpen
+        }
         onOpenChange={
           setEditProfileOpen
         }
@@ -679,8 +828,7 @@ function SettingsPage() {
                   event,
                 ) =>
                   setProfileName(
-                    event.target
-                      .value,
+                    event.target.value,
                   )
                 }
                 placeholder="Seu nome"
@@ -707,8 +855,7 @@ function SettingsPage() {
                     event,
                   ) =>
                     setProfileUsername(
-                      event.target
-                        .value,
+                      event.target.value,
                     )
                   }
                   placeholder="seuusername"
@@ -742,7 +889,9 @@ function SettingsPage() {
          ================================================= */}
 
       <Dialog
-        open={editEmailOpen}
+        open={
+          editEmailOpen
+        }
         onOpenChange={
           setEditEmailOpen
         }
@@ -774,8 +923,7 @@ function SettingsPage() {
                 event,
               ) =>
                 setNewEmail(
-                  event.target
-                    .value,
+                  event.target.value,
                 )
               }
               placeholder="voce@email.com"
@@ -807,7 +955,9 @@ function SettingsPage() {
          ================================================= */}
 
       <Dialog
-        open={editPasswordOpen}
+        open={
+          editPasswordOpen
+        }
         onOpenChange={
           setEditPasswordOpen
         }
@@ -845,8 +995,7 @@ function SettingsPage() {
                     event,
                   ) =>
                     setNewPassword(
-                      event.target
-                        .value,
+                      event.target.value,
                     )
                   }
                 />
@@ -893,8 +1042,7 @@ function SettingsPage() {
                   event,
                 ) =>
                   setConfirmPassword(
-                    event.target
-                      .value,
+                    event.target.value,
                   )
                 }
               />
@@ -946,7 +1094,9 @@ function SettingsRow({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={
+        onClick
+      }
       className="flex w-full items-center gap-3 p-5 text-left transition-colors hover:bg-muted/40"
     >
       <div
@@ -993,29 +1143,34 @@ function SettingsRow({
 }
 
 /* =========================================================
-   COMPONENTE: TEMA
+   COMPONENTE: OPÇÃO DE TEMA
    ========================================================= */
 
 function ThemeOption({
   icon,
   title,
+  description,
   active,
   onClick,
 }: {
   icon: React.ReactNode;
   title: string;
+  description: string;
   active: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={
+        onClick
+      }
       className={cn(
-        "relative flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-sm font-medium transition-all",
+        "relative flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all",
+
         active
-          ? "border-primary bg-primary/10 text-primary"
-          : "hover:bg-muted/50",
+          ? "border-primary bg-primary/10 text-primary shadow-sm"
+          : "hover:bg-muted/50 hover:border-primary/30",
       )}
     >
       {active ? (
@@ -1026,7 +1181,15 @@ function ThemeOption({
 
       {icon}
 
-      <span>{title}</span>
+      <div>
+        <p className="font-medium">
+          {title}
+        </p>
+
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {description}
+        </p>
+      </div>
     </button>
   );
 }
