@@ -9,15 +9,12 @@ import {
 } from "react";
 
 import {
-  toast,
-} from "sonner";
-
-import {
   Check,
   ChevronRight,
   Eye,
   EyeOff,
-  LockKeyhole,
+  KeyRound,
+  Laptop,
   LogOut,
   Mail,
   Monitor,
@@ -25,13 +22,20 @@ import {
   Palette,
   Save,
   ShieldCheck,
+  Smartphone,
   Sun,
+  Trash2,
   User,
+  X,
 } from "lucide-react";
 
 import {
   useQueryClient,
 } from "@tanstack/react-query";
+
+import {
+  toast,
+} from "sonner";
 
 import {
   PageHeader,
@@ -88,7 +92,7 @@ export const Route = createFileRoute(
       {
         name: "description",
         content:
-          "Gerencie sua conta, segurança e preferências de aparência no FinanLook.",
+          "Gerencie sua conta, segurança e preferências no FinanLook.",
       },
     ],
   }),
@@ -97,140 +101,196 @@ export const Route = createFileRoute(
 });
 
 
-function maskEmail(email: string) {
-  if (!email) {
-    return "";
-  }
+function maskEmail(
+  email: string,
+) {
+  const parts =
+    email.split("@");
 
-  const parts = email.split("@");
-
-  if (parts.length !== 2) {
+  if (
+    parts.length !== 2 ||
+    !parts[0] ||
+    !parts[1]
+  ) {
     return email;
   }
 
-  const username = parts[0];
-  const domain = parts[1];
+  const name =
+    parts[0];
 
-  if (username.length <= 2) {
-    return `${username.charAt(0)}****@${domain}`;
+  const domain =
+    parts[1];
+
+  if (
+    name.length <= 2
+  ) {
+    return `${name[0] ?? ""}****@${domain}`;
   }
 
-  const first = username.charAt(0);
-  const last = username.charAt(
-    username.length - 1,
-  );
-
-  return `${first}****${last}@${domain}`;
+  return `${name[0]}****${name.at(-1)}@${domain}`;
 }
 
 
 function SettingsPage() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   const {
     data: profile,
-  } = useProfile();
+  } =
+    useProfile();
 
   const {
     data: authUser,
-  } = useUser();
+  } =
+    useUser();
 
   const {
     theme,
     setTheme,
-  } = useTheme();
+  } =
+    useTheme();
 
-
-  const accountEmail =
-    authUser?.email ??
-    "";
 
   const username =
     profile?.username ??
     "";
 
+  const accountEmail =
+    authUser?.email ??
+    "";
+
 
   const [
-    editProfileOpen,
-    setEditProfileOpen,
-  ] = useState(false);
+    profileOpen,
+    setProfileOpen,
+  ] =
+    useState(false);
 
   const [
-    editEmailOpen,
-    setEditEmailOpen,
-  ] = useState(false);
+    securityOpen,
+    setSecurityOpen,
+  ] =
+    useState(false);
 
   const [
-    editPasswordOpen,
-    setEditPasswordOpen,
-  ] = useState(false);
+    appearanceOpen,
+    setAppearanceOpen,
+  ] =
+    useState(false);
 
   const [
-    logoutConfirmOpen,
-    setLogoutConfirmOpen,
-  ] = useState(false);
+    sessionsOpen,
+    setSessionsOpen,
+  ] =
+    useState(false);
+
+  const [
+    deleteOpen,
+    setDeleteOpen,
+  ] =
+    useState(false);
+
+  const [
+    emailOpen,
+    setEmailOpen,
+  ] =
+    useState(false);
+
+  const [
+    passwordOpen,
+    setPasswordOpen,
+  ] =
+    useState(false);
 
 
   const [
     profileName,
     setProfileName,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     profileUsername,
     setProfileUsername,
-  ] = useState("");
+  ] =
+    useState("");
+
 
   const [
     newEmail,
     setNewEmail,
-  ] = useState("");
+  ] =
+    useState("");
+
 
   const [
     newPassword,
     setNewPassword,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     confirmPassword,
     setConfirmPassword,
-  ] = useState("");
+  ] =
+    useState("");
 
   const [
     showPassword,
     setShowPassword,
-  ] = useState(false);
+  ] =
+    useState(false);
+
 
   const [
-    confirmationUsername,
-    setConfirmationUsername,
-  ] = useState("");
+    sessionUsername,
+    setSessionUsername,
+  ] =
+    useState("");
+
+  const [
+    deleteUsername,
+    setDeleteUsername,
+  ] =
+    useState("");
 
 
   const [
     savingProfile,
     setSavingProfile,
-  ] = useState(false);
+  ] =
+    useState(false);
 
   const [
     savingEmail,
     setSavingEmail,
-  ] = useState(false);
+  ] =
+    useState(false);
 
   const [
     savingPassword,
     setSavingPassword,
-  ] = useState(false);
+  ] =
+    useState(false);
 
   const [
     signingOut,
     setSigningOut,
-  ] = useState(false);
+  ] =
+    useState(false);
+
+  const [
+    deleting,
+    setDeleting,
+  ] =
+    useState(false);
 
 
-  function openProfileDialog() {
+  function openProfile() {
     setProfileName(
       profile?.name ??
         "",
@@ -241,7 +301,42 @@ function SettingsPage() {
         "",
     );
 
-    setEditProfileOpen(true);
+    setProfileOpen(true);
+  }
+
+
+  function openSecurity() {
+    setSecurityOpen(true);
+  }
+
+
+  function openEmail() {
+    setNewEmail(
+      accountEmail,
+    );
+
+    setEmailOpen(true);
+  }
+
+
+  function openPassword() {
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+
+    setPasswordOpen(true);
+  }
+
+
+  function openSessions() {
+    setSessionUsername("");
+    setSessionsOpen(true);
+  }
+
+
+  function openDelete() {
+    setDeleteUsername("");
+    setDeleteOpen(true);
   }
 
 
@@ -249,41 +344,30 @@ function SettingsPage() {
     const name =
       profileName.trim();
 
-    const username =
+    const newUsername =
       profileUsername
         .trim()
-        .replace(/^@/, "")
+        .replace(
+          /^@/,
+          "",
+        )
         .toLowerCase();
 
 
-    if (!name) {
+    if (
+      name.length < 2
+    ) {
       toast.error(
-        "Informe seu nome.",
+        "Informe um nome com pelo menos 2 caracteres.",
       );
 
       return;
     }
 
 
-    if (name.length < 2) {
-      toast.error(
-        "Seu nome precisa ter pelo menos 2 caracteres.",
-      );
-
-      return;
-    }
-
-
-    if (!username) {
-      toast.error(
-        "Informe seu nome de usuário.",
-      );
-
-      return;
-    }
-
-
-    if (username.length < 3) {
+    if (
+      newUsername.length < 3
+    ) {
       toast.error(
         "O nome de usuário precisa ter pelo menos 3 caracteres.",
       );
@@ -294,7 +378,7 @@ function SettingsPage() {
 
     if (
       !/^[a-zA-Z0-9._-]+$/.test(
-        username,
+        newUsername,
       )
     ) {
       toast.error(
@@ -310,15 +394,15 @@ function SettingsPage() {
 
     try {
       const {
-        data: authData,
-        error: authError,
+        data,
+        error: userError,
       } =
         await supabase.auth.getUser();
 
 
       if (
-        authError ||
-        !authData.user
+        userError ||
+        !data.user
       ) {
         throw new Error(
           "Usuário não autenticado.",
@@ -339,14 +423,14 @@ function SettingsPage() {
               ),
 
             username:
-              username.slice(
+              newUsername.slice(
                 0,
                 40,
               ),
           })
           .eq(
             "id",
-            authData.user.id,
+            data.user.id,
           );
 
 
@@ -366,24 +450,14 @@ function SettingsPage() {
         "Perfil atualizado com sucesso.",
       );
 
-
-      setEditProfileOpen(false);
-    } catch (error) {
-      console.error(error);
-
+      setProfileOpen(false);
+    } catch {
       toast.error(
         "Não foi possível atualizar seu perfil.",
       );
     } finally {
       setSavingProfile(false);
     }
-  }
-
-
-  function openEmailDialog() {
-    setNewEmail(accountEmail);
-
-    setEditEmailOpen(true);
   }
 
 
@@ -394,20 +468,12 @@ function SettingsPage() {
         .toLowerCase();
 
 
-    if (!email) {
-      toast.error(
-        "Informe um email.",
-      );
-
-      return;
-    }
-
-
     if (
+      !email ||
       !email.includes("@")
     ) {
       toast.error(
-        "Informe um email válido.",
+        "Informe um e-mail válido.",
       );
 
       return;
@@ -432,16 +498,13 @@ function SettingsPage() {
 
 
       toast.success(
-        "Enviamos uma confirmação para o novo email.",
+        "Enviamos uma confirmação para o novo e-mail.",
       );
 
-
-      setEditEmailOpen(false);
-    } catch (error) {
-      console.error(error);
-
+      setEmailOpen(false);
+    } catch {
       toast.error(
-        "Não foi possível alterar seu email.",
+        "Não foi possível alterar seu e-mail.",
       );
     } finally {
       setSavingEmail(false);
@@ -449,25 +512,7 @@ function SettingsPage() {
   }
 
 
-  function openPasswordDialog() {
-    setNewPassword("");
-    setConfirmPassword("");
-    setShowPassword(false);
-
-    setEditPasswordOpen(true);
-  }
-
-
   async function savePassword() {
-    if (!newPassword) {
-      toast.error(
-        "Informe uma nova senha.",
-      );
-
-      return;
-    }
-
-
     if (
       newPassword.length < 6
     ) {
@@ -518,10 +563,8 @@ function SettingsPage() {
       setConfirmPassword("");
       setShowPassword(false);
 
-      setEditPasswordOpen(false);
-    } catch (error) {
-      console.error(error);
-
+      setPasswordOpen(false);
+    } catch {
       toast.error(
         "Não foi possível alterar sua senha.",
       );
@@ -534,55 +577,27 @@ function SettingsPage() {
   function changeTheme(
     value: Theme,
   ) {
-    if (
-      value === theme
-    ) {
-      return;
-    }
-
-
     setTheme(value);
 
-
-    const themeName =
+    const label =
       value === "light"
-        ? "tema claro"
+        ? "claro"
         : value === "dark"
-          ? "tema escuro"
-          : "tema do sistema";
-
+          ? "escuro"
+          : "do sistema";
 
     toast.success(
-      `Aparência alterada para ${themeName}.`,
+      `Aparência alterada para tema ${label}.`,
     );
   }
 
 
-  function openLogoutDialog() {
-    setConfirmationUsername("");
-
-    setLogoutConfirmOpen(true);
-  }
-
-
-  async function signOut() {
-    const typedUsername =
-      confirmationUsername
-        .trim()
-        .replace(/^@/, "")
-        .toLowerCase();
-
-
-    const correctUsername =
-      username
-        .trim()
-        .replace(/^@/, "")
-        .toLowerCase();
-
-
-    if (!correctUsername) {
+  async function confirmSignOut() {
+    if (
+      !username
+    ) {
       toast.error(
-        "Não foi possível confirmar seu username.",
+        "Não foi possível confirmar seu nome de usuário.",
       );
 
       return;
@@ -590,11 +605,17 @@ function SettingsPage() {
 
 
     if (
-      typedUsername !==
-      correctUsername
+      sessionUsername
+        .trim()
+        .replace(
+          /^@/,
+          "",
+        )
+        .toLowerCase() !==
+      username.toLowerCase()
     ) {
       toast.error(
-        "O username informado não corresponde à sua conta.",
+        "Digite exatamente o seu nome de usuário para confirmar.",
       );
 
       return;
@@ -623,16 +644,9 @@ function SettingsPage() {
 
       await navigate({
         to: "/auth",
-
-        search: {
-          modo: "entrar",
-        },
-
         replace: true,
       });
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       toast.error(
         "Não foi possível sair da conta.",
       );
@@ -642,217 +656,115 @@ function SettingsPage() {
   }
 
 
+  async function confirmDelete() {
+    if (
+      !username
+    ) {
+      toast.error(
+        "Não foi possível confirmar seu nome de usuário.",
+      );
+
+      return;
+    }
+
+
+    if (
+      deleteUsername
+        .trim()
+        .replace(
+          /^@/,
+          "",
+        )
+        .toLowerCase() !==
+      username.toLowerCase()
+    ) {
+      toast.error(
+        "Digite exatamente o seu nome de usuário para confirmar.",
+      );
+
+      return;
+    }
+
+
+    setDeleting(true);
+
+
+    try {
+      /*
+       * A exclusão definitiva da conta deve ser feita
+       * por uma função segura no backend.
+       *
+       * Aqui deixamos a confirmação pronta para conectar
+       * quando você criar a função no Supabase.
+       */
+
+      toast.error(
+        "A exclusão da conta ainda precisa ser conectada ao backend.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+
   return (
     <div className="space-y-6">
 
       <PageHeader
         title="Configurações"
-        subtitle="Gerencie sua conta, segurança e preferências do FinanLook."
+        subtitle="Gerencie sua conta e personalize sua experiência no FinanLook."
       />
 
 
-      <section className="surface overflow-hidden">
-
-        <div className="border-b p-5">
-
-          <div className="flex items-center gap-3">
-
-            <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
-
-              <User className="size-5 text-primary" />
-
-            </div>
+      <section className="grid gap-4 md:grid-cols-2">
 
 
-            <div>
-
-              <h2 className="font-display text-lg font-semibold">
-                Perfil
-              </h2>
-
-
-              <p className="text-sm text-muted-foreground">
-                Gerencie suas informações pessoais.
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div className="divide-y">
-
-          <SettingsRow
-            icon={
-              <User className="size-5" />
-            }
-            title="Nome e nome de usuário"
-            description={
-              profile
-                ? `${profile.name || "Você"} • @${
-                    profile.username ??
-                    ""
-                  }`
-                : "Configure seu nome e nome de usuário"
-            }
-            action="Editar"
-            onClick={
-              openProfileDialog
-            }
-          />
-
-
-          <SettingsRow
-            icon={
-              <Mail className="size-5" />
-            }
-            title="Email"
-            description={
-              accountEmail
-                ? maskEmail(
-                    accountEmail,
-                  )
-                : "Configure seu email"
-            }
-            action="Alterar"
-            onClick={
-              openEmailDialog
-            }
-          />
-
-        </div>
-
-      </section>
-
-
-      <section className="surface overflow-hidden">
-
-        <div className="border-b p-5">
-
-          <div className="flex items-center gap-3">
-
-            <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
-
-              <ShieldCheck className="size-5 text-primary" />
-
-            </div>
-
-
-            <div>
-
-              <h2 className="font-display text-lg font-semibold">
-                Segurança
-              </h2>
-
-
-              <p className="text-sm text-muted-foreground">
-                Proteja o acesso à sua conta.
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <SettingsRow
+        <SettingsCard
           icon={
-            <LockKeyhole className="size-5" />
+            <User className="size-6" />
           }
-          title="Senha"
-          description="Altere sua senha de acesso."
-          action="Alterar"
-          onClick={
-            openPasswordDialog
+          title="Perfil"
+          description="Altere seu nome e nome de usuário."
+          action="Configurar"
+          onClick={openProfile}
+        />
+
+
+        <SettingsCard
+          icon={
+            <ShieldCheck className="size-6" />
+          }
+          title="Conta e segurança"
+          description="Gerencie seu e-mail, senha e informações de acesso."
+          action="Configurar"
+          onClick={openSecurity}
+        />
+
+
+        <SettingsCard
+          icon={
+            <Palette className="size-6" />
+          }
+          title="Aparência"
+          description="Personalize como o FinanLook aparece para você."
+          action="Configurar"
+          onClick={() =>
+            setAppearanceOpen(true)
           }
         />
 
-      </section>
 
+        <SettingsCard
+          icon={
+            <Laptop className="size-6" />
+          }
+          title="Gerenciar sessões"
+          description="Controle a sessão atual e saia da sua conta."
+          action="Abrir"
+          variant="success"
+          onClick={openSessions}
+        />
 
-      <section className="surface p-5">
-
-        <div className="flex items-start gap-3">
-
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-
-            <Palette className="size-5 text-primary" />
-
-          </div>
-
-
-          <div className="min-w-0">
-
-            <h2 className="font-display text-lg font-semibold">
-              Aparência
-            </h2>
-
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Escolha como deseja visualizar o FinanLook.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-
-          <ThemeOption
-            icon={
-              <Sun className="size-5" />
-            }
-            title="Claro"
-            description="Sempre usar aparência clara"
-            active={
-              theme === "light"
-            }
-            onClick={() =>
-              changeTheme(
-                "light",
-              )
-            }
-          />
-
-
-          <ThemeOption
-            icon={
-              <Moon className="size-5" />
-            }
-            title="Escuro"
-            description="Sempre usar aparência escura"
-            active={
-              theme === "dark"
-            }
-            onClick={() =>
-              changeTheme(
-                "dark",
-              )
-            }
-          />
-
-
-          <ThemeOption
-            icon={
-              <Monitor className="size-5" />
-            }
-            title="Sistema"
-            description="Seguir as configurações do dispositivo"
-            active={
-              theme === "system"
-            }
-            onClick={() =>
-              changeTheme(
-                "system",
-              )
-            }
-          />
-
-        </div>
 
       </section>
 
@@ -863,9 +775,9 @@ function SettingsPage() {
 
           <div className="flex items-center gap-3">
 
-            <div className="flex size-11 items-center justify-center rounded-xl bg-destructive/10">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
 
-              <LogOut className="size-5 text-destructive" />
+              <Trash2 className="size-5" />
 
             </div>
 
@@ -873,12 +785,11 @@ function SettingsPage() {
             <div>
 
               <h2 className="font-display text-lg font-semibold">
-                Sessão
+                Zona de perigo
               </h2>
 
-
               <p className="text-sm text-muted-foreground">
-                Gerencie o acesso neste dispositivo.
+                Ações importantes relacionadas à sua conta.
               </p>
 
             </div>
@@ -888,29 +799,48 @@ function SettingsPage() {
         </div>
 
 
-        <SettingsRow
-          icon={
-            <LogOut className="size-5" />
-          }
-          title="Sair da conta"
-          description="Encerre sua sessão neste dispositivo."
-          action="Sair"
-          destructive
-          onClick={
-            openLogoutDialog
-          }
-        />
+        <button
+          type="button"
+          onClick={openDelete}
+          className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-destructive/5"
+        >
+
+          <div className="flex min-w-0 items-center gap-3">
+
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+
+              <Trash2 className="size-5" />
+
+            </div>
+
+
+            <div className="min-w-0">
+
+              <p className="font-medium text-destructive">
+                Excluir minha conta
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Remover permanentemente sua conta e seus dados.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <ChevronRight className="size-5 shrink-0 text-destructive" />
+
+        </button>
 
       </section>
 
+
+      {/* PERFIL */}
 
       <Dialog
-        open={
-          editProfileOpen
-        }
-        onOpenChange={
-          setEditProfileOpen
-        }
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
       >
 
         <DialogContent className="sm:max-w-md">
@@ -918,12 +848,11 @@ function SettingsPage() {
           <DialogHeader>
 
             <DialogTitle>
-              Editar perfil
+              Perfil
             </DialogTitle>
 
-
             <DialogDescription>
-              Atualize as informações exibidas na sua conta.
+              Atualize as informações que aparecem na sua conta.
             </DialogDescription>
 
           </DialogHeader>
@@ -933,24 +862,21 @@ function SettingsPage() {
 
             <div className="space-y-1.5">
 
-              <Label htmlFor="name">
+              <Label htmlFor="profile-name">
                 Nome
               </Label>
 
-
               <Input
-                id="name"
+                id="profile-name"
                 className="h-11"
-                value={
-                  profileName
-                }
+                value={profileName}
                 onChange={(event) =>
                   setProfileName(
                     event.target.value,
                   )
                 }
-                placeholder="Seu nome"
                 maxLength={80}
+                placeholder="Seu nome"
               />
 
             </div>
@@ -958,10 +884,9 @@ function SettingsPage() {
 
             <div className="space-y-1.5">
 
-              <Label htmlFor="username">
+              <Label htmlFor="profile-username">
                 Nome de usuário
               </Label>
-
 
               <div className="relative">
 
@@ -969,24 +894,20 @@ function SettingsPage() {
                   @
                 </span>
 
-
                 <Input
-                  id="username"
+                  id="profile-username"
                   className="h-11 pl-7"
-                  value={
-                    profileUsername
-                  }
+                  value={profileUsername}
                   onChange={(event) =>
                     setProfileUsername(
                       event.target.value,
                     )
                   }
-                  placeholder="seuusername"
                   maxLength={40}
+                  placeholder="seuusername"
                 />
 
               </div>
-
 
               <p className="text-xs text-muted-foreground">
                 Use letras, números, ponto, hífen ou underline.
@@ -1001,16 +922,13 @@ function SettingsPage() {
 
             <Button
               className="h-11 w-full"
-              disabled={
-                savingProfile
-              }
+              disabled={savingProfile}
               onClick={() =>
                 void saveProfile()
               }
             >
 
               <Save className="size-4" />
-
 
               {savingProfile
                 ? "Salvando..."
@@ -1025,13 +943,11 @@ function SettingsPage() {
       </Dialog>
 
 
+      {/* CONTA E SEGURANÇA */}
+
       <Dialog
-        open={
-          editEmailOpen
-        }
-        onOpenChange={
-          setEditEmailOpen
-        }
+        open={securityOpen}
+        onOpenChange={setSecurityOpen}
       >
 
         <DialogContent className="sm:max-w-md">
@@ -1039,12 +955,105 @@ function SettingsPage() {
           <DialogHeader>
 
             <DialogTitle>
-              Alterar email
+              Conta e segurança
             </DialogTitle>
 
+            <DialogDescription>
+              Gerencie as informações usadas para acessar sua conta.
+            </DialogDescription>
+
+          </DialogHeader>
+
+
+          <div className="space-y-3">
+
+            <button
+              type="button"
+              onClick={() => {
+                setSecurityOpen(false);
+                openEmail();
+              }}
+              className="flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/50"
+            >
+
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Mail className="size-5" />
+              </div>
+
+
+              <div className="min-w-0 flex-1">
+
+                <p className="font-medium">
+                  E-mail
+                </p>
+
+                <p className="mt-1 truncate text-sm text-muted-foreground">
+                  {maskEmail(accountEmail)}
+                </p>
+
+              </div>
+
+
+              <ChevronRight className="size-5 text-muted-foreground" />
+
+            </button>
+
+
+            <button
+              type="button"
+              onClick={() => {
+                setSecurityOpen(false);
+                openPassword();
+              }}
+              className="flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/50"
+            >
+
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <KeyRound className="size-5" />
+              </div>
+
+
+              <div className="flex-1">
+
+                <p className="font-medium">
+                  Senha
+                </p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Altere sua senha de acesso.
+                </p>
+
+              </div>
+
+
+              <ChevronRight className="size-5 text-muted-foreground" />
+
+            </button>
+
+          </div>
+
+        </DialogContent>
+
+      </Dialog>
+
+
+      {/* EMAIL */}
+
+      <Dialog
+        open={emailOpen}
+        onOpenChange={setEmailOpen}
+      >
+
+        <DialogContent className="sm:max-w-md">
+
+          <DialogHeader>
+
+            <DialogTitle>
+              Alterar e-mail
+            </DialogTitle>
 
             <DialogDescription>
-              Enviaremos uma confirmação para o novo endereço informado.
+              Você receberá uma confirmação no novo endereço de e-mail.
             </DialogDescription>
 
           </DialogHeader>
@@ -1052,25 +1061,22 @@ function SettingsPage() {
 
           <div className="space-y-1.5">
 
-            <Label htmlFor="email">
-              Novo email
+            <Label htmlFor="new-email">
+              Novo e-mail
             </Label>
 
-
             <Input
-              id="email"
+              id="new-email"
               type="email"
               className="h-11"
-              value={
-                newEmail
-              }
+              value={newEmail}
               onChange={(event) =>
                 setNewEmail(
                   event.target.value,
                 )
               }
               placeholder="voce@email.com"
-              autoComplete="email"
+              maxLength={160}
             />
 
           </div>
@@ -1080,9 +1086,7 @@ function SettingsPage() {
 
             <Button
               className="h-11 w-full"
-              disabled={
-                savingEmail
-              }
+              disabled={savingEmail}
               onClick={() =>
                 void saveEmail()
               }
@@ -1090,10 +1094,9 @@ function SettingsPage() {
 
               <Mail className="size-4" />
 
-
               {savingEmail
                 ? "Alterando..."
-                : "Alterar email"}
+                : "Alterar e-mail"}
 
             </Button>
 
@@ -1104,13 +1107,11 @@ function SettingsPage() {
       </Dialog>
 
 
+      {/* SENHA */}
+
       <Dialog
-        open={
-          editPasswordOpen
-        }
-        onOpenChange={
-          setEditPasswordOpen
-        }
+        open={passwordOpen}
+        onOpenChange={setPasswordOpen}
       >
 
         <DialogContent className="sm:max-w-md">
@@ -1120,7 +1121,6 @@ function SettingsPage() {
             <DialogTitle>
               Alterar senha
             </DialogTitle>
-
 
             <DialogDescription>
               Escolha uma nova senha para proteger sua conta.
@@ -1147,16 +1147,15 @@ function SettingsPage() {
                       ? "text"
                       : "password"
                   }
-                  className="h-11 pr-11"
-                  value={
-                    newPassword
-                  }
+                  value={newPassword}
                   onChange={(event) =>
                     setNewPassword(
                       event.target.value,
                     )
                   }
+                  className="h-11 pr-11"
                   autoComplete="new-password"
+                  maxLength={1000}
                 />
 
 
@@ -1168,7 +1167,7 @@ function SettingsPage() {
                         !current,
                     )
                   }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground"
                   aria-label={
                     showPassword
                       ? "Ocultar senha"
@@ -1195,7 +1194,6 @@ function SettingsPage() {
                 Confirmar nova senha
               </Label>
 
-
               <Input
                 id="confirm-password"
                 type={
@@ -1203,16 +1201,15 @@ function SettingsPage() {
                     ? "text"
                     : "password"
                 }
-                className="h-11"
-                value={
-                  confirmPassword
-                }
+                value={confirmPassword}
                 onChange={(event) =>
                   setConfirmPassword(
                     event.target.value,
                   )
                 }
+                className="h-11"
                 autoComplete="new-password"
+                maxLength={1000}
               />
 
             </div>
@@ -1224,16 +1221,13 @@ function SettingsPage() {
 
             <Button
               className="h-11 w-full"
-              disabled={
-                savingPassword
-              }
+              disabled={savingPassword}
               onClick={() =>
                 void savePassword()
               }
             >
 
-              <LockKeyhole className="size-4" />
-
+              <KeyRound className="size-4" />
 
               {savingPassword
                 ? "Alterando..."
@@ -1248,13 +1242,95 @@ function SettingsPage() {
       </Dialog>
 
 
+      {/* APARÊNCIA */}
+
       <Dialog
-        open={
-          logoutConfirmOpen
-        }
-        onOpenChange={
-          setLogoutConfirmOpen
-        }
+        open={appearanceOpen}
+        onOpenChange={setAppearanceOpen}
+      >
+
+        <DialogContent className="sm:max-w-lg">
+
+          <DialogHeader>
+
+            <DialogTitle>
+              Aparência
+            </DialogTitle>
+
+            <DialogDescription>
+              Escolha como deseja visualizar o FinanLook.
+            </DialogDescription>
+
+          </DialogHeader>
+
+
+          <div className="grid gap-3 sm:grid-cols-3">
+
+            <ThemeOption
+              icon={
+                <Sun className="size-5" />
+              }
+              title="Claro"
+              description="Sempre claro"
+              active={
+                theme ===
+                "light"
+              }
+              onClick={() =>
+                changeTheme(
+                  "light",
+                )
+              }
+            />
+
+
+            <ThemeOption
+              icon={
+                <Moon className="size-5" />
+              }
+              title="Escuro"
+              description="Sempre escuro"
+              active={
+                theme ===
+                "dark"
+              }
+              onClick={() =>
+                changeTheme(
+                  "dark",
+                )
+              }
+            />
+
+
+            <ThemeOption
+              icon={
+                <Monitor className="size-5" />
+              }
+              title="Sistema"
+              description="Seguir dispositivo"
+              active={
+                theme ===
+                "system"
+              }
+              onClick={() =>
+                changeTheme(
+                  "system",
+                )
+              }
+            />
+
+          </div>
+
+        </DialogContent>
+
+      </Dialog>
+
+
+      {/* GERENCIAR SESSÕES */}
+
+      <Dialog
+        open={sessionsOpen}
+        onOpenChange={setSessionsOpen}
       >
 
         <DialogContent className="sm:max-w-md">
@@ -1262,59 +1338,77 @@ function SettingsPage() {
           <DialogHeader>
 
             <DialogTitle>
-              Confirmar saída
+              Gerenciar sessões
             </DialogTitle>
 
-
             <DialogDescription>
-              Para confirmar que deseja encerrar sua sessão, digite seu nome de usuário abaixo.
+              Você está gerenciando a sessão atual da sua conta.
             </DialogDescription>
 
           </DialogHeader>
 
 
-          <div className="space-y-3">
+          <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4">
 
-            <div className="rounded-xl border bg-muted/40 p-4">
+            <div className="flex items-start gap-3">
 
-              <p className="text-sm text-muted-foreground">
-                Digite exatamente:
-              </p>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10 text-green-600 dark:text-green-400">
 
+                <Smartphone className="size-5" />
 
-              <p className="mt-1 font-semibold">
-                @{username}
-              </p>
-
-            </div>
+              </div>
 
 
-            <div className="space-y-1.5">
+              <div>
 
-              <Label htmlFor="confirm-username">
-                Confirmar nome de usuário
-              </Label>
+                <p className="font-medium">
+                  Sessão atual
+                </p>
 
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Esta é a sessão que está sendo usada agora.
+                </p>
 
-              <Input
-                id="confirm-username"
-                className="h-11"
-                value={
-                  confirmationUsername
-                }
-                onChange={(event) =>
-                  setConfirmationUsername(
-                    event.target.value,
-                  )
-                }
-                placeholder={
-                  username ||
-                  "seuusername"
-                }
-                autoComplete="off"
-              />
+              </div>
 
             </div>
+
+          </div>
+
+
+          <div className="space-y-2">
+
+            <Label htmlFor="session-username">
+              Confirme seu nome de usuário
+            </Label>
+
+
+            <p className="text-sm text-muted-foreground">
+              Para sair da sua conta, digite exatamente:
+              {" "}
+              <strong>
+                {username
+                  ? `@${username}`
+                  : "seu nome de usuário"}
+              </strong>
+            </p>
+
+
+            <Input
+              id="session-username"
+              value={sessionUsername}
+              onChange={(event) =>
+                setSessionUsername(
+                  event.target.value,
+                )
+              }
+              className="h-11"
+              placeholder={
+                username
+                  ? username
+                  : "Seu nome de usuário"
+              }
+            />
 
           </div>
 
@@ -1322,22 +1416,136 @@ function SettingsPage() {
           <DialogFooter>
 
             <Button
-              variant="destructive"
+              variant="outline"
               className="h-11 w-full"
-              disabled={
-                signingOut
-              }
               onClick={() =>
-                void signOut()
+                setSessionsOpen(false)
+              }
+              disabled={signingOut}
+            >
+              Cancelar
+            </Button>
+
+
+            <Button
+              className="h-11 w-full bg-green-600 hover:bg-green-700"
+              disabled={signingOut}
+              onClick={() =>
+                void confirmSignOut()
               }
             >
 
               <LogOut className="size-4" />
 
-
               {signingOut
                 ? "Saindo..."
-                : "Confirmar saída"}
+                : "Sair da conta"}
+
+            </Button>
+
+          </DialogFooter>
+
+        </DialogContent>
+
+      </Dialog>
+
+
+      {/* EXCLUIR CONTA */}
+
+      <Dialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      >
+
+        <DialogContent className="sm:max-w-md">
+
+          <DialogHeader>
+
+            <DialogTitle className="text-destructive">
+              Excluir minha conta
+            </DialogTitle>
+
+            <DialogDescription>
+              Esta é uma ação permanente. Confira cuidadosamente antes de continuar.
+            </DialogDescription>
+
+          </DialogHeader>
+
+
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+
+            <p className="text-sm leading-relaxed">
+              Para confirmar esta ação, digite exatamente o seu nome de usuário.
+            </p>
+
+          </div>
+
+
+          <div className="space-y-2">
+
+            <Label htmlFor="delete-username">
+              Confirme seu nome de usuário
+            </Label>
+
+
+            <p className="text-sm text-muted-foreground">
+              Digite:
+              {" "}
+              <strong>
+                {username
+                  ? `@${username}`
+                  : "seu nome de usuário"}
+              </strong>
+            </p>
+
+
+            <Input
+              id="delete-username"
+              value={deleteUsername}
+              onChange={(event) =>
+                setDeleteUsername(
+                  event.target.value,
+                )
+              }
+              className="h-11"
+              placeholder={
+                username
+                  ? username
+                  : "Seu nome de usuário"
+              }
+            />
+
+          </div>
+
+
+          <DialogFooter>
+
+            <Button
+              variant="outline"
+              className="h-11 w-full"
+              onClick={() =>
+                setDeleteOpen(false)
+              }
+              disabled={deleting}
+            >
+              Cancelar
+            </Button>
+
+
+            <Button
+              variant="destructive"
+              className="h-11 w-full"
+              disabled={deleting}
+              onClick={() =>
+                void confirmDelete()
+              }
+            >
+
+              <Trash2 className="size-4" />
+
+              {deleting
+                ? "Excluindo..."
+                : "Excluir minha conta"}
 
             </Button>
 
@@ -1352,55 +1560,55 @@ function SettingsPage() {
 }
 
 
-function SettingsRow({
+function SettingsCard({
   icon,
   title,
   description,
   action,
-  destructive = false,
   onClick,
+  variant = "default",
 }: {
   icon: ReactNode;
   title: string;
   description: string;
   action: string;
-  destructive?: boolean;
   onClick: () => void;
+  variant?: "default" | "success";
 }) {
+  const isSuccess =
+    variant ===
+    "success";
+
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 p-5 text-left transition-colors hover:bg-muted/40"
+      className={cn(
+        "surface group flex min-h-48 flex-col items-start p-6 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
+        isSuccess &&
+          "border-green-500/20 hover:border-green-500/40",
+      )}
     >
 
       <div
         className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary",
-
-          destructive &&
-            "bg-destructive/10 text-destructive",
+          "flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary",
+          isSuccess &&
+            "bg-green-500/10 text-green-600 dark:text-green-400",
         )}
       >
         {icon}
       </div>
 
 
-      <div className="min-w-0 flex-1">
+      <div className="mt-5">
 
-        <p
-          className={cn(
-            "font-medium",
-
-            destructive &&
-              "text-destructive",
-          )}
-        >
+        <h2 className="font-display text-lg font-semibold">
           {title}
-        </p>
+        </h2>
 
-
-        <p className="mt-1 truncate text-sm text-muted-foreground">
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
           {description}
         </p>
 
@@ -1409,19 +1617,17 @@ function SettingsRow({
 
       <div
         className={cn(
-          "flex shrink-0 items-center gap-1 text-sm font-medium text-muted-foreground",
-
-          destructive &&
-            "text-destructive",
+          "mt-auto flex items-center gap-1 pt-5 text-sm font-medium text-primary",
+          isSuccess &&
+            "text-green-600 dark:text-green-400",
         )}
       >
 
-        <span className="hidden sm:inline">
+        <span>
           {action}
         </span>
 
-
-        <ChevronRight className="size-4" />
+        <ChevronRight className="size-4 transition-transform group-hover:translate-x-1" />
 
       </div>
 
@@ -1448,7 +1654,7 @@ function ThemeOption({
       type="button"
       onClick={onClick}
       className={cn(
-        "relative flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all",
+        "relative flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all",
 
         active
           ? "border-primary bg-primary/10 text-primary shadow-sm"
@@ -1473,7 +1679,6 @@ function ThemeOption({
         <p className="font-medium">
           {title}
         </p>
-
 
         <p className="mt-0.5 text-xs text-muted-foreground">
           {description}
