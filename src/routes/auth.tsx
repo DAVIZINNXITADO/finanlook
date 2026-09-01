@@ -1,45 +1,17 @@
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-} from "@tanstack/react-router";
-
-import {
-  ArrowLeft,
-  ArrowRight,
-  Eye,
-  EyeOff,
-  KeyRound,
-  Loader2,
-  Mail,
-  UserPlus,
-} from "lucide-react";
-
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff, KeyRound, Mail } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-
-/* =========================================================
-   ROTAS
-   ========================================================= */
-
 const searchSchema = z.object({
-  modo: z
-    .enum([
-      "entrar",
-      "cadastro",
-    ])
-    .optional()
-    .catch("entrar"),
+  modo: z.enum(["entrar", "cadastro"]).optional().catch("entrar"),
 });
-
 
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
@@ -49,23 +21,19 @@ export const Route = createFileRoute("/auth")({
       {
         title: "Entrar no FinanLook",
       },
-
       {
         name: "description",
         content:
-          "Entre ou crie sua conta no FinanLook para organizar entradas, gastos, metas e sua vida financeira de forma simples.",
+          "Entre ou crie sua conta no FinanLook para organizar sua vida financeira de forma simples.",
       },
-
       {
         property: "og:title",
-        content:
-          "FinanLook — organize sua vida financeira",
+        content: "Entrar no FinanLook",
       },
-
       {
         property: "og:description",
         content:
-          "Crie sua conta e acompanhe seu dinheiro de forma simples, clara e organizada.",
+          "Acesse sua conta ou crie uma nova conta no FinanLook.",
       },
     ],
   }),
@@ -73,20 +41,12 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-
-/* =========================================================
-   VALIDAÇÃO
-   ========================================================= */
-
 const signUpSchema = z
   .object({
     name: z
       .string()
       .trim()
-      .min(
-        2,
-        "Informe seu nome",
-      )
+      .min(2, "Informe seu nome")
       .max(
         24,
         "O nome pode ter no máximo 24 caracteres",
@@ -111,9 +71,7 @@ const signUpSchema = z
     email: z
       .string()
       .trim()
-      .email(
-        "E-mail inválido",
-      )
+      .email("E-mail inválido")
       .max(
         160,
         "O e-mail pode ter no máximo 160 caracteres",
@@ -137,23 +95,14 @@ const signUpSchema = z
         "A confirmação pode ter no máximo 1.000 caracteres",
       ),
   })
-
   .refine(
     (value) =>
       value.password === value.confirm,
     {
-      message:
-        "As senhas não são iguais",
-      path: [
-        "confirm",
-      ],
+      message: "As senhas não são iguais",
+      path: ["confirm"],
     },
   );
-
-
-/* =========================================================
-   PÁGINA
-   ========================================================= */
 
 function AuthPage() {
   const { modo } =
@@ -165,34 +114,35 @@ function AuthPage() {
   const isSignUp =
     modo === "cadastro";
 
-
-  /* =====================================================
-     STATES
-     ===================================================== */
-
-  const [
-    loading,
-    setLoading,
-  ] =
+  const [loading, setLoading] =
     useState(false);
 
   const [
     showPassword,
     setShowPassword,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     showConfirmPassword,
     setShowConfirmPassword,
-  ] =
-    useState(false);
-
+  ] = useState(false);
 
   const [
-    form,
-    setForm,
-  ] =
+    showRecovery,
+    setShowRecovery,
+  ] = useState(false);
+
+  const [
+    recoveryLoading,
+    setRecoveryLoading,
+  ] = useState(false);
+
+  const [
+    recoveryEmail,
+    setRecoveryEmail,
+  ] = useState("");
+
+  const [form, setForm] =
     useState({
       name: "",
       username: "",
@@ -201,29 +151,15 @@ function AuthPage() {
       confirm: "",
     });
 
-
-  /* =====================================================
-     ATUALIZAR FORM
-     ===================================================== */
-
   function update(
-    key:
-      | "name"
-      | "username"
-      | "email"
-      | "password"
-      | "confirm",
-
+    key: keyof typeof form,
     value: string,
   ) {
-    setForm(
-      (previous) => ({
-        ...previous,
-        [key]: value,
-      }),
-    );
+    setForm((previous) => ({
+      ...previous,
+      [key]: value,
+    }));
   }
-
 
   /* =====================================================
      CADASTRO
@@ -231,22 +167,17 @@ function AuthPage() {
 
   async function handleSignUp() {
     const parsed =
-      signUpSchema.safeParse(
-        form,
-      );
+      signUpSchema.safeParse(form);
 
-    if (
-      !parsed.success
-    ) {
+    if (!parsed.success) {
       toast.error(
         parsed.error.issues[0]
           ?.message ??
-          "Verifique os dados informados",
+          "Verifique os dados informados.",
       );
 
       return;
     }
-
 
     setLoading(true);
 
@@ -258,7 +189,6 @@ function AuthPage() {
         await supabase.auth.signUp({
           email:
             parsed.data.email,
-
           password:
             parsed.data.password,
 
@@ -276,57 +206,43 @@ function AuthPage() {
           },
         });
 
-
-      if (
-        error
-      ) {
+      if (error) {
         throw error;
       }
 
-
-      if (
-        !data.session
-      ) {
+      if (!data.session) {
         toast.success(
-          "Conta criada! Verifique seu e-mail para confirmar sua conta.",
+          "Conta criada! Confirme seu e-mail para entrar.",
         );
 
         navigate({
           to: "/auth",
-
           search: {
-            modo:
-              "entrar",
+            modo: "entrar",
           },
         });
 
         return;
       }
 
-
       toast.success(
-        "Conta criada com sucesso! 🎉",
+        "Conta criada com sucesso!",
       );
 
-
       navigate({
-        to:
-          "/bem-vindo",
+        to: "/bem-vindo",
       });
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "";
 
-
       toast.error(
         message.includes(
           "already registered",
         )
-          ? "Este e-mail já possui uma conta."
+          ? "Este e-mail já possui uma conta. Tente entrar."
           : message ||
               "Não foi possível criar sua conta.",
       );
@@ -334,7 +250,6 @@ function AuthPage() {
       setLoading(false);
     }
   }
-
 
   /* =====================================================
      LOGIN
@@ -346,28 +261,32 @@ function AuthPage() {
         .trim()
         .toLowerCase();
 
-
-    if (
-      !email
-    ) {
+    if (!email) {
       toast.error(
-        "Informe seu e-mail",
+        "Informe seu e-mail.",
       );
 
       return;
     }
 
-
-    if (
-      !form.password
-    ) {
+    if (!form.password) {
       toast.error(
-        "Informe sua senha",
+        "Informe sua senha.",
       );
 
       return;
     }
 
+    if (
+      form.password.length >
+      1000
+    ) {
+      toast.error(
+        "A senha pode ter no máximo 1.000 caracteres.",
+      );
+
+      return;
+    }
 
     setLoading(true);
 
@@ -377,27 +296,20 @@ function AuthPage() {
       } =
         await supabase.auth.signInWithPassword({
           email,
-
           password:
             form.password,
         });
 
-
-      if (
-        error
-      ) {
+      if (error) {
         throw error;
       }
 
-
       toast.success(
-        "Bem-vindo de volta! 👋",
+        "Login realizado com sucesso!",
       );
 
-
       navigate({
-        to:
-          "/visao-geral",
+        to: "/visao-geral",
       });
     } catch {
       toast.error(
@@ -408,30 +320,33 @@ function AuthPage() {
     }
   }
 
-
   /* =====================================================
      RECUPERAR SENHA
      ===================================================== */
 
-  async function handleForgotPassword() {
+  async function handlePasswordRecovery() {
     const email =
-      form.email
+      recoveryEmail
         .trim()
         .toLowerCase();
 
-
-    if (
-      !email
-    ) {
+    if (!email) {
       toast.error(
-        "Digite seu e-mail primeiro para recuperar sua senha.",
+        "Informe seu e-mail.",
       );
 
       return;
     }
 
+    if (!email.includes("@")) {
+      toast.error(
+        "Informe um e-mail válido.",
+      );
 
-    setLoading(true);
+      return;
+    }
+
+    setRecoveryLoading(true);
 
     try {
       const {
@@ -445,438 +360,446 @@ function AuthPage() {
           },
         );
 
-
-      if (
-        error
-      ) {
+      if (error) {
         throw error;
       }
 
-
       toast.success(
-        "Se existir uma conta com esse e-mail, enviaremos as instruções para recuperar sua senha.",
+        "Se existir uma conta com este e-mail, enviaremos um link para redefinir sua senha.",
       );
-    } catch {
+
+      setRecoveryEmail("");
+      setShowRecovery(false);
+    } catch (error) {
       toast.error(
-        "Não foi possível solicitar a recuperação da senha.",
+        error instanceof Error
+          ? error.message
+          : "Não foi possível enviar o e-mail de recuperação.",
       );
     } finally {
-      setLoading(false);
+      setRecoveryLoading(false);
     }
   }
 
-
   /* =====================================================
-     SUBMIT
+     FORMULARIO PRINCIPAL
      ===================================================== */
 
-  function handleSubmit(
-    event:
-      React.FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
-
-
-    void (
-      isSignUp
-        ? handleSignUp()
-        : handleSignIn()
-    );
-  }
-
-
-  /* =====================================================
-     RENDER
-     ===================================================== */
-
-  return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-10">
-
-
-      {/* FUNDO DECORATIVO */}
-
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-
-        <div className="absolute -left-32 -top-32 size-96 rounded-full bg-primary/10 blur-3xl" />
-
-        <div className="absolute -bottom-32 -right-32 size-96 rounded-full bg-primary/10 blur-3xl" />
-
-      </div>
-
-
-      <div className="relative w-full max-w-md">
-
-
-        {/* VOLTAR */}
-
+  if (showRecovery) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-5 py-10">
         <Link
           to="/"
-          className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="mb-6 flex items-center gap-2 transition-opacity hover:opacity-80"
         >
-          <ArrowLeft className="size-4" />
+          <span className="hero-gradient flex size-10 items-center justify-center rounded-xl text-lg">
+            💸
+          </span>
 
-          Voltar ao início
+          <span className="font-display text-xl font-semibold">
+            FinanLook
+          </span>
         </Link>
 
-
-        {/* LOGO */}
-
-        <Link
-          to="/"
-          className="mb-8 flex items-center justify-center gap-3"
-        >
-          <div className="flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-primary shadow-lg shadow-primary/20">
-
-            <img
-              src="/favicon.png"
-              alt="FinanLook"
-              className="size-full object-cover"
-            />
-
-          </div>
-
-
-          <div>
-            <p className="font-display text-2xl font-semibold tracking-tight">
-              FinanLook
-            </p>
-
-            <p className="text-xs text-muted-foreground">
-              Organização financeira simples
-            </p>
-          </div>
-        </Link>
-
-
-        {/* CARD */}
-
-        <div className="surface overflow-hidden">
-
-
-          {/* TOPO */}
-
-          <div className="border-b bg-muted/30 px-6 py-6">
-
-            <div className="flex items-start gap-4">
-
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-
-                {isSignUp ? (
-                  <UserPlus className="size-5" />
-                ) : (
-                  <KeyRound className="size-5" />
-                )}
-
-              </div>
-
-
-              <div>
-
-                <h1 className="font-display text-xl font-semibold">
-
-                  {isSignUp
-                    ? "Criar sua conta"
-                    : "Bem-vindo de volta"}
-
-                </h1>
-
-
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-
-                  {isSignUp
-                    ? "Comece a organizar sua vida financeira de um jeito simples."
-                    : "Entre para continuar acompanhando sua vida financeira."}
-
-                </p>
-
-              </div>
-
+        <div className="surface w-full max-w-sm overflow-hidden">
+          <div className="border-b bg-primary/[0.03] px-6 py-7 text-center">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+              <KeyRound className="size-6 text-primary" />
             </div>
 
+            <h1 className="mt-4 font-display text-2xl font-semibold">
+              Recuperar senha
+            </h1>
+
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Digite seu e-mail e enviaremos um link para você criar uma nova senha.
+            </p>
           </div>
-
-
-          {/* FORM */}
 
           <form
             className="space-y-5 p-6"
-            onSubmit={
-              handleSubmit
-            }
+            onSubmit={(event) => {
+              event.preventDefault();
+
+              void handlePasswordRecovery();
+            }}
           >
+            <div className="space-y-1.5">
+              <Label htmlFor="recovery-email">
+                E-mail da conta
+              </Label>
 
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-            {/* CADASTRO */}
-
-            {isSignUp ? (
-              <>
-                <Field
-                  id="name"
-                  label="Nome"
-                  value={
-                    form.name
+                <Input
+                  id="recovery-email"
+                  type="email"
+                  value={recoveryEmail}
+                  onChange={(event) =>
+                    setRecoveryEmail(
+                      event.target.value,
+                    )
                   }
-                  onChange={
-                    (value) =>
-                      update(
-                        "name",
-                        value,
-                      )
-                  }
-                  placeholder="Como podemos chamar você?"
-                  autoComplete="given-name"
-                  maxLength={24}
+                  placeholder="seuemail@exemplo.com"
+                  autoComplete="email"
+                  maxLength={160}
+                  className="h-11 pl-10"
                 />
-
-
-                <Field
-                  id="username"
-                  label="Nome de usuário"
-                  value={
-                    form.username
-                  }
-                  onChange={
-                    (value) =>
-                      update(
-                        "username",
-                        value,
-                      )
-                  }
-                  placeholder="seuusuario"
-                  autoComplete="username"
-                  maxLength={24}
-                  prefix="@"
-                />
-              </>
-            ) : null}
-
-
-            {/* EMAIL */}
-
-            <Field
-              id="email"
-              label="E-mail"
-              type="email"
-              value={
-                form.email
-              }
-              onChange={
-                (value) =>
-                  update(
-                    "email",
-                    value,
-                  )
-              }
-              placeholder="voce@email.com"
-              autoComplete="email"
-              maxLength={160}
-              icon={
-                <Mail className="size-4" />
-              }
-            />
-
-
-            {/* SENHA */}
-
-            <div>
-
-              <div className="mb-1.5 flex items-center justify-between">
-
-                <Label htmlFor="password">
-                  Senha
-                </Label>
-
-
-                {!isSignUp ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void handleForgotPassword()
-                    }
-                    disabled={
-                      loading
-                    }
-                    className="text-xs font-medium text-primary transition-opacity hover:opacity-75 disabled:opacity-50"
-                  >
-                    Esqueci minha senha
-                  </button>
-                ) : null}
-
               </div>
 
-
-              <PasswordField
-                id="password"
-                value={
-                  form.password
-                }
-                onChange={
-                  (value) =>
-                    update(
-                      "password",
-                      value,
-                    )
-                }
-                placeholder="Digite sua senha"
-                autoComplete={
-                  isSignUp
-                    ? "new-password"
-                    : "current-password"
-                }
-                showPassword={
-                  showPassword
-                }
-                onToggleVisibility={() =>
-                  setShowPassword(
-                    (previous) =>
-                      !previous,
-                  )
-                }
-              />
-
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Enviaremos um link de recuperação para este endereço.
+              </p>
             </div>
-
-
-            {/* CONFIRMAR */}
-
-            {isSignUp ? (
-              <div>
-
-                <Label
-                  htmlFor="confirm"
-                  className="mb-1.5 block"
-                >
-                  Confirmar senha
-                </Label>
-
-
-                <PasswordField
-                  id="confirm"
-                  value={
-                    form.confirm
-                  }
-                  onChange={
-                    (value) =>
-                      update(
-                        "confirm",
-                        value,
-                      )
-                  }
-                  placeholder="Digite novamente sua senha"
-                  autoComplete="new-password"
-                  showPassword={
-                    showConfirmPassword
-                  }
-                  onToggleVisibility={() =>
-                    setShowConfirmPassword(
-                      (
-                        previous,
-                      ) =>
-                        !previous,
-                    )
-                  }
-                />
-
-              </div>
-            ) : null}
-
-
-            {/* BOTÃO */}
 
             <Button
               type="submit"
-              className="h-12 w-full gap-2 text-sm"
-              disabled={
-                loading
-              }
+              className="h-11 w-full"
+              disabled={recoveryLoading}
             >
+              <Mail className="size-4" />
 
-              {loading ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-
-                  Aguarde...
-                </>
-              ) : (
-                <>
-                  {isSignUp
-                    ? "Criar minha conta"
-                    : "Entrar na minha conta"}
-
-                  <ArrowRight className="size-4" />
-                </>
-              )}
-
+              {recoveryLoading
+                ? "Enviando..."
+                : "Enviar link de recuperação"}
             </Button>
-
-
-            {/* TROCAR MODO */}
-
-            <div className="pt-1 text-center text-sm text-muted-foreground">
-
-              {isSignUp
-                ? "Já possui uma conta?"
-                : "Ainda não possui uma conta?"}
-
-
-              <Link
-                to="/auth"
-                search={{
-                  modo:
-                    isSignUp
-                      ? "entrar"
-                      : "cadastro",
-                }}
-                className="ml-1 font-medium text-primary transition-opacity hover:opacity-75"
-              >
-
-                {isSignUp
-                  ? "Entrar"
-                  : "Criar conta"}
-
-              </Link>
-
-            </div>
-
           </form>
-
         </div>
 
+        <button
+          type="button"
+          onClick={() =>
+            setShowRecovery(false)
+          }
+          className="mt-6 text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Voltar para entrar
+        </button>
+      </div>
+    );
+  }
 
-        {/* RODAPÉ */}
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center px-5 py-10">
+      {/* LOGO */}
 
-        <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
+      <Link
+        to="/"
+        className="mb-6 flex items-center gap-2 transition-opacity hover:opacity-80"
+      >
+        <span className="hero-gradient flex size-10 items-center justify-center rounded-xl text-lg">
+          💸
+        </span>
 
-          Ao continuar, você concorda com os
-          {" "}
+        <span className="font-display text-xl font-semibold">
+          FinanLook
+        </span>
+      </Link>
 
-          <Link
-            to="/termos-de-uso"
-            className="underline underline-offset-2 hover:text-foreground"
+      {/* CARD */}
+
+      <div className="surface w-full max-w-sm overflow-hidden">
+        <div className="border-b bg-primary/[0.03] px-6 py-6">
+          <h1 className="font-display text-2xl font-semibold">
+            {isSignUp
+              ? "Criar sua conta"
+              : "Bem-vindo de volta"}
+          </h1>
+
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            {isSignUp
+              ? "Comece a organizar sua vida financeira de um jeito simples."
+              : "Entre na sua conta para continuar organizando seu dinheiro."}
+          </p>
+        </div>
+
+        <form
+          className="space-y-4 p-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+
+            void (
+              isSignUp
+                ? handleSignUp()
+                : handleSignIn()
+            );
+          }}
+        >
+          {isSignUp ? (
+            <>
+              <Field
+                id="name"
+                label="Nome"
+                value={form.name}
+                onChange={(value) =>
+                  update(
+                    "name",
+                    value,
+                  )
+                }
+                placeholder="Seu primeiro nome"
+                helperText="Como você gostaria de ser chamado?"
+                autoComplete="given-name"
+                maxLength={24}
+              />
+
+              <Field
+                id="username"
+                label="Nome de usuário"
+                value={form.username}
+                onChange={(value) =>
+                  update(
+                    "username",
+                    value,
+                  )
+                }
+                placeholder="seuusername"
+                helperText="Use letras, números, ponto, hífen ou underline."
+                autoComplete="username"
+                maxLength={24}
+              />
+            </>
+          ) : null}
+
+          <Field
+            id="email"
+            label="E-mail"
+            type="email"
+            value={form.email}
+            onChange={(value) =>
+              update(
+                "email",
+                value,
+              )
+            }
+            placeholder="seuemail@exemplo.com"
+            helperText="Use um e-mail que você tenha acesso."
+            autoComplete="email"
+            maxLength={160}
+          />
+
+          <PasswordField
+            id="password"
+            label="Senha"
+            value={form.password}
+            onChange={(value) =>
+              update(
+                "password",
+                value,
+              )
+            }
+            placeholder="Digite sua senha"
+            helperText={
+              isSignUp
+                ? "Sua senha deve ter pelo menos 6 caracteres."
+                : "Digite a senha usada na sua conta."
+            }
+            autoComplete={
+              isSignUp
+                ? "new-password"
+                : "current-password"
+            }
+            showPassword={
+              showPassword
+            }
+            onToggleVisibility={() =>
+              setShowPassword(
+                (previous) =>
+                  !previous,
+              )
+            }
+          />
+
+          {!isSignUp ? (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setRecoveryEmail(
+                    form.email,
+                  );
+
+                  setShowRecovery(
+                    true,
+                  );
+                }}
+                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
+          ) : null}
+
+          {isSignUp ? (
+            <PasswordField
+              id="confirm"
+              label="Confirmar senha"
+              value={
+                form.confirm
+              }
+              onChange={(value) =>
+                update(
+                  "confirm",
+                  value,
+                )
+              }
+              placeholder="Repita sua senha"
+              helperText="Digite novamente a mesma senha."
+              autoComplete="new-password"
+              showPassword={
+                showConfirmPassword
+              }
+              onToggleVisibility={() =>
+                setShowConfirmPassword(
+                  (previous) =>
+                    !previous,
+                )
+              }
+            />
+          ) : null}
+
+          <Button
+            type="submit"
+            className="h-11 w-full"
+            disabled={loading}
           >
-            Termos de Uso
-          </Link>
-
-          {" "}e a{" "}
-
-          <Link
-            to="/politica-de-privacidade"
-            className="underline underline-offset-2 hover:text-foreground"
-          >
-            Política de Privacidade
-          </Link>.
-
-        </p>
-
+            {loading
+              ? "Aguarde..."
+              : isSignUp
+                ? "Criar minha conta"
+                : "Entrar na minha conta"}
+          </Button>
+        </form>
       </div>
 
+      {/* TROCAR MODO */}
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        {isSignUp
+          ? "Já possui uma conta? "
+          : "Ainda não possui uma conta? "}
+
+        <Link
+          to="/auth"
+          search={{
+            modo: isSignUp
+              ? "entrar"
+              : "cadastro",
+          }}
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {isSignUp
+            ? "Entrar"
+            : "Criar conta"}
+        </Link>
+      </p>
     </div>
   );
 }
 
+/* =========================================================
+   COMPONENTE: CAMPO DE SENHA
+   ========================================================= */
+
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  helperText,
+  autoComplete,
+  showPassword,
+  onToggleVisibility,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (
+    value: string,
+  ) => void;
+  placeholder?: string;
+  helperText?: string;
+  autoComplete?: string;
+  showPassword: boolean;
+  onToggleVisibility: () => void;
+}) {
+  const maxLength =
+    1000;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={id}>
+          {label}
+        </Label>
+
+        {value.length > 0 ? (
+          <span className="text-xs text-muted-foreground">
+            {value.length}/
+            {maxLength}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="relative">
+        <Input
+          id={id}
+          type={
+            showPassword
+              ? "text"
+              : "password"
+          }
+          value={value}
+          placeholder={
+            placeholder
+          }
+          autoComplete={
+            autoComplete
+          }
+          maxLength={
+            maxLength
+          }
+          onChange={(event) =>
+            onChange(
+              event.target.value,
+            )
+          }
+          className="h-11 pr-11"
+        />
+
+        <button
+          type="button"
+          onClick={
+            onToggleVisibility
+          }
+          aria-label={
+            showPassword
+              ? "Ocultar senha"
+              : "Mostrar senha"
+          }
+          className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          {showPassword ? (
+            <EyeOff className="size-4" />
+          ) : (
+            <Eye className="size-4" />
+          )}
+        </button>
+      </div>
+
+      {helperText ? (
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          {helperText}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 /* =========================================================
-   CAMPO NORMAL
+   COMPONENTE: CAMPO NORMAL
    ========================================================= */
 
 function Field({
@@ -886,10 +809,9 @@ function Field({
   onChange,
   type = "text",
   placeholder,
+  helperText,
   autoComplete,
   maxLength,
-  prefix,
-  icon,
 }: {
   id: string;
   label: string;
@@ -899,142 +821,52 @@ function Field({
   ) => void;
   type?: string;
   placeholder?: string;
+  helperText?: string;
   autoComplete?: string;
   maxLength?: number;
-  prefix?: string;
-  icon?: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
-
-      <div className="flex items-center justify-between gap-3">
-
+      <div className="flex items-center justify-between gap-2">
         <Label htmlFor={id}>
           {label}
         </Label>
 
-
         {value.length > 0 &&
         maxLength ? (
           <span className="text-xs text-muted-foreground">
-            {value.length}/{maxLength}
+            {value.length}/
+            {maxLength}
           </span>
         ) : null}
-
       </div>
-
-
-      <div className="relative">
-
-        {prefix ? (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-            {prefix}
-          </span>
-        ) : null}
-
-
-        {icon ? (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-            {icon}
-          </span>
-        ) : null}
-
-
-        <Input
-          id={id}
-          type={type}
-          value={value}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          maxLength={maxLength}
-          onChange={(event) =>
-            onChange(
-              event.target.value,
-            )
-          }
-          className={[
-            "h-11 transition-all",
-
-            prefix || icon
-              ? "pl-10"
-              : "",
-          ].join(" ")}
-        />
-
-      </div>
-
-    </div>
-  );
-}
-
-
-/* =========================================================
-   CAMPO SENHA
-   ========================================================= */
-
-function PasswordField({
-  id,
-  value,
-  onChange,
-  placeholder,
-  autoComplete,
-  showPassword,
-  onToggleVisibility,
-}: {
-  id: string;
-  value: string;
-  onChange: (
-    value: string,
-  ) => void;
-  placeholder?: string;
-  autoComplete?: string;
-  showPassword: boolean;
-  onToggleVisibility: () => void;
-}) {
-  return (
-    <div className="relative">
 
       <Input
         id={id}
-        type={
-          showPassword
-            ? "text"
-            : "password"
-        }
+        type={type}
         value={value}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        maxLength={1000}
+        placeholder={
+          placeholder
+        }
+        autoComplete={
+          autoComplete
+        }
+        maxLength={
+          maxLength
+        }
         onChange={(event) =>
           onChange(
             event.target.value,
           )
         }
-        className="h-11 pr-11"
+        className="h-11"
       />
 
-
-      <button
-        type="button"
-        onClick={
-          onToggleVisibility
-        }
-        aria-label={
-          showPassword
-            ? "Ocultar senha"
-            : "Mostrar senha"
-        }
-        className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-      >
-
-        {showPassword ? (
-          <EyeOff className="size-4" />
-        ) : (
-          <Eye className="size-4" />
-        )}
-
-      </button>
-
+      {helperText ? (
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          {helperText}
+        </p>
+      ) : null}
     </div>
   );
 }
