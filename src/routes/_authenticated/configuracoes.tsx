@@ -15,7 +15,6 @@ import {
 import {
   Check,
   ChevronRight,
-  Crown,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -26,7 +25,6 @@ import {
   Palette,
   Save,
   ShieldCheck,
-  Sparkles,
   Sun,
   User,
 } from "lucide-react";
@@ -82,30 +80,27 @@ import {
    ROTA
    ========================================================= */
 
-export const Route =
-  createFileRoute(
-    "/_authenticated/configuracoes",
-  )({
-    head: () => ({
-      meta: [
-        {
-          title:
-            "Configurações — FinanLook",
-        },
+export const Route = createFileRoute(
+  "/_authenticated/configuracoes",
+)({
+  head: () => ({
+    meta: [
+      {
+        title:
+          "Configurações — FinanLook",
+      },
+      {
+        name:
+          "description",
+        content:
+          "Gerencie sua conta, segurança e preferências de aparência no FinanLook.",
+      },
+    ],
+  }),
 
-        {
-          name:
-            "description",
-
-          content:
-            "Gerencie sua conta, segurança, aparência e preferências no FinanLook.",
-        },
-      ],
-    }),
-
-    component:
-      SettingsPage,
-  });
+  component:
+    SettingsPage,
+});
 
 /* =========================================================
    PÁGINA
@@ -139,42 +134,24 @@ function SettingsPage() {
     "";
 
   /* =======================================================
-     CONTROLE DAS MINI TELAS
+     DIALOGS
      ======================================================= */
 
   const [
-    profileOpen,
-    setProfileOpen,
-  ] =
-    useState(false);
-
-  const [
-    accountOpen,
-    setAccountOpen,
-  ] =
-    useState(false);
-
-  const [
-    securityOpen,
-    setSecurityOpen,
-  ] =
-    useState(false);
-
-  const [
-    appearanceOpen,
-    setAppearanceOpen,
-  ] =
-    useState(false);
-
-  const [
-    subscriptionOpen,
-    setSubscriptionOpen,
+    editProfileOpen,
+    setEditProfileOpen,
   ] =
     useState(false);
 
   const [
     editEmailOpen,
     setEditEmailOpen,
+  ] =
+    useState(false);
+
+  const [
+    editPasswordOpen,
+    setEditPasswordOpen,
   ] =
     useState(false);
 
@@ -249,10 +226,10 @@ function SettingsPage() {
     useState(false);
 
   /* =======================================================
-     ABRIR PERFIL
+     PERFIL
      ======================================================= */
 
-  function openProfile() {
+  function openProfileDialog() {
     setProfileName(
       profile?.name ??
         "",
@@ -263,14 +240,10 @@ function SettingsPage() {
         "",
     );
 
-    setProfileOpen(
+    setEditProfileOpen(
       true,
     );
   }
-
-  /* =======================================================
-     SALVAR PERFIL
-     ======================================================= */
 
   async function saveProfile() {
     const name =
@@ -293,41 +266,9 @@ function SettingsPage() {
       return;
     }
 
-    if (
-      name.length < 2
-    ) {
-      toast.error(
-        "Seu nome precisa ter pelo menos 2 caracteres.",
-      );
-
-      return;
-    }
-
     if (!username) {
       toast.error(
         "Informe seu username.",
-      );
-
-      return;
-    }
-
-    if (
-      username.length < 3
-    ) {
-      toast.error(
-        "O username precisa ter pelo menos 3 caracteres.",
-      );
-
-      return;
-    }
-
-    if (
-      !/^[a-zA-Z0-9._-]+$/.test(
-        username,
-      )
-    ) {
-      toast.error(
-        "Use apenas letras, números, ponto, hífen ou underline.",
       );
 
       return;
@@ -392,16 +333,10 @@ function SettingsPage() {
         "Perfil atualizado com sucesso.",
       );
 
-      setProfileOpen(
+      setEditProfileOpen(
         false,
       );
-    } catch (
-      error,
-    ) {
-      console.error(
-        error,
-      );
-
+    } catch {
       toast.error(
         "Não foi possível atualizar seu perfil.",
       );
@@ -413,10 +348,10 @@ function SettingsPage() {
   }
 
   /* =======================================================
-     ABRIR EMAIL
+     EMAIL
      ======================================================= */
 
-  function openEmail() {
+  function openEmailDialog() {
     setNewEmail(
       accountEmail,
     );
@@ -425,10 +360,6 @@ function SettingsPage() {
       true,
     );
   }
-
-  /* =======================================================
-     SALVAR EMAIL
-     ======================================================= */
 
   async function saveEmail() {
     const email =
@@ -445,23 +376,12 @@ function SettingsPage() {
     }
 
     if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        email,
+      !email.includes(
+        "@",
       )
     ) {
       toast.error(
         "Informe um email válido.",
-      );
-
-      return;
-    }
-
-    if (
-      email ===
-      accountEmail.toLowerCase()
-    ) {
-      toast.error(
-        "Informe um email diferente do atual.",
       );
 
       return;
@@ -490,13 +410,7 @@ function SettingsPage() {
       setEditEmailOpen(
         false,
       );
-    } catch (
-      error,
-    ) {
-      console.error(
-        error,
-      );
-
+    } catch {
       toast.error(
         "Não foi possível alterar seu email.",
       );
@@ -508,7 +422,7 @@ function SettingsPage() {
   }
 
   /* =======================================================
-     SALVAR SENHA
+     SENHA
      ======================================================= */
 
   async function savePassword() {
@@ -575,16 +489,10 @@ function SettingsPage() {
         false,
       );
 
-      setSecurityOpen(
+      setEditPasswordOpen(
         false,
       );
-    } catch (
-      error,
-    ) {
-      console.error(
-        error,
-      );
-
+    } catch {
       toast.error(
         "Não foi possível alterar sua senha.",
       );
@@ -614,11 +522,9 @@ function SettingsPage() {
     );
 
     const themeName =
-      value ===
-      "light"
+      value === "light"
         ? "tema claro"
-        : value ===
-            "dark"
+        : value === "dark"
           ? "tema escuro"
           : "tema do sistema";
 
@@ -653,13 +559,7 @@ function SettingsPage() {
         replace:
           true,
       });
-    } catch (
-      error,
-    ) {
-      console.error(
-        error,
-      );
-
+    } catch {
       toast.error(
         "Não foi possível sair da conta.",
       );
@@ -671,67 +571,50 @@ function SettingsPage() {
      ======================================================= */
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 pb-8">
+    <div className="space-y-6">
       <PageHeader
         title="Configurações"
         subtitle="Gerencie sua conta e personalize sua experiência no FinanLook."
       />
 
-      {/* =================================================
-          RESUMO DA CONTA
-         ================================================= */}
+      {/* PERFIL */}
 
       <section className="surface overflow-hidden">
-        <div className="flex items-center gap-4 p-5">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
-            <User className="size-7 text-primary" />
-          </div>
+        <div className="border-b p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+              <User className="size-5 text-primary" />
+            </div>
 
-          <div className="min-w-0 flex-1">
-            <h2 className="truncate font-display text-lg font-semibold">
-              {profile?.name ||
-                "Sua conta"}
-            </h2>
+            <div>
+              <h2 className="font-display text-lg font-semibold">
+                Perfil
+              </h2>
 
-            <p className="truncate text-sm text-muted-foreground">
-              {accountEmail ||
-                "Nenhum email encontrado"}
-            </p>
-
-            {profile?.username ? (
-              <p className="mt-1 text-xs text-primary">
-                @
-                {
-                  profile.username
-                }
+              <p className="text-sm text-muted-foreground">
+                Informações da sua conta.
               </p>
-            ) : null}
+            </div>
           </div>
         </div>
-      </section>
-
-      {/* =================================================
-          PREFERÊNCIAS
-         ================================================= */}
-
-      <section className="surface overflow-hidden">
-        <SettingsSectionHeader
-          icon={
-            <User className="size-5 text-primary" />
-          }
-          title="Conta e preferências"
-          description="Gerencie suas informações e preferências."
-        />
 
         <div className="divide-y">
           <SettingsRow
             icon={
               <User className="size-5" />
             }
-            title="Perfil"
-            description="Nome e username"
+            title="Nome e username"
+            description={
+              profile
+                ? `${profile.name || "Você"} • @${
+                    profile.username ??
+                    ""
+                  }`
+                : "Configure seu nome e username"
+            }
+            action="Editar"
             onClick={
-              openProfile
+              openProfileDialog
             }
           />
 
@@ -739,127 +622,157 @@ function SettingsPage() {
             icon={
               <Mail className="size-5" />
             }
-            title="Conta"
+            title="Email"
             description={
               accountEmail ||
-              "Gerencie seu email"
+              "Configure seu email"
             }
-            onClick={() =>
-              setAccountOpen(
-                true,
-              )
-            }
-          />
-
-          <SettingsRow
-            icon={
-              <Palette className="size-5" />
-            }
-            title="Aparência"
-            description={
-              theme ===
-              "light"
-                ? "Tema claro"
-                : theme ===
-                    "dark"
-                  ? "Tema escuro"
-                  : "Seguir o sistema"
-            }
-            onClick={() =>
-              setAppearanceOpen(
-                true,
-              )
+            action="Alterar"
+            onClick={
+              openEmailDialog
             }
           />
         </div>
       </section>
 
-      {/* =================================================
-          SEGURANÇA
-         ================================================= */}
+      {/* SEGURANÇA */}
 
       <section className="surface overflow-hidden">
-        <SettingsSectionHeader
-          icon={
-            <ShieldCheck className="size-5 text-primary" />
-          }
-          title="Segurança"
-          description="Proteja sua conta e seus dados."
-        />
+        <div className="border-b p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+              <ShieldCheck className="size-5 text-primary" />
+            </div>
+
+            <div>
+              <h2 className="font-display text-lg font-semibold">
+                Segurança
+              </h2>
+
+              <p className="text-sm text-muted-foreground">
+                Proteja sua conta e suas informações.
+              </p>
+            </div>
+          </div>
+        </div>
 
         <SettingsRow
           icon={
             <LockKeyhole className="size-5" />
           }
           title="Senha"
-          description="Altere sua senha de acesso"
+          description="Altere sua senha de acesso."
+          action="Alterar"
           onClick={() => {
-            setNewPassword(
-              "",
-            );
-
-            setConfirmPassword(
-              "",
-            );
-
-            setShowPassword(
-              false,
-            );
-
-            setSecurityOpen(
-              true,
-            );
+            setNewPassword("");
+            setConfirmPassword("");
+            setShowPassword(false);
+            setEditPasswordOpen(true);
           }}
         />
       </section>
 
-      {/* =================================================
-          ASSINATURA
-         ================================================= */}
+      {/* APARÊNCIA */}
 
-      <section className="surface overflow-hidden">
-        <SettingsSectionHeader
-          icon={
-            <Crown className="size-5 text-primary" />
-          }
-          title="Assinatura"
-          description="Veja seu plano e futuras opções do FinanLook."
-        />
+      <section className="surface p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <Palette className="size-5 text-primary" />
+          </div>
 
-        <SettingsRow
-          icon={
-            <Sparkles className="size-5" />
-          }
-          title="Seu plano"
-          description="Gratuito"
-          badge="Grátis"
-          onClick={() =>
-            setSubscriptionOpen(
-              true,
-            )
-          }
-        />
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-semibold">
+              Aparência
+            </h2>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Escolha como deseja visualizar o FinanLook.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <ThemeOption
+            icon={
+              <Sun className="size-5" />
+            }
+            title="Claro"
+            description="Sempre usar aparência clara"
+            active={
+              theme ===
+              "light"
+            }
+            onClick={() =>
+              changeTheme(
+                "light",
+              )
+            }
+          />
+
+          <ThemeOption
+            icon={
+              <Moon className="size-5" />
+            }
+            title="Escuro"
+            description="Sempre usar aparência escura"
+            active={
+              theme ===
+              "dark"
+            }
+            onClick={() =>
+              changeTheme(
+                "dark",
+              )
+            }
+          />
+
+          <ThemeOption
+            icon={
+              <Monitor className="size-5" />
+            }
+            title="Sistema"
+            description="Seguir o dispositivo"
+            active={
+              theme ===
+              "system"
+            }
+            onClick={() =>
+              changeTheme(
+                "system",
+              )
+            }
+          />
+        </div>
       </section>
 
-      {/* =================================================
-          SESSÃO
-         ================================================= */}
+      {/* CONTA */}
 
       <section className="surface overflow-hidden">
-        <SettingsSectionHeader
-          icon={
-            <LogOut className="size-5 text-primary" />
-          }
-          title="Sessão"
-          description="Gerencie sua sessão neste dispositivo."
-        />
+        <div className="border-b p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+              <LogOut className="size-5 text-primary" />
+            </div>
+
+            <div>
+              <h2 className="font-display text-lg font-semibold">
+                Conta
+              </h2>
+
+              <p className="text-sm text-muted-foreground">
+                Gerencie sua sessão atual.
+              </p>
+            </div>
+          </div>
+        </div>
 
         <SettingsRow
           icon={
             <LogOut className="size-5" />
           }
           title="Sair da conta"
-          description="Encerrar sua sessão neste dispositivo"
+          description="Encerrar sua sessão neste dispositivo."
+          action="Sair"
           destructive
           onClick={() =>
             void signOut()
@@ -867,16 +780,14 @@ function SettingsPage() {
         />
       </section>
 
-      {/* =================================================
-          MODAL PERFIL
-         ================================================= */}
+      {/* DIALOG PERFIL */}
 
       <Dialog
         open={
-          profileOpen
+          editProfileOpen
         }
         onOpenChange={
-          setProfileOpen
+          setEditProfileOpen
         }
       >
         <DialogContent className="sm:max-w-md">
@@ -886,7 +797,7 @@ function SettingsPage() {
             </DialogTitle>
 
             <DialogDescription>
-              Escolha como seu nome será exibido no FinanLook.
+              Atualize seu nome e username.
             </DialogDescription>
           </DialogHeader>
 
@@ -901,9 +812,6 @@ function SettingsPage() {
                 className="h-11"
                 value={
                   profileName
-                }
-                maxLength={
-                  80
                 }
                 onChange={(
                   event,
@@ -932,9 +840,6 @@ function SettingsPage() {
                   value={
                     profileUsername
                   }
-                  maxLength={
-                    40
-                  }
                   onChange={(
                     event,
                   ) =>
@@ -945,10 +850,6 @@ function SettingsPage() {
                   placeholder="seuusername"
                 />
               </div>
-
-              <p className="text-xs text-muted-foreground">
-                Use letras, números, ponto, hífen ou underline.
-              </p>
             </div>
           </div>
 
@@ -972,50 +873,7 @@ function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* =================================================
-          MODAL CONTA
-         ================================================= */}
-
-      <Dialog
-        open={
-          accountOpen
-        }
-        onOpenChange={
-          setAccountOpen
-        }
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              Conta
-            </DialogTitle>
-
-            <DialogDescription>
-              Gerencie as informações principais da sua conta.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="divide-y rounded-xl border">
-            <MiniSettingRow
-              icon={
-                <Mail className="size-5" />
-              }
-              title="Email"
-              description={
-                accountEmail ||
-                "Nenhum email"
-              }
-              onClick={
-                openEmail
-              }
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* =================================================
-          MODAL EMAIL
-         ================================================= */}
+      {/* DIALOG EMAIL */}
 
       <Dialog
         open={
@@ -1032,7 +890,7 @@ function SettingsPage() {
             </DialogTitle>
 
             <DialogDescription>
-              Uma confirmação será enviada para concluir a alteração.
+              Você receberá uma confirmação no novo endereço de email.
             </DialogDescription>
           </DialogHeader>
 
@@ -1047,9 +905,6 @@ function SettingsPage() {
               className="h-11"
               value={
                 newEmail
-              }
-              maxLength={
-                160
               }
               onChange={(
                 event,
@@ -1082,26 +937,24 @@ function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* =================================================
-          MODAL SEGURANÇA
-         ================================================= */}
+      {/* DIALOG SENHA */}
 
       <Dialog
         open={
-          securityOpen
+          editPasswordOpen
         }
         onOpenChange={
-          setSecurityOpen
+          setEditPasswordOpen
         }
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Segurança
+              Alterar senha
             </DialogTitle>
 
             <DialogDescription>
-              Escolha uma nova senha para sua conta.
+              Escolha uma nova senha para acessar sua conta.
             </DialogDescription>
           </DialogHeader>
 
@@ -1123,10 +976,6 @@ function SettingsPage() {
                   value={
                     newPassword
                   }
-                  maxLength={
-                    1000
-                  }
-                  autoComplete="new-password"
                   onChange={(
                     event,
                   ) =>
@@ -1146,12 +995,8 @@ function SettingsPage() {
                         !current,
                     )
                   }
-                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label={
-                    showPassword
-                      ? "Ocultar senha"
-                      : "Mostrar senha"
-                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  aria-label="Mostrar ou ocultar senha"
                 >
                   {showPassword ? (
                     <EyeOff className="size-4" />
@@ -1178,10 +1023,6 @@ function SettingsPage() {
                 value={
                   confirmPassword
                 }
-                maxLength={
-                  1000
-                }
-                autoComplete="new-password"
                 onChange={(
                   event,
                 ) =>
@@ -1191,10 +1032,6 @@ function SettingsPage() {
                 }
               />
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              Use pelo menos 6 caracteres.
-            </p>
           </div>
 
           <DialogFooter>
@@ -1216,194 +1053,27 @@ function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* =================================================
-          MODAL APARÊNCIA
-         ================================================= */}
-
-      <Dialog
-        open={
-          appearanceOpen
-        }
-        onOpenChange={
-          setAppearanceOpen
-        }
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              Aparência
-            </DialogTitle>
-
-            <DialogDescription>
-              Escolha como deseja visualizar o FinanLook.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <ThemeOption
-              icon={
-                <Sun className="size-5" />
-              }
-              title="Claro"
-              description="Sempre claro"
-              active={
-                theme ===
-                "light"
-              }
-              onClick={() =>
-                changeTheme(
-                  "light",
-                )
-              }
-            />
-
-            <ThemeOption
-              icon={
-                <Moon className="size-5" />
-              }
-              title="Escuro"
-              description="Sempre escuro"
-              active={
-                theme ===
-                "dark"
-              }
-              onClick={() =>
-                changeTheme(
-                  "dark",
-                )
-              }
-            />
-
-            <ThemeOption
-              icon={
-                <Monitor className="size-5" />
-              }
-              title="Sistema"
-              description="Do dispositivo"
-              active={
-                theme ===
-                "system"
-              }
-              onClick={() =>
-                changeTheme(
-                  "system",
-                )
-              }
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* =================================================
-          MODAL ASSINATURA
-         ================================================= */}
-
-      <Dialog
-        open={
-          subscriptionOpen
-        }
-        onOpenChange={
-          setSubscriptionOpen
-        }
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              Assinatura
-            </DialogTitle>
-
-            <DialogDescription>
-              Gerencie seu plano no FinanLook.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="rounded-2xl border bg-muted/30 p-5">
-            <div className="flex items-start gap-3">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
-                <Sparkles className="size-5 text-primary" />
-              </div>
-
-              <div>
-                <p className="font-semibold">
-                  Plano gratuito
-                </p>
-
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Você está utilizando a versão gratuita do FinanLook.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-dashed p-4 text-center">
-            <Crown className="mx-auto size-5 text-primary" />
-
-            <p className="mt-2 text-sm font-medium">
-              Novos planos em breve
-            </p>
-
-            <p className="mt-1 text-xs text-muted-foreground">
-              Quando você adicionar assinaturas ao FinanLook, elas aparecerão aqui.
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
 
 /* =========================================================
-   CABEÇALHO DE SEÇÃO
-   ========================================================= */
-
-function SettingsSectionHeader({
-  icon,
-  title,
-  description,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="border-b p-5">
-      <div className="flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
-          {icon}
-        </div>
-
-        <div>
-          <h2 className="font-display text-lg font-semibold">
-            {title}
-          </h2>
-
-          <p className="text-sm text-muted-foreground">
-            {description}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* =========================================================
-   LINHA PRINCIPAL
+   COMPONENTE: LINHA
    ========================================================= */
 
 function SettingsRow({
   icon,
   title,
   description,
+  action,
   destructive = false,
-  badge,
   onClick,
 }: {
   icon: ReactNode;
   title: string;
   description: string;
+  action: string;
   destructive?: boolean;
-  badge?: string;
   onClick: () => void;
 }) {
   return (
@@ -1417,7 +1087,6 @@ function SettingsRow({
       <div
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary",
-
           destructive &&
             "bg-destructive/10 text-destructive",
         )}
@@ -1426,86 +1095,40 @@ function SettingsRow({
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p
-            className={cn(
-              "font-medium",
-
-              destructive &&
-                "text-destructive",
-            )}
-          >
-            {title}
-          </p>
-
-          {badge ? (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-              {badge}
-            </span>
-          ) : null}
-        </div>
+        <p
+          className={cn(
+            "font-medium",
+            destructive &&
+              "text-destructive",
+          )}
+        >
+          {title}
+        </p>
 
         <p className="mt-1 truncate text-sm text-muted-foreground">
           {description}
         </p>
       </div>
 
-      <ChevronRight
+      <div
         className={cn(
-          "size-4 shrink-0 text-muted-foreground",
-
+          "flex shrink-0 items-center gap-1 text-sm font-medium text-muted-foreground",
           destructive &&
             "text-destructive",
         )}
-      />
+      >
+        <span className="hidden sm:inline">
+          {action}
+        </span>
+
+        <ChevronRight className="size-4" />
+      </div>
     </button>
   );
 }
 
 /* =========================================================
-   LINHA DENTRO DE MINI TELA
-   ========================================================= */
-
-function MiniSettingRow({
-  icon,
-  title,
-  description,
-  onClick,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={
-        onClick
-      }
-      className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50"
-    >
-      <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        {icon}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <p className="font-medium">
-          {title}
-        </p>
-
-        <p className="truncate text-sm text-muted-foreground">
-          {description}
-        </p>
-      </div>
-
-      <ChevronRight className="size-4 text-muted-foreground" />
-    </button>
-  );
-}
-
-/* =========================================================
-   OPÇÃO DE TEMA
+   COMPONENTE: TEMA
    ========================================================= */
 
 function ThemeOption({
@@ -1528,7 +1151,7 @@ function ThemeOption({
         onClick
       }
       className={cn(
-        "relative flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all",
+        "relative flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all",
 
         active
           ? "border-primary bg-primary/10 text-primary shadow-sm"
@@ -1548,7 +1171,7 @@ function ThemeOption({
           {title}
         </p>
 
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           {description}
         </p>
       </div>
