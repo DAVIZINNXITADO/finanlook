@@ -1,43 +1,80 @@
-import { cn } from "@/lib/utils";
+import {
+  useEffect,
+} from "react";
 
-type AdSlotSize = "banner" | "inline" | "sidebar";
+import {
+  cn,
+} from "@/lib/utils";
 
-/**
- * Espaço reservado para anúncios.
- *
- * Nenhum anúncio real é carregado aqui. O componente apenas
- * reserva altura para que, no futuro, uma plataforma de anúncios
- * possa ser conectada sem quebrar o layout.
- */
+type AdSlotSize =
+  | "banner"
+  | "inline"
+  | "sidebar";
+
+declare global {
+  interface Window {
+    adsbygoogle:
+      unknown[];
+  }
+}
+
 export function AdSlot({
   id,
   size = "banner",
   className,
 }: {
-  /** Identificador do espaço, usado depois pela plataforma de anúncios. */
   id: string;
   size?: AdSlotSize;
   className?: string;
 }) {
-  const heights: Record<AdSlotSize, string> = {
-    banner: "h-20 sm:h-24",
-    inline: "h-16 sm:h-20",
-    sidebar: "h-40",
-  };
+  useEffect(() => {
+    try {
+      (
+        window.adsbygoogle =
+          window.adsbygoogle ||
+          []
+      ).push({});
+    } catch {
+      // Evita que um erro do anúncio
+      // quebre o restante da página.
+    }
+  }, []);
+
+  const heights:
+    Record<
+      AdSlotSize,
+      string
+    > = {
+      banner:
+        "min-h-[90px]",
+
+      inline:
+        "min-h-[120px]",
+
+      sidebar:
+        "min-h-[250px]",
+    };
 
   return (
     <div
-      data-ad-slot={id}
-      aria-hidden
+      data-ad-slot-id={id}
       className={cn(
-        "flex w-full max-w-full items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-muted/40 px-4",
+        "w-full max-w-full overflow-hidden",
         heights[size],
         className,
       )}
     >
-      <span className="truncate text-xs font-medium text-muted-foreground">
-        Espaço para anúncio
-      </span>
+      <ins
+        className="adsbygoogle block"
+        style={{
+          display:
+            "block",
+        }}
+        data-ad-client="ca-pub-8390455641519303"
+        data-ad-slot="5029040323"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
     </div>
   );
 }
