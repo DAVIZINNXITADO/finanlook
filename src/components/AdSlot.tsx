@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useState,
 } from "react";
 
 import {
@@ -27,6 +28,11 @@ export function AdSlot({
   size?: AdSlotSize;
   className?: string;
 }) {
+  const [
+    adLoaded,
+    setAdLoaded,
+  ] = useState(false);
+
   useEffect(() => {
     try {
       (
@@ -34,9 +40,28 @@ export function AdSlot({
           window.adsbygoogle ||
           []
       ).push({});
+
+      /*
+       * O AdSense injeta conteúdo dentro
+       * do elemento <ins>.
+       *
+       * Mantemos o espaço reservado inicialmente.
+       */
+      const timeout =
+        window.setTimeout(() => {
+          setAdLoaded(true);
+        }, 1500);
+
+      return () => {
+        window.clearTimeout(
+          timeout,
+        );
+      };
     } catch {
-      // Evita que um erro do anúncio
-      // quebre o restante da página.
+      /*
+       * Se o AdSense falhar, o placeholder
+       * continua aparecendo e a página não quebra.
+       */
     }
   }, []);
 
@@ -46,10 +71,10 @@ export function AdSlot({
       string
     > = {
       banner:
-        "min-h-[90px]",
+        "min-h-[90px] sm:min-h-[100px]",
 
       inline:
-        "min-h-[120px]",
+        "min-h-[120px] sm:min-h-[140px]",
 
       sidebar:
         "min-h-[250px]",
@@ -59,13 +84,25 @@ export function AdSlot({
     <div
       data-ad-slot-id={id}
       className={cn(
-        "w-full max-w-full overflow-hidden",
+        "relative w-full max-w-full overflow-hidden rounded-2xl border border-dashed border-border bg-muted/40",
         heights[size],
         className,
       )}
     >
+      {/* PLACEHOLDER */}
+
+      {!adLoaded ? (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
+          <span className="truncate text-xs font-medium text-muted-foreground">
+            Espaço reservado para anúncio
+          </span>
+        </div>
+      ) : null}
+
+      {/* GOOGLE ADSENSE */}
+
       <ins
-        className="adsbygoogle block"
+        className="adsbygoogle block h-full w-full"
         style={{
           display:
             "block",
