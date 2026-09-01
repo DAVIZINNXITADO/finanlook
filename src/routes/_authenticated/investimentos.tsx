@@ -104,7 +104,7 @@ function InvestimentosPage() {
 
   const [selectedInvestment, setSelectedInvestment] =
     useState<Investment>(
-      INVESTMENTS[0],
+      INVESTMENTS[0] as Investment,
     );
 
   const [initialValue, setInitialValue] =

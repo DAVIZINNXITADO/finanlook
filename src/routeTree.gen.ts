@@ -13,11 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedBemVindoRouteImport } from './routes/_authenticated/bem-vindo'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated/contas'
 import { Route as AuthenticatedInvestimentosRouteImport } from './routes/_authenticated/investimentos'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
 import { Route as AuthenticatedOrganizarSalarioRouteImport } from './routes/_authenticated/organizar-salario'
+import { Route as AuthenticatedPlanejamentoRouteImport } from './routes/_authenticated/planejamento'
+import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedReservaRouteImport } from './routes/_authenticated/reserva'
 import { Route as AuthenticatedVisaoGeralRouteImport } from './routes/_authenticated/visao-geral'
 
@@ -40,6 +43,12 @@ const AuthenticatedBemVindoRoute = AuthenticatedBemVindoRouteImport.update({
   path: '/bem-vindo',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedConfiguracoesRoute =
+  AuthenticatedConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContasRoute = AuthenticatedContasRouteImport.update({
   id: '/contas',
   path: '/contas',
@@ -68,6 +77,17 @@ const AuthenticatedOrganizarSalarioRoute =
     path: '/organizar-salario',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlanejamentoRoute =
+  AuthenticatedPlanejamentoRouteImport.update({
+    id: '/planejamento',
+    path: '/planejamento',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReservaRoute = AuthenticatedReservaRouteImport.update({
   id: '/reserva',
   path: '/reserva',
@@ -83,11 +103,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
   '/investimentos': typeof AuthenticatedInvestimentosRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
+  '/planejamento': typeof AuthenticatedPlanejamentoRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/reserva': typeof AuthenticatedReservaRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
@@ -95,11 +118,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
   '/investimentos': typeof AuthenticatedInvestimentosRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
+  '/planejamento': typeof AuthenticatedPlanejamentoRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/reserva': typeof AuthenticatedReservaRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
@@ -109,11 +135,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/bem-vindo': typeof AuthenticatedBemVindoRoute
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/contas': typeof AuthenticatedContasRoute
   '/_authenticated/investimentos': typeof AuthenticatedInvestimentosRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/_authenticated/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
+  '/_authenticated/planejamento': typeof AuthenticatedPlanejamentoRoute
+  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/reserva': typeof AuthenticatedReservaRoute
   '/_authenticated/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
@@ -123,11 +152,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/bem-vindo'
+    | '/configuracoes'
     | '/contas'
     | '/investimentos'
     | '/metas'
     | '/movimentacoes'
     | '/organizar-salario'
+    | '/planejamento'
+    | '/relatorios'
     | '/reserva'
     | '/visao-geral'
   fileRoutesByTo: FileRoutesByTo
@@ -135,11 +167,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/bem-vindo'
+    | '/configuracoes'
     | '/contas'
     | '/investimentos'
     | '/metas'
     | '/movimentacoes'
     | '/organizar-salario'
+    | '/planejamento'
+    | '/relatorios'
     | '/reserva'
     | '/visao-geral'
   id:
@@ -148,11 +183,14 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/bem-vindo'
+    | '/_authenticated/configuracoes'
     | '/_authenticated/contas'
     | '/_authenticated/investimentos'
     | '/_authenticated/metas'
     | '/_authenticated/movimentacoes'
     | '/_authenticated/organizar-salario'
+    | '/_authenticated/planejamento'
+    | '/_authenticated/relatorios'
     | '/_authenticated/reserva'
     | '/_authenticated/visao-geral'
   fileRoutesById: FileRoutesById
@@ -193,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBemVindoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contas': {
       id: '/_authenticated/contas'
       path: '/contas'
@@ -228,6 +273,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizarSalarioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/planejamento': {
+      id: '/_authenticated/planejamento'
+      path: '/planejamento'
+      fullPath: '/planejamento'
+      preLoaderRoute: typeof AuthenticatedPlanejamentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/relatorios': {
+      id: '/_authenticated/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reserva': {
       id: '/_authenticated/reserva'
       path: '/reserva'
@@ -247,22 +306,28 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBemVindoRoute: typeof AuthenticatedBemVindoRoute
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedContasRoute: typeof AuthenticatedContasRoute
   AuthenticatedInvestimentosRoute: typeof AuthenticatedInvestimentosRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
   AuthenticatedOrganizarSalarioRoute: typeof AuthenticatedOrganizarSalarioRoute
+  AuthenticatedPlanejamentoRoute: typeof AuthenticatedPlanejamentoRoute
+  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedReservaRoute: typeof AuthenticatedReservaRoute
   AuthenticatedVisaoGeralRoute: typeof AuthenticatedVisaoGeralRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBemVindoRoute: AuthenticatedBemVindoRoute,
+  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedContasRoute: AuthenticatedContasRoute,
   AuthenticatedInvestimentosRoute: AuthenticatedInvestimentosRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
   AuthenticatedOrganizarSalarioRoute: AuthenticatedOrganizarSalarioRoute,
+  AuthenticatedPlanejamentoRoute: AuthenticatedPlanejamentoRoute,
+  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedReservaRoute: AuthenticatedReservaRoute,
   AuthenticatedVisaoGeralRoute: AuthenticatedVisaoGeralRoute,
 }
