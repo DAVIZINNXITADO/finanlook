@@ -1,14 +1,44 @@
-User-agent: Googlebot
-Allow: /
+# =========================================================
+# FINANLOOK - ROBOTS.TXT
+# =========================================================
 
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# Regras para todos os mecanismos de busca
 User-agent: *
+
+# =========================================================
+# PÁGINAS PÚBLICAS
+# =========================================================
+
 Allow: /
+Allow: /politica-de-privacidade
+Allow: /termos-de-uso
+Allow: /cookies
+
+# =========================================================
+# AUTENTICAÇÃO
+# =========================================================
+
+Disallow: /auth
+Disallow: /nova-senha
+
+# =========================================================
+# ÁREA AUTENTICADA
+# =========================================================
+
+Disallow: /bem-vindo
+Disallow: /visao-geral
+Disallow: /contas
+Disallow: /investimentos
+Disallow: /metas
+Disallow: /movimentacoes
+Disallow: /organizar-salario
+Disallow: /planejamento
+Disallow: /relatorios
+Disallow: /reserva
+Disallow: /configuracoes
+
+# =========================================================
+# SITEMAP
+# =========================================================
+
+Sitemap: https://finanlook.lovable.app/sitemap.xml
