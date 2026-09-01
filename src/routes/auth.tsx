@@ -1,165 +1,270 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Eye, EyeOff, KeyRound, Mail } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-import { z } from "zod";
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+} from "@tanstack/react-router";
 
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Eye,
+  EyeOff,
+  KeyRound,
+  Mail,
+} from "lucide-react";
 
-const searchSchema = z.object({
-  modo: z.enum(["entrar", "cadastro"]).optional().catch("entrar"),
-});
+import {
+  useState,
+} from "react";
 
-export const Route = createFileRoute("/auth")({
-  validateSearch: searchSchema,
+import {
+  toast,
+} from "sonner";
 
-  head: () => ({
-    meta: [
+import {
+  z,
+} from "zod";
+
+import {
+  supabase,
+} from "@/integrations/supabase/client";
+
+import {
+  Button,
+} from "@/components/ui/button";
+
+import {
+  Input,
+} from "@/components/ui/input";
+
+import {
+  Label,
+} from "@/components/ui/label";
+
+
+const searchSchema =
+  z.object({
+    modo: z
+      .enum([
+        "entrar",
+        "cadastro",
+      ])
+      .optional()
+      .catch(
+        "entrar",
+      ),
+  });
+
+
+export const Route =
+  createFileRoute(
+    "/auth",
+  )({
+    validateSearch:
+      searchSchema,
+
+    head: () => ({
+      meta: [
+        {
+          title:
+            "Entrar no FinanLook",
+        },
+        {
+          name:
+            "description",
+          content:
+            "Entre ou crie sua conta no FinanLook para organizar sua vida financeira de forma simples.",
+        },
+        {
+          property:
+            "og:title",
+          content:
+            "Entrar no FinanLook",
+        },
+        {
+          property:
+            "og:description",
+          content:
+            "Acesse sua conta ou crie uma nova conta no FinanLook.",
+        },
+      ],
+    }),
+
+    component:
+      AuthPage,
+  });
+
+
+const signUpSchema =
+  z
+    .object({
+      name:
+        z
+          .string()
+          .trim()
+          .min(
+            2,
+            "Informe seu nome",
+          )
+          .max(
+            24,
+            "O nome pode ter no máximo 24 caracteres",
+          ),
+
+      username:
+        z
+          .string()
+          .trim()
+          .min(
+            3,
+            "O nome de usuário precisa ter pelo menos 3 caracteres",
+          )
+          .max(
+            24,
+            "O nome de usuário pode ter no máximo 24 caracteres",
+          )
+          .regex(
+            /^[a-zA-Z0-9._-]+$/,
+            "Use apenas letras, números, ponto, hífen ou underline",
+          ),
+
+      email:
+        z
+          .string()
+          .trim()
+          .email(
+            "E-mail inválido",
+          )
+          .max(
+            160,
+            "O e-mail pode ter no máximo 160 caracteres",
+          ),
+
+      password:
+        z
+          .string()
+          .min(
+            6,
+            "A senha precisa ter pelo menos 6 caracteres",
+          )
+          .max(
+            1000,
+            "A senha pode ter no máximo 1.000 caracteres",
+          ),
+
+      confirm:
+        z
+          .string()
+          .max(
+            1000,
+            "A confirmação pode ter no máximo 1.000 caracteres",
+          ),
+    })
+    .refine(
+      (
+        value,
+      ) =>
+        value.password ===
+        value.confirm,
       {
-        title: "Entrar no FinanLook",
+        message:
+          "As senhas não são iguais",
+        path: [
+          "confirm",
+        ],
       },
-      {
-        name: "description",
-        content:
-          "Entre ou crie sua conta no FinanLook para organizar sua vida financeira de forma simples.",
-      },
-      {
-        property: "og:title",
-        content: "Entrar no FinanLook",
-      },
-      {
-        property: "og:description",
-        content:
-          "Acesse sua conta ou crie uma nova conta no FinanLook.",
-      },
-    ],
-  }),
+    );
 
-  component: AuthPage,
-});
-
-const signUpSchema = z
-  .object({
-    name: z
-      .string()
-      .trim()
-      .min(2, "Informe seu nome")
-      .max(
-        24,
-        "O nome pode ter no máximo 24 caracteres",
-      ),
-
-    username: z
-      .string()
-      .trim()
-      .min(
-        3,
-        "O nome de usuário precisa ter pelo menos 3 caracteres",
-      )
-      .max(
-        24,
-        "O nome de usuário pode ter no máximo 24 caracteres",
-      )
-      .regex(
-        /^[a-zA-Z0-9._-]+$/,
-        "Use apenas letras, números, ponto, hífen ou underline",
-      ),
-
-    email: z
-      .string()
-      .trim()
-      .email("E-mail inválido")
-      .max(
-        160,
-        "O e-mail pode ter no máximo 160 caracteres",
-      ),
-
-    password: z
-      .string()
-      .min(
-        6,
-        "A senha precisa ter pelo menos 6 caracteres",
-      )
-      .max(
-        1000,
-        "A senha pode ter no máximo 1.000 caracteres",
-      ),
-
-    confirm: z
-      .string()
-      .max(
-        1000,
-        "A confirmação pode ter no máximo 1.000 caracteres",
-      ),
-  })
-  .refine(
-    (value) =>
-      value.password === value.confirm,
-    {
-      message: "As senhas não são iguais",
-      path: ["confirm"],
-    },
-  );
 
 function AuthPage() {
-  const { modo } =
+  const {
+    modo,
+  } =
     Route.useSearch();
 
   const navigate =
     useNavigate();
 
   const isSignUp =
-    modo === "cadastro";
+    modo ===
+    "cadastro";
 
-  const [loading, setLoading] =
+
+  const [
+    loading,
+    setLoading,
+  ] =
     useState(false);
+
 
   const [
     showPassword,
     setShowPassword,
-  ] = useState(false);
+  ] =
+    useState(false);
+
 
   const [
     showConfirmPassword,
     setShowConfirmPassword,
-  ] = useState(false);
+  ] =
+    useState(false);
+
 
   const [
     showRecovery,
     setShowRecovery,
-  ] = useState(false);
+  ] =
+    useState(false);
+
 
   const [
     recoveryLoading,
     setRecoveryLoading,
-  ] = useState(false);
+  ] =
+    useState(false);
+
 
   const [
     recoveryEmail,
     setRecoveryEmail,
-  ] = useState("");
+  ] =
+    useState("");
 
-  const [form, setForm] =
+
+  const [
+    form,
+    setForm,
+  ] =
     useState({
-      name: "",
-      username: "",
-      email: "",
-      password: "",
-      confirm: "",
+      name:
+        "",
+      username:
+        "",
+      email:
+        "",
+      password:
+        "",
+      confirm:
+        "",
     });
 
+
   function update(
-    key: keyof typeof form,
-    value: string,
+    key:
+      keyof typeof form,
+    value:
+      string,
   ) {
-    setForm((previous) => ({
-      ...previous,
-      [key]: value,
-    }));
+    setForm(
+      (
+        previous,
+      ) => ({
+        ...previous,
+        [key]:
+          value,
+      }),
+    );
   }
+
 
   /* =====================================================
      CADASTRO
@@ -167,9 +272,13 @@ function AuthPage() {
 
   async function handleSignUp() {
     const parsed =
-      signUpSchema.safeParse(form);
+      signUpSchema.safeParse(
+        form,
+      );
 
-    if (!parsed.success) {
+    if (
+      !parsed.success
+    ) {
       toast.error(
         parsed.error.issues[0]
           ?.message ??
@@ -179,7 +288,11 @@ function AuthPage() {
       return;
     }
 
-    setLoading(true);
+
+    setLoading(
+      true,
+    );
+
 
     try {
       const {
@@ -189,6 +302,7 @@ function AuthPage() {
         await supabase.auth.signUp({
           email:
             parsed.data.email,
+
           password:
             parsed.data.password,
 
@@ -206,37 +320,55 @@ function AuthPage() {
           },
         });
 
-      if (error) {
+
+      if (
+        error
+      ) {
         throw error;
       }
 
-      if (!data.session) {
+
+      if (
+        !data.session
+      ) {
         toast.success(
           "Conta criada! Confirme seu e-mail para entrar.",
         );
 
-        navigate({
-          to: "/auth",
+        await navigate({
+          to:
+            "/auth",
+
           search: {
-            modo: "entrar",
+            modo:
+              "entrar",
           },
+
+          replace:
+            true,
         });
 
         return;
       }
 
+
       toast.success(
         "Conta criada com sucesso!",
       );
 
-      navigate({
-        to: "/bem-vindo",
+
+      await navigate({
+        to:
+          "/bem-vindo",
       });
-    } catch (error) {
+    } catch (
+      error,
+    ) {
       const message =
         error instanceof Error
           ? error.message
           : "";
+
 
       toast.error(
         message.includes(
@@ -247,9 +379,12 @@ function AuthPage() {
               "Não foi possível criar sua conta.",
       );
     } finally {
-      setLoading(false);
+      setLoading(
+        false,
+      );
     }
   }
+
 
   /* =====================================================
      LOGIN
@@ -261,7 +396,10 @@ function AuthPage() {
         .trim()
         .toLowerCase();
 
-    if (!email) {
+
+    if (
+      !email
+    ) {
       toast.error(
         "Informe seu e-mail.",
       );
@@ -269,13 +407,17 @@ function AuthPage() {
       return;
     }
 
-    if (!form.password) {
+
+    if (
+      !form.password
+    ) {
       toast.error(
         "Informe sua senha.",
       );
 
       return;
     }
+
 
     if (
       form.password.length >
@@ -288,7 +430,11 @@ function AuthPage() {
       return;
     }
 
-    setLoading(true);
+
+    setLoading(
+      true,
+    );
+
 
     try {
       const {
@@ -300,25 +446,34 @@ function AuthPage() {
             form.password,
         });
 
-      if (error) {
+
+      if (
+        error
+      ) {
         throw error;
       }
+
 
       toast.success(
         "Login realizado com sucesso!",
       );
 
-      navigate({
-        to: "/visao-geral",
+
+      await navigate({
+        to:
+          "/visao-geral",
       });
     } catch {
       toast.error(
         "E-mail ou senha incorretos.",
       );
     } finally {
-      setLoading(false);
+      setLoading(
+        false,
+      );
     }
   }
+
 
   /* =====================================================
      RECUPERAR SENHA
@@ -330,7 +485,10 @@ function AuthPage() {
         .trim()
         .toLowerCase();
 
-    if (!email) {
+
+    if (
+      !email
+    ) {
       toast.error(
         "Informe seu e-mail.",
       );
@@ -338,7 +496,12 @@ function AuthPage() {
       return;
     }
 
-    if (!email.includes("@")) {
+
+    if (
+      !email.includes(
+        "@",
+      )
+    ) {
       toast.error(
         "Informe um e-mail válido.",
       );
@@ -346,7 +509,11 @@ function AuthPage() {
       return;
     }
 
-    setRecoveryLoading(true);
+
+    setRecoveryLoading(
+      true,
+    );
+
 
     try {
       const {
@@ -355,39 +522,63 @@ function AuthPage() {
         await supabase.auth.resetPasswordForEmail(
           email,
           {
+            /*
+             * IMPORTANTE:
+             * Esta rota precisa existir em:
+             *
+             * src/routes/nova-senha.tsx
+             */
             redirectTo:
-              `${window.location.origin}/redefinir-senha`,
+              `${window.location.origin}/nova-senha`,
           },
         );
 
-      if (error) {
+
+      if (
+        error
+      ) {
         throw error;
       }
+
 
       toast.success(
         "Se existir uma conta com este e-mail, enviaremos um link para redefinir sua senha.",
       );
 
-      setRecoveryEmail("");
-      setShowRecovery(false);
-    } catch (error) {
+
+      setRecoveryEmail(
+        "",
+      );
+
+      setShowRecovery(
+        false,
+      );
+    } catch (
+      error,
+    ) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível enviar o e-mail de recuperação.",
       );
     } finally {
-      setRecoveryLoading(false);
+      setRecoveryLoading(
+        false,
+      );
     }
   }
 
+
   /* =====================================================
-     FORMULARIO PRINCIPAL
+     TELA DE RECUPERAÇÃO
      ===================================================== */
 
-  if (showRecovery) {
+  if (
+    showRecovery
+  ) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-5 py-10">
+
         <Link
           to="/"
           className="mb-6 flex items-center gap-2 transition-opacity hover:opacity-80"
@@ -401,88 +592,127 @@ function AuthPage() {
           </span>
         </Link>
 
+
         <div className="surface w-full max-w-sm overflow-hidden">
+
           <div className="border-b bg-primary/[0.03] px-6 py-7 text-center">
+
             <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+
               <KeyRound className="size-6 text-primary" />
+
             </div>
+
 
             <h1 className="mt-4 font-display text-2xl font-semibold">
               Recuperar senha
             </h1>
 
+
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Digite seu e-mail e enviaremos um link para você criar uma nova senha.
             </p>
+
           </div>
+
 
           <form
             className="space-y-5 p-6"
-            onSubmit={(event) => {
+            onSubmit={(
+              event,
+            ) => {
               event.preventDefault();
 
               void handlePasswordRecovery();
             }}
           >
+
             <div className="space-y-1.5">
+
               <Label htmlFor="recovery-email">
                 E-mail da conta
               </Label>
 
+
               <div className="relative">
+
                 <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
 
                 <Input
                   id="recovery-email"
                   type="email"
-                  value={recoveryEmail}
-                  onChange={(event) =>
+                  value={
+                    recoveryEmail
+                  }
+                  onChange={(
+                    event,
+                  ) =>
                     setRecoveryEmail(
                       event.target.value,
                     )
                   }
                   placeholder="seuemail@exemplo.com"
                   autoComplete="email"
-                  maxLength={160}
+                  maxLength={
+                    160
+                  }
                   className="h-11 pl-10"
                 />
+
               </div>
+
 
               <p className="text-[11px] leading-relaxed text-muted-foreground">
                 Enviaremos um link de recuperação para este endereço.
               </p>
+
             </div>
+
 
             <Button
               type="submit"
               className="h-11 w-full"
-              disabled={recoveryLoading}
+              disabled={
+                recoveryLoading
+              }
             >
               <Mail className="size-4" />
 
               {recoveryLoading
                 ? "Enviando..."
                 : "Enviar link de recuperação"}
+
             </Button>
+
           </form>
+
         </div>
+
 
         <button
           type="button"
           onClick={() =>
-            setShowRecovery(false)
+            setShowRecovery(
+              false,
+            )
           }
           className="mt-6 text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
           Voltar para entrar
         </button>
+
       </div>
     );
   }
 
+
+  /* =====================================================
+     TELA PRINCIPAL
+     ===================================================== */
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-5 py-10">
-      {/* LOGO */}
 
       <Link
         to="/"
@@ -497,26 +727,36 @@ function AuthPage() {
         </span>
       </Link>
 
-      {/* CARD */}
 
       <div className="surface w-full max-w-sm overflow-hidden">
+
         <div className="border-b bg-primary/[0.03] px-6 py-6">
+
           <h1 className="font-display text-2xl font-semibold">
+
             {isSignUp
               ? "Criar sua conta"
               : "Bem-vindo de volta"}
+
           </h1>
 
+
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+
             {isSignUp
               ? "Comece a organizar sua vida financeira de um jeito simples."
               : "Entre na sua conta para continuar organizando seu dinheiro."}
+
           </p>
+
         </div>
+
 
         <form
           className="space-y-4 p-6"
-          onSubmit={(event) => {
+          onSubmit={(
+            event,
+          ) => {
             event.preventDefault();
 
             void (
@@ -526,13 +766,19 @@ function AuthPage() {
             );
           }}
         >
+
           {isSignUp ? (
             <>
+
               <Field
                 id="name"
                 label="Nome"
-                value={form.name}
-                onChange={(value) =>
+                value={
+                  form.name
+                }
+                onChange={(
+                  value,
+                ) =>
                   update(
                     "name",
                     value,
@@ -541,14 +787,21 @@ function AuthPage() {
                 placeholder="Seu primeiro nome"
                 helperText="Como você gostaria de ser chamado?"
                 autoComplete="given-name"
-                maxLength={24}
+                maxLength={
+                  24
+                }
               />
+
 
               <Field
                 id="username"
                 label="Nome de usuário"
-                value={form.username}
-                onChange={(value) =>
+                value={
+                  form.username
+                }
+                onChange={(
+                  value,
+                ) =>
                   update(
                     "username",
                     value,
@@ -557,17 +810,25 @@ function AuthPage() {
                 placeholder="seuusername"
                 helperText="Use letras, números, ponto, hífen ou underline."
                 autoComplete="username"
-                maxLength={24}
+                maxLength={
+                  24
+                }
               />
+
             </>
           ) : null}
+
 
           <Field
             id="email"
             label="E-mail"
             type="email"
-            value={form.email}
-            onChange={(value) =>
+            value={
+              form.email
+            }
+            onChange={(
+              value,
+            ) =>
               update(
                 "email",
                 value,
@@ -576,14 +837,21 @@ function AuthPage() {
             placeholder="seuemail@exemplo.com"
             helperText="Use um e-mail que você tenha acesso."
             autoComplete="email"
-            maxLength={160}
+            maxLength={
+              160
+            }
           />
+
 
           <PasswordField
             id="password"
             label="Senha"
-            value={form.password}
-            onChange={(value) =>
+            value={
+              form.password
+            }
+            onChange={(
+              value,
+            ) =>
               update(
                 "password",
                 value,
@@ -605,14 +873,18 @@ function AuthPage() {
             }
             onToggleVisibility={() =>
               setShowPassword(
-                (previous) =>
+                (
+                  previous,
+                ) =>
                   !previous,
               )
             }
           />
 
+
           {!isSignUp ? (
             <div className="flex justify-end">
+
               <button
                 type="button"
                 onClick={() => {
@@ -628,8 +900,10 @@ function AuthPage() {
               >
                 Esqueci minha senha
               </button>
+
             </div>
           ) : null}
+
 
           {isSignUp ? (
             <PasswordField
@@ -638,7 +912,9 @@ function AuthPage() {
               value={
                 form.confirm
               }
-              onChange={(value) =>
+              onChange={(
+                value,
+              ) =>
                 update(
                   "confirm",
                   value,
@@ -652,51 +928,67 @@ function AuthPage() {
               }
               onToggleVisibility={() =>
                 setShowConfirmPassword(
-                  (previous) =>
+                  (
+                    previous,
+                  ) =>
                     !previous,
                 )
               }
             />
           ) : null}
 
+
           <Button
             type="submit"
             className="h-11 w-full"
-            disabled={loading}
+            disabled={
+              loading
+            }
           >
+
             {loading
               ? "Aguarde..."
               : isSignUp
                 ? "Criar minha conta"
                 : "Entrar na minha conta"}
+
           </Button>
+
         </form>
+
       </div>
 
-      {/* TROCAR MODO */}
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
+
         {isSignUp
           ? "Já possui uma conta? "
           : "Ainda não possui uma conta? "}
 
+
         <Link
           to="/auth"
           search={{
-            modo: isSignUp
-              ? "entrar"
-              : "cadastro",
+            modo:
+              isSignUp
+                ? "entrar"
+                : "cadastro",
           }}
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
+
           {isSignUp
             ? "Entrar"
             : "Criar conta"}
+
         </Link>
+
       </p>
+
     </div>
   );
 }
+
 
 /* =========================================================
    COMPONENTE: CAMPO DE SENHA
@@ -713,37 +1005,63 @@ function PasswordField({
   showPassword,
   onToggleVisibility,
 }: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (
-    value: string,
-  ) => void;
-  placeholder?: string;
-  helperText?: string;
-  autoComplete?: string;
-  showPassword: boolean;
-  onToggleVisibility: () => void;
+  id:
+    string;
+
+  label:
+    string;
+
+  value:
+    string;
+
+  onChange:
+    (
+      value:
+        string,
+    ) => void;
+
+  placeholder?:
+    string;
+
+  helperText?:
+    string;
+
+  autoComplete?:
+    string;
+
+  showPassword:
+    boolean;
+
+  onToggleVisibility:
+    () => void;
 }) {
   const maxLength =
     1000;
 
+
   return (
     <div className="space-y-1.5">
+
       <div className="flex items-center justify-between gap-2">
+
         <Label htmlFor={id}>
           {label}
         </Label>
 
-        {value.length > 0 ? (
+
+        {value.length >
+        0 ? (
           <span className="text-xs text-muted-foreground">
             {value.length}/
             {maxLength}
           </span>
         ) : null}
+
       </div>
 
+
       <div className="relative">
+
         <Input
           id={id}
           type={
@@ -751,7 +1069,9 @@ function PasswordField({
               ? "text"
               : "password"
           }
-          value={value}
+          value={
+            value
+          }
           placeholder={
             placeholder
           }
@@ -761,13 +1081,16 @@ function PasswordField({
           maxLength={
             maxLength
           }
-          onChange={(event) =>
+          onChange={(
+            event,
+          ) =>
             onChange(
               event.target.value,
             )
           }
           className="h-11 pr-11"
         />
+
 
         <button
           type="button"
@@ -781,22 +1104,28 @@ function PasswordField({
           }
           className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         >
+
           {showPassword ? (
             <EyeOff className="size-4" />
           ) : (
             <Eye className="size-4" />
           )}
+
         </button>
+
       </div>
+
 
       {helperText ? (
         <p className="text-[11px] leading-relaxed text-muted-foreground">
           {helperText}
         </p>
       ) : null}
+
     </div>
   );
 }
+
 
 /* =========================================================
    COMPONENTE: CAMPO NORMAL
@@ -807,44 +1136,73 @@ function Field({
   label,
   value,
   onChange,
-  type = "text",
+  type =
+    "text",
   placeholder,
   helperText,
   autoComplete,
   maxLength,
 }: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (
-    value: string,
-  ) => void;
-  type?: string;
-  placeholder?: string;
-  helperText?: string;
-  autoComplete?: string;
-  maxLength?: number;
+  id:
+    string;
+
+  label:
+    string;
+
+  value:
+    string;
+
+  onChange:
+    (
+      value:
+        string,
+    ) => void;
+
+  type?:
+    string;
+
+  placeholder?:
+    string;
+
+  helperText?:
+    string;
+
+  autoComplete?:
+    string;
+
+  maxLength?:
+    number;
 }) {
   return (
     <div className="space-y-1.5">
+
       <div className="flex items-center justify-between gap-2">
+
         <Label htmlFor={id}>
           {label}
         </Label>
 
-        {value.length > 0 &&
+
+        {value.length >
+          0 &&
         maxLength ? (
           <span className="text-xs text-muted-foreground">
             {value.length}/
             {maxLength}
           </span>
         ) : null}
+
       </div>
+
 
       <Input
         id={id}
-        type={type}
-        value={value}
+        type={
+          type
+        }
+        value={
+          value
+        }
         placeholder={
           placeholder
         }
@@ -854,7 +1212,9 @@ function Field({
         maxLength={
           maxLength
         }
-        onChange={(event) =>
+        onChange={(
+          event,
+        ) =>
           onChange(
             event.target.value,
           )
@@ -862,11 +1222,13 @@ function Field({
         className="h-11"
       />
 
+
       {helperText ? (
         <p className="text-[11px] leading-relaxed text-muted-foreground">
           {helperText}
         </p>
       ) : null}
+
     </div>
   );
 }
