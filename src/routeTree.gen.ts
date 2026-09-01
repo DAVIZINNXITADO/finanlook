@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as NovaSenhaRouteImport } from './routes/nova-senha'
 import { Route as AuthenticatedBemVindoRouteImport } from './routes/_authenticated/bem-vindo'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated/contas'
@@ -29,70 +30,89 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+
+const NovaSenhaRoute = NovaSenhaRouteImport.update({
+  id: '/nova-senha',
+  path: '/nova-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
 const AuthenticatedBemVindoRoute = AuthenticatedBemVindoRouteImport.update({
   id: '/bem-vindo',
   path: '/bem-vindo',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
     id: '/configuracoes',
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+
 const AuthenticatedContasRoute = AuthenticatedContasRouteImport.update({
   id: '/contas',
   path: '/contas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+
 const AuthenticatedInvestimentosRoute =
   AuthenticatedInvestimentosRouteImport.update({
     id: '/investimentos',
     path: '/investimentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+
 const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
   id: '/metas',
   path: '/metas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+
 const AuthenticatedMovimentacoesRoute =
   AuthenticatedMovimentacoesRouteImport.update({
     id: '/movimentacoes',
     path: '/movimentacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+
 const AuthenticatedOrganizarSalarioRoute =
   AuthenticatedOrganizarSalarioRouteImport.update({
     id: '/organizar-salario',
     path: '/organizar-salario',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+
 const AuthenticatedPlanejamentoRoute =
   AuthenticatedPlanejamentoRouteImport.update({
     id: '/planejamento',
     path: '/planejamento',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+
 const AuthenticatedReservaRoute = AuthenticatedReservaRouteImport.update({
   id: '/reserva',
   path: '/reserva',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+
 const AuthenticatedVisaoGeralRoute = AuthenticatedVisaoGeralRouteImport.update({
   id: '/visao-geral',
   path: '/visao-geral',
@@ -102,6 +122,7 @@ const AuthenticatedVisaoGeralRoute = AuthenticatedVisaoGeralRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/nova-senha': typeof NovaSenhaRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
@@ -114,9 +135,11 @@ export interface FileRoutesByFullPath {
   '/reserva': typeof AuthenticatedReservaRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
+
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/nova-senha': typeof NovaSenhaRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
@@ -129,11 +152,13 @@ export interface FileRoutesByTo {
   '/reserva': typeof AuthenticatedReservaRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
+
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/nova-senha': typeof NovaSenhaRoute
   '/_authenticated/bem-vindo': typeof AuthenticatedBemVindoRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/contas': typeof AuthenticatedContasRoute
@@ -146,11 +171,14 @@ export interface FileRoutesById {
   '/_authenticated/reserva': typeof AuthenticatedReservaRoute
   '/_authenticated/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
+
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
+
   fullPaths:
     | '/'
     | '/auth'
+    | '/nova-senha'
     | '/bem-vindo'
     | '/configuracoes'
     | '/contas'
@@ -162,10 +190,13 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reserva'
     | '/visao-geral'
+
   fileRoutesByTo: FileRoutesByTo
+
   to:
     | '/'
     | '/auth'
+    | '/nova-senha'
     | '/bem-vindo'
     | '/configuracoes'
     | '/contas'
@@ -177,11 +208,13 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reserva'
     | '/visao-geral'
+
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/nova-senha'
     | '/_authenticated/bem-vindo'
     | '/_authenticated/configuracoes'
     | '/_authenticated/contas'
@@ -193,12 +226,15 @@ export interface FileRouteTypes {
     | '/_authenticated/relatorios'
     | '/_authenticated/reserva'
     | '/_authenticated/visao-geral'
+
   fileRoutesById: FileRoutesById
 }
+
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  NovaSenhaRoute: typeof NovaSenhaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -210,6 +246,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -217,6 +254,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -224,6 +262,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+
+    '/nova-senha': {
+      id: '/nova-senha'
+      path: '/nova-senha'
+      fullPath: '/nova-senha'
+      preLoaderRoute: typeof NovaSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+
     '/_authenticated/bem-vindo': {
       id: '/_authenticated/bem-vindo'
       path: '/bem-vindo'
@@ -231,6 +278,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBemVindoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/configuracoes': {
       id: '/_authenticated/configuracoes'
       path: '/configuracoes'
@@ -238,6 +286,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/contas': {
       id: '/_authenticated/contas'
       path: '/contas'
@@ -245,6 +294,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/investimentos': {
       id: '/_authenticated/investimentos'
       path: '/investimentos'
@@ -252,6 +302,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvestimentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/metas': {
       id: '/_authenticated/metas'
       path: '/metas'
@@ -259,6 +310,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMetasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/movimentacoes': {
       id: '/_authenticated/movimentacoes'
       path: '/movimentacoes'
@@ -266,6 +318,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMovimentacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/organizar-salario': {
       id: '/_authenticated/organizar-salario'
       path: '/organizar-salario'
@@ -273,6 +326,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizarSalarioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/planejamento': {
       id: '/_authenticated/planejamento'
       path: '/planejamento'
@@ -280,6 +334,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlanejamentoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/relatorios': {
       id: '/_authenticated/relatorios'
       path: '/relatorios'
@@ -287,6 +342,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/reserva': {
       id: '/_authenticated/reserva'
       path: '/reserva'
@@ -294,6 +350,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReservaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+
     '/_authenticated/visao-geral': {
       id: '/_authenticated/visao-geral'
       path: '/visao-geral'
@@ -333,23 +390,42 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 }
 
 const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+  AuthenticatedRouteRoute._addFileChildren(
+    AuthenticatedRouteRouteChildren,
+  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthenticatedRouteRoute:
+    AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  NovaSenhaRoute: NovaSenhaRoute,
 }
+
 export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
+  ._addFileChildren(
+    rootRouteChildren,
+  )
   ._addFileTypes<FileRouteTypes>()
 
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
+import type {
+  getRouter,
+} from './router.tsx'
+
+import type {
+  startInstance,
+} from './start.ts'
+
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+    router: Awaited<
+      ReturnType<typeof getRouter>
+    >
+    config: Awaited<
+      ReturnType<
+        typeof startInstance.getOptions
+      >
+    >
   }
 }
