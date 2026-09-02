@@ -1926,4 +1926,4 @@ function SettingsPage() {
                     Atenção
                   </p>
 
-                  <p className="mt
+                  <p className="mt"
