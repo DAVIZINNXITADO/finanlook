@@ -74,6 +74,9 @@
 :root {
   --radius: 0.9rem;
 
+  --hero-shade: oklch(0.2 0.02 165);
+
+
   --background: oklch(0.985 0.008 150);
   --foreground: oklch(0.23 0.03 165);
 
