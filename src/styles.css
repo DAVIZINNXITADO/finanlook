@@ -137,6 +137,8 @@
 }
 
 .dark {
+  --hero-shade: oklch(0.99 0.01 150);
+
   --background: oklch(0.19 0.025 165);
   --foreground: oklch(0.96 0.01 150);
 
