@@ -1786,6 +1786,60 @@ export function useDemoData() {
     });
 
   const remove =
-    useMutation({
-      mutationFn: async () => {
-        const user_id
+  useMutation({
+    mutationFn: async () => {
+      const user_id =
+        await requireUserId();
+
+      const {
+        error: transactionsError,
+      } =
+        await supabase
+          .from("transactions")
+          .delete()
+          .eq(
+            "user_id",
+            user_id,
+          )
+          .eq(
+            "is_demo",
+            true,
+          );
+
+      if (
+        transactionsError
+      ) {
+        throw transactionsError;
+      }
+
+      const {
+        error: goalsError,
+      } =
+        await supabase
+          .from("goals")
+          .delete()
+          .eq(
+            "user_id",
+            user_id,
+          )
+          .eq(
+            "is_demo",
+            true,
+          );
+
+      if (
+        goalsError
+      ) {
+        throw goalsError;
+      }
+    },
+
+    onSuccess:
+      invalidate,
+  });
+
+  return {
+    create,
+    remove,
+  };
+}
