@@ -3,17 +3,11 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 
-import {
-  useState,
-} from "react";
+import { useState } from "react";
 
-import {
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
-import {
-  toast,
-} from "sonner";
+import { toast } from "sonner";
 
 import {
   ArrowLeft,
@@ -26,25 +20,15 @@ import {
   User,
 } from "lucide-react";
 
-import {
-  PageHeader,
-} from "@/components/PageHeader";
+import { PageHeader } from "@/components/PageHeader";
 
-import {
-  Button,
-} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
-import {
-  Input,
-} from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 
-import {
-  Label,
-} from "@/components/ui/label";
+import { Label } from "@/components/ui/label";
 
-import {
-  supabase,
-} from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   useProfile,
@@ -52,130 +36,88 @@ import {
 } from "@/lib/data";
 
 
-export const Route =
-  createFileRoute(
-    "/_authenticated/configuracoes/conta",
-  )({
-    head: () => ({
-      meta: [
-        {
-          title:
-            "Conta — FinanLook",
-        },
-        {
-          name:
-            "description",
-          content:
-            "Gerencie seu perfil, e-mail e senha.",
-        },
-      ],
-    }),
+export const Route = createFileRoute(
+  "/_authenticated/configuracoes/conta",
+)({
+  head: () => ({
+    meta: [
+      {
+        title: "Conta — FinanLook",
+      },
+      {
+        name: "description",
+        content: "Gerencie seu perfil, e-mail e senha.",
+      },
+    ],
+  }),
 
-    component:
-      ContaPage,
-  });
+  component: ContaPage,
+});
 
 
 function ContaPage() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
-  const queryClient =
-    useQueryClient();
+  const queryClient = useQueryClient();
 
   const {
     data: profile,
-  } =
-    useProfile();
+  } = useProfile();
 
   const {
     data: authUser,
-  } =
-    useUser();
+  } = useUser();
 
 
-  const [
-    name,
-    setName,
-  ] =
-    useState(
-      profile?.name ??
-      "",
-    );
+  const [name, setName] = useState(
+    profile?.name ?? "",
+  );
 
-  const [
-    username,
-    setUsername,
-  ] =
-    useState(
-      profile?.username ??
-      "",
-    );
+  const [username, setUsername] = useState(
+    profile?.username ?? "",
+  );
 
-  const [
-    currentEmail,
-    setCurrentEmail,
-  ] =
-    useState(
-      authUser?.email ??
-      "",
-    );
+  const [currentEmail, setCurrentEmail] = useState(
+    authUser?.email ?? "",
+  );
 
-  const [
-    newEmail,
-    setNewEmail,
-  ] =
-    useState("");
+  const [newEmail, setNewEmail] = useState("");
 
-  const [
-    newPassword,
-    setNewPassword,
-  ] =
-    useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   const [
     confirmPassword,
     setConfirmPassword,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     showPassword,
     setShowPassword,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     savingProfile,
     setSavingProfile,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     savingEmail,
     setSavingEmail,
-  ] =
-    useState(false);
+  ] = useState(false);
 
   const [
     savingPassword,
     setSavingPassword,
-  ] =
-    useState(false);
+  ] = useState(false);
 
 
   async function saveProfile() {
-    const cleanName =
-      name.trim();
+    const cleanName = name.trim();
 
-    const cleanUsername =
-      username
-        .trim()
-        .replace(
-          /^@/,
-          "",
-        )
-        .toLowerCase();
+    const cleanUsername = username
+      .trim()
+      .replace(/^@/, "")
+      .toLowerCase();
 
 
     if (!cleanName) {
@@ -196,10 +138,7 @@ function ContaPage() {
     }
 
 
-    if (
-      cleanUsername.length <
-      3
-    ) {
+    if (cleanUsername.length < 3) {
       toast.error(
         "O nome de usuário precisa ter pelo menos 3 caracteres.",
       );
@@ -221,17 +160,14 @@ function ContaPage() {
     }
 
 
-    setSavingProfile(
-      true,
-    );
+    setSavingProfile(true);
 
 
     try {
       const {
         data,
         error: userError,
-      } =
-        await supabase.auth.getUser();
+      } = await supabase.auth.getUser();
 
 
       if (
@@ -246,28 +182,23 @@ function ContaPage() {
 
       const {
         error,
-      } =
-        await supabase
-          .from(
-            "profiles",
-          )
-          .update({
-            name:
-              cleanName.slice(
-                0,
-                80,
-              ),
+      } = await supabase
+        .from("profiles")
+        .update({
+          name: cleanName.slice(
+            0,
+            80,
+          ),
 
-            username:
-              cleanUsername.slice(
-                0,
-                40,
-              ),
-          })
-          .eq(
-            "id",
-            data.user.id,
-          );
+          username: cleanUsername.slice(
+            0,
+            40,
+          ),
+        })
+        .eq(
+          "id",
+          data.user.id,
+        );
 
 
       if (error) {
@@ -276,47 +207,38 @@ function ContaPage() {
 
 
       await queryClient.invalidateQueries({
-        queryKey: [
-          "profile",
-        ],
+        queryKey: ["profile"],
       });
 
 
       toast.success(
         "Perfil atualizado com sucesso.",
       );
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível atualizar seu perfil.",
       );
     } finally {
-      setSavingProfile(
-        false,
-      );
+      setSavingProfile(false);
     }
   }
 
 
   async function saveEmail() {
-    const current =
-      currentEmail
-        .trim()
-        .toLowerCase();
+    const current = currentEmail
+      .trim()
+      .toLowerCase();
 
-    const next =
-      newEmail
-        .trim()
-        .toLowerCase();
+    const next = newEmail
+      .trim()
+      .toLowerCase();
 
     const accountEmail =
       authUser?.email
         ?.trim()
-        .toLowerCase() ??
-      "";
+        .toLowerCase() ?? "";
 
 
     if (!accountEmail) {
@@ -328,10 +250,7 @@ function ContaPage() {
     }
 
 
-    if (
-      current !==
-      accountEmail
-    ) {
+    if (current !== accountEmail) {
       toast.error(
         "Digite corretamente o seu e-mail atual.",
       );
@@ -362,10 +281,7 @@ function ContaPage() {
     }
 
 
-    if (
-      next ===
-      accountEmail
-    ) {
+    if (next === accountEmail) {
       toast.error(
         "O novo e-mail precisa ser diferente do atual.",
       );
@@ -374,19 +290,15 @@ function ContaPage() {
     }
 
 
-    setSavingEmail(
-      true,
-    );
+    setSavingEmail(true);
 
 
     try {
       const {
         error,
-      } =
-        await supabase.auth.updateUser({
-          email:
-            next,
-        });
+      } = await supabase.auth.updateUser({
+        email: next,
+      });
 
 
       if (error) {
@@ -394,26 +306,20 @@ function ContaPage() {
       }
 
 
-      setNewEmail(
-        "",
-      );
+      setNewEmail("");
 
 
       toast.success(
         "Verifique seu e-mail para confirmar a alteração.",
       );
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível alterar o e-mail.",
       );
     } finally {
-      setSavingEmail(
-        false,
-      );
+      setSavingEmail(false);
     }
   }
 
@@ -428,10 +334,7 @@ function ContaPage() {
     }
 
 
-    if (
-      newPassword.length <
-      6
-    ) {
+    if (newPassword.length < 6) {
       toast.error(
         "A senha precisa ter pelo menos 6 caracteres.",
       );
@@ -452,19 +355,15 @@ function ContaPage() {
     }
 
 
-    setSavingPassword(
-      true,
-    );
+    setSavingPassword(true);
 
 
     try {
       const {
         error,
-      } =
-        await supabase.auth.updateUser({
-          password:
-            newPassword,
-        });
+      } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
 
 
       if (error) {
@@ -472,36 +371,30 @@ function ContaPage() {
       }
 
 
-      setNewPassword(
-        "",
-      );
+      setNewPassword("");
 
-      setConfirmPassword(
-        "",
-      );
+      setConfirmPassword("");
 
 
       toast.success(
         "Senha alterada com sucesso.",
       );
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível alterar a senha.",
       );
     } finally {
-      setSavingPassword(
-        false,
-      );
+      setSavingPassword(false);
     }
   }
 
 
   return (
     <div className="space-y-6">
+
+      {/* VOLTAR + TÍTULO */}
 
       <div className="flex items-center gap-3">
 
@@ -511,15 +404,12 @@ function ContaPage() {
           size="icon"
           onClick={() =>
             navigate({
-              to:
-                "/_authenticated/configuracoes",
+              to: "/configuracoes",
             })
           }
           aria-label="Voltar para configurações"
         >
-
           <ArrowLeft className="size-5" />
-
         </Button>
 
 
@@ -531,14 +421,14 @@ function ContaPage() {
       </div>
 
 
+      {/* PERFIL */}
+
       <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
 
         <div className="mb-6 flex items-start gap-3">
 
           <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-
             <User className="size-5" />
-
           </div>
 
 
@@ -568,12 +458,8 @@ function ContaPage() {
             <Input
               id="account-name"
               className="h-11"
-              value={
-                name
-              }
-              onChange={(
-                event,
-              ) =>
+              value={name}
+              onChange={(event) =>
                 setName(
                   event.target.value,
                 )
@@ -595,12 +481,8 @@ function ContaPage() {
             <Input
               id="account-username"
               className="h-11"
-              value={
-                username
-              }
-              onChange={(
-                event,
-              ) =>
+              value={username}
+              onChange={(event) =>
                 setUsername(
                   event.target.value,
                 )
@@ -619,9 +501,7 @@ function ContaPage() {
 
           <Button
             type="button"
-            disabled={
-              savingProfile
-            }
+            disabled={savingProfile}
             onClick={() =>
               void saveProfile()
             }
@@ -640,14 +520,14 @@ function ContaPage() {
       </section>
 
 
+      {/* E-MAIL */}
+
       <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
 
         <div className="mb-6 flex items-start gap-3">
 
           <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-
             <Mail className="size-5" />
-
           </div>
 
 
@@ -678,12 +558,8 @@ function ContaPage() {
               id="current-email"
               type="email"
               className="h-11"
-              value={
-                currentEmail
-              }
-              onChange={(
-                event,
-              ) =>
+              value={currentEmail}
+              onChange={(event) =>
                 setCurrentEmail(
                   event.target.value,
                 )
@@ -705,12 +581,8 @@ function ContaPage() {
               id="new-email"
               type="email"
               className="h-11"
-              value={
-                newEmail
-              }
-              onChange={(
-                event,
-              ) =>
+              value={newEmail}
+              onChange={(event) =>
                 setNewEmail(
                   event.target.value,
                 )
@@ -729,9 +601,7 @@ function ContaPage() {
 
           <Button
             type="button"
-            disabled={
-              savingEmail
-            }
+            disabled={savingEmail}
             onClick={() =>
               void saveEmail()
             }
@@ -750,14 +620,14 @@ function ContaPage() {
       </section>
 
 
+      {/* SENHA */}
+
       <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
 
         <div className="mb-6 flex items-start gap-3">
 
           <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-
             <ShieldCheck className="size-5" />
-
           </div>
 
 
@@ -795,12 +665,8 @@ function ContaPage() {
                     : "password"
                 }
                 className="h-11 pr-11"
-                value={
-                  newPassword
-                }
-                onChange={(
-                  event,
-                ) =>
+                value={newPassword}
+                onChange={(event) =>
                   setNewPassword(
                     event.target.value,
                   )
@@ -814,9 +680,7 @@ function ContaPage() {
                 type="button"
                 onClick={() =>
                   setShowPassword(
-                    (
-                      current,
-                    ) =>
+                    (current) =>
                       !current,
                   )
                 }
@@ -855,12 +719,8 @@ function ContaPage() {
                   : "password"
               }
               className="h-11"
-              value={
-                confirmPassword
-              }
-              onChange={(
-                event,
-              ) =>
+              value={confirmPassword}
+              onChange={(event) =>
                 setConfirmPassword(
                   event.target.value,
                 )
@@ -878,9 +738,7 @@ function ContaPage() {
 
           <Button
             type="button"
-            disabled={
-              savingPassword
-            }
+            disabled={savingPassword}
             onClick={() =>
               void savePassword()
             }
