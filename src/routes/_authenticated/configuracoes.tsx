@@ -100,7 +100,7 @@ function SettingsPage() {
               Personalize o tema, estilo visual
               e as cores do FinanLook.
             "
-            to="/configuracoes/aparencia"
+            to="/configuracao/aparencia"
           />
 
         </div>
@@ -162,8 +162,8 @@ type SettingsCardProps = {
   description: string;
 
   to:
-    | "/configuracoes/conta"
-    | "/configuracoes/aparencia";
+    | "/configuracao/conta"
+    | "/configuracao/aparencia";
 };
 
 
