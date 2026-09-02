@@ -8,14 +8,20 @@ import {
 } from "react";
 
 import {
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import {
   toast,
 } from "sonner";
 
 import {
   ArrowLeft,
+  ChevronRight,
   KeyRound,
   Mail,
-  MailCheck,
+  Save,
+  User,
 } from "lucide-react";
 
 import {
@@ -39,42 +45,46 @@ import {
 } from "@/integrations/supabase/client";
 
 import {
+  useProfile,
   useUser,
 } from "@/lib/data";
 
 
-type VerificationMethod =
-  | "email"
-  | "senha";
-
-
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracoes/conta/email",
+    "/_authenticated/configuracoes/conta",
   )({
     head: () => ({
       meta: [
         {
           title:
-            "Trocar e-mail — FinanLook",
+            "Conta — FinanLook",
         },
         {
           name:
             "description",
           content:
-            "Altere o e-mail da sua conta.",
+            "Gerencie seu perfil, e-mail e senha.",
         },
       ],
     }),
 
     component:
-      TrocarEmailPage,
+      ContaPage,
   });
 
 
-function TrocarEmailPage() {
+function ContaPage() {
   const navigate =
     useNavigate();
+
+  const queryClient =
+    useQueryClient();
+
+  const {
+    data: profile,
+  } =
+    useProfile();
 
   const {
     data: authUser,
@@ -83,67 +93,56 @@ function TrocarEmailPage() {
 
 
   const [
-    currentEmail,
-    setCurrentEmail,
+    name,
+    setName,
   ] =
-    useState("");
-
-  const [
-    newEmail,
-    setNewEmail,
-  ] =
-    useState("");
-
-  const [
-    method,
-    setMethod,
-  ] =
-    useState<VerificationMethod>(
-      "email",
+    useState(
+      profile?.name ??
+      "",
     );
 
   const [
-    password,
-    setPassword,
+    username,
+    setUsername,
   ] =
-    useState("");
+    useState(
+      profile?.username ??
+      "",
+    );
 
   const [
-    saving,
-    setSaving,
+    savingProfile,
+    setSavingProfile,
   ] =
     useState(false);
 
 
-  function goBack() {
-    navigate({
-      to:
-        "/_authenticated/configuracoes/conta",
-    });
-  }
+  async function saveProfile() {
+    const cleanName =
+      name.trim();
 
-
-  async function handleSubmit() {
-    const current =
-      currentEmail
+    const cleanUsername =
+      username
         .trim()
+        .replace(
+          /^@/,
+          "",
+        )
         .toLowerCase();
 
-    const next =
-      newEmail
-        .trim()
-        .toLowerCase();
 
-    const accountEmail =
-      authUser?.email
-        ?.trim()
-        .toLowerCase() ??
-      "";
-
-
-    if (!accountEmail) {
+    if (!cleanName) {
       toast.error(
-        "Não foi possível identificar o e-mail da sua conta.",
+        "Informe seu nome.",
+      );
+
+      return;
+    }
+
+
+    if (!cleanUsername) {
+      toast.error(
+        "Informe seu nome de usuário.",
       );
 
       return;
@@ -151,20 +150,11 @@ function TrocarEmailPage() {
 
 
     if (
-      current !==
-      accountEmail
+      cleanUsername.length <
+      3
     ) {
       toast.error(
-        "Digite corretamente o seu e-mail atual.",
-      );
-
-      return;
-    }
-
-
-    if (!next) {
-      toast.error(
-        "Informe o novo e-mail.",
+        "O nome de usuário precisa ter pelo menos 3 caracteres.",
       );
 
       return;
@@ -172,79 +162,65 @@ function TrocarEmailPage() {
 
 
     if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        next,
+      !/^[a-zA-Z0-9._-]+$/.test(
+        cleanUsername,
       )
     ) {
       toast.error(
-        "Informe um e-mail válido.",
+        "Use apenas letras, números, ponto, hífen ou underline.",
       );
 
       return;
     }
 
 
-    if (
-      next ===
-      accountEmail
-    ) {
-      toast.error(
-        "O novo e-mail precisa ser diferente do atual.",
-      );
-
-      return;
-    }
-
-
-    if (
-      method ===
-        "senha" &&
-      !password
-    ) {
-      toast.error(
-        "Digite sua senha atual para confirmar.",
-      );
-
-      return;
-    }
-
-
-    setSaving(
+    setSavingProfile(
       true,
     );
 
 
     try {
+      const {
+        data,
+        error: userError,
+      } =
+        await supabase.auth.getUser();
+
+
       if (
-        method ===
-        "senha"
+        userError ||
+        !data.user
       ) {
-        const {
-          error: signInError,
-        } =
-          await supabase.auth.signInWithPassword({
-            email:
-              accountEmail,
-
-            password,
-          });
-
-
-        if (signInError) {
-          throw new Error(
-            "Senha incorreta.",
-          );
-        }
+        throw new Error(
+          "Usuário não autenticado.",
+        );
       }
 
 
       const {
         error,
       } =
-        await supabase.auth.updateUser({
-          email:
-            next,
-        });
+        await supabase
+          .from(
+            "profiles",
+          )
+          .update({
+            name:
+              cleanName.slice(
+                0,
+                80,
+              ),
+
+            username:
+              cleanUsername.slice(
+                0,
+                40,
+              ),
+          })
+          .eq(
+            "id",
+            data.user.id,
+          );
 
 
       if (error) {
@@ -252,32 +228,24 @@ function TrocarEmailPage() {
       }
 
 
-      setNewEmail(
-        "",
-      );
-
-      setPassword(
-        "",
-      );
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "profile",
+        ],
+      });
 
 
       toast.success(
-        method ===
-        "senha"
-          ? "E-mail atualizado com sucesso."
-          : "Verifique seu e-mail para confirmar a alteração.",
+        "Perfil atualizado com sucesso.",
       );
-
-
-      goBack();
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Não foi possível alterar o e-mail.",
+          : "Não foi possível atualizar seu perfil.",
       );
     } finally {
-      setSaving(
+      setSavingProfile(
         false,
       );
     }
@@ -293,10 +261,13 @@ function TrocarEmailPage() {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={
-            goBack
+          onClick={() =>
+            navigate({
+              to:
+                "/_authenticated/configuracoes",
+            })
           }
-          aria-label="Voltar para conta"
+          aria-label="Voltar para configurações"
         >
 
           <ArrowLeft className="size-5" />
@@ -305,8 +276,8 @@ function TrocarEmailPage() {
 
 
         <PageHeader
-          title="Trocar e-mail"
-          subtitle="Confirme seu e-mail atual e escolha como verificar a troca."
+          title="Conta"
+          subtitle="Gerencie seu perfil, e-mail e senha."
         />
 
       </div>
@@ -318,7 +289,7 @@ function TrocarEmailPage() {
 
           <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
 
-            <Mail className="size-5" />
+            <User className="size-5" />
 
           </div>
 
@@ -326,14 +297,11 @@ function TrocarEmailPage() {
           <div>
 
             <h2 className="font-display text-lg font-semibold">
-              Novo e-mail
+              Perfil
             </h2>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Sua conta atual é {
-                authUser?.email ??
-                "—"
-              }
+              Atualize as informações exibidas na sua conta.
             </p>
 
           </div>
@@ -341,192 +309,181 @@ function TrocarEmailPage() {
         </div>
 
 
-        <form
-          className="space-y-5"
-          onSubmit={(
-            event,
-          ) => {
-            event.preventDefault();
+        <div className="grid gap-4 md:grid-cols-2">
 
-            void handleSubmit();
-          }}
-        >
+          <div className="space-y-1.5">
 
-          <div className="grid gap-4 md:grid-cols-2">
-
-            <div className="space-y-1.5">
-
-              <Label htmlFor="current-email">
-                E-mail atual
-              </Label>
-
-              <Input
-                id="current-email"
-                type="email"
-                className="h-11"
-                value={
-                  currentEmail
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setCurrentEmail(
-                    event.target.value,
-                  )
-                }
-                placeholder="seuemail@exemplo.com"
-                autoComplete="email"
-                maxLength={255}
-              />
-
-            </div>
-
-
-            <div className="space-y-1.5">
-
-              <Label htmlFor="new-email">
-                Novo e-mail
-              </Label>
-
-              <Input
-                id="new-email"
-                type="email"
-                className="h-11"
-                value={
-                  newEmail
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setNewEmail(
-                    event.target.value,
-                  )
-                }
-                placeholder="novo@email.com"
-                autoComplete="email"
-                maxLength={255}
-              />
-
-            </div>
-
-          </div>
-
-
-          <div className="space-y-2">
-
-            <Label>
-              Método de verificação
+            <Label htmlFor="account-name">
+              Nome
             </Label>
 
-
-            <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMethod(
-                    "email",
-                  )
-                }
-                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  method ===
-                  "email"
-                    ? "bg-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-
-                <MailCheck className="size-4" />
-
-                Verificar por e-mail
-
-              </button>
-
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMethod(
-                    "senha",
-                  )
-                }
-                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  method ===
-                  "senha"
-                    ? "bg-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-
-                <KeyRound className="size-4" />
-
-                Confirmar com senha
-
-              </button>
-
-            </div>
-
-
-            <p className="text-[11px] leading-relaxed text-muted-foreground">
-              {method ===
-              "email"
-                ? "Enviaremos um link de confirmação para o seu e-mail para validar a troca antes de aplicá-la."
-                : "Confirme sua senha atual e a troca é aplicada imediatamente, sem precisar checar o e-mail."}
-            </p>
+            <Input
+              id="account-name"
+              className="h-11"
+              value={
+                name
+              }
+              onChange={(
+                event,
+              ) =>
+                setName(
+                  event.target.value,
+                )
+              }
+              placeholder="Seu nome"
+              maxLength={80}
+              autoComplete="name"
+            />
 
           </div>
 
 
-          {method ===
-            "senha" && (
-            <div className="space-y-1.5">
+          <div className="space-y-1.5">
 
-              <Label htmlFor="confirm-password">
-                Sua senha atual
-              </Label>
+            <Label htmlFor="account-username">
+              Nome de usuário
+            </Label>
 
-              <Input
-                id="confirm-password"
-                type="password"
-                className="h-11"
-                value={
-                  password
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setPassword(
-                    event.target.value,
-                  )
-                }
-                autoComplete="current-password"
-                maxLength={1000}
-              />
+            <Input
+              id="account-username"
+              className="h-11"
+              value={
+                username
+              }
+              onChange={(
+                event,
+              ) =>
+                setUsername(
+                  event.target.value,
+                )
+              }
+              placeholder="seuusername"
+              maxLength={40}
+              autoComplete="username"
+            />
 
-            </div>
-          )}
+          </div>
 
+        </div>
+
+
+        <div className="mt-5">
 
           <Button
-            type="submit"
-            className="h-11 w-full sm:w-auto"
+            type="button"
             disabled={
-              saving
+              savingProfile
+            }
+            onClick={() =>
+              void saveProfile()
             }
           >
 
-            <Mail className="size-4" />
+            <Save className="size-4" />
 
-            {saving
-              ? "Enviando..."
-              : "Alterar e-mail"}
+            {savingProfile
+              ? "Salvando..."
+              : "Salvar perfil"}
 
           </Button>
 
-        </form>
+        </div>
+
+      </section>
+
+
+      <section className="rounded-2xl border bg-card shadow-sm">
+
+        <div className="p-5 pb-3 sm:p-6 sm:pb-3">
+
+          <h2 className="font-display text-lg font-semibold">
+            Segurança e acesso
+          </h2>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Altere seu e-mail ou sua senha de acesso.
+          </p>
+
+        </div>
+
+
+        <div className="divide-y">
+
+          <NavRow
+            icon={<Mail className="size-5" />}
+            title="Trocar e-mail"
+            description={
+              authUser?.email ??
+              "Gerencie o e-mail da sua conta"
+            }
+            onClick={() =>
+              navigate({
+                to:
+                  "/_authenticated/configuracoes/conta/email",
+              })
+            }
+          />
+
+
+          <NavRow
+            icon={<KeyRound className="size-5" />}
+            title="Trocar senha"
+            description="Altere a senha usada para entrar na sua conta"
+            onClick={() =>
+              navigate({
+                to:
+                  "/_authenticated/configuracoes/conta/senha",
+              })
+            }
+          />
+
+        </div>
 
       </section>
 
     </div>
+  );
+}
+
+
+function NavRow({
+  icon,
+  title,
+  description,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-muted/50 sm:px-6"
+    >
+
+      <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+        {icon}
+      </div>
+
+
+      <div className="min-w-0 flex-1">
+
+        <p className="font-medium">
+          {title}
+        </p>
+
+        <p className="truncate text-sm text-muted-foreground">
+          {description}
+        </p>
+
+      </div>
+
+
+      <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+
+    </button>
   );
 }
