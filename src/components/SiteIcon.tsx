@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-export const SITE_ICON_SRC = "/SiteIcon.svg";
+export const SITE_ICON_SRC = "/Favicon.png";
 
 export function SiteIcon({
   alt = "FinanLook",
