@@ -19,8 +19,10 @@ import {
 import {
   Check,
   ChevronRight,
+  Crown,
   Eye,
   EyeOff,
+  Lock,
   LockKeyhole,
   LogOut,
   Mail,
@@ -95,8 +97,15 @@ export const Route =
           title:
             "Configurações — FinanLook",
         },
+        {
+          name:
+            "description",
+          content:
+            "Gerencie sua conta e personalize sua experiência no FinanLook.",
+        },
       ],
     }),
+
     component:
       SettingsPage,
   });
@@ -105,40 +114,38 @@ export const Route =
 function maskEmail(
   email: string,
 ) {
-  const [
-    name = "",
-    domain = "",
-  ] =
+  if (!email) {
+    return "";
+  }
+
+  const parts =
     email.split("@");
 
-  if (
-    !name ||
-    !domain
-  ) {
+  const username =
+    parts[0] ?? "";
+
+  const domain =
+    parts[1] ?? "";
+
+  if (!domain) {
     return email;
   }
 
   if (
-    name.length <=
-    2
+    username.length <= 2
   ) {
-    return `${name[0] ?? ""}***@${domain}`;
+    return `${username[0] ?? ""}****@${domain}`;
   }
 
-  return `${name[0]}***${name[name.length - 1]}@${domain}`;
-}
+  const first =
+    username[0];
 
+  const last =
+    username[
+      username.length - 1
+    ];
 
-function normalizeUsername(
-  value: string,
-) {
-  return value
-    .trim()
-    .replace(
-      /^@/,
-      "",
-    )
-    .toLowerCase();
+  return `${first}****${last}@${domain}`;
 }
 
 
@@ -159,13 +166,17 @@ function SettingsPage() {
   } =
     useUser();
 
+
   const {
     theme,
     setTheme,
+
     themeStyle,
     setThemeStyle,
+
     themeColor,
     setThemeColor,
+
     customColor,
     setCustomColor,
   } =
@@ -219,6 +230,13 @@ function SettingsPage() {
 
 
   const [
+    deleteStep,
+    setDeleteStep,
+  ] =
+    useState(1);
+
+
+  const [
     profileName,
     setProfileName,
   ] =
@@ -229,6 +247,7 @@ function SettingsPage() {
     setProfileUsername,
   ] =
     useState("");
+
 
   const [
     currentEmail,
@@ -241,6 +260,7 @@ function SettingsPage() {
     setNewEmail,
   ] =
     useState("");
+
 
   const [
     newPassword,
@@ -260,22 +280,41 @@ function SettingsPage() {
   ] =
     useState(false);
 
+
   const [
-    deleteUsername,
-    setDeleteUsername,
+    deleteUsernameFirst,
+    setDeleteUsernameFirst,
+  ] =
+    useState("");
+
+  const [
+    deleteUsernameFinal,
+    setDeleteUsernameFinal,
   ] =
     useState("");
 
 
   const [
-    saving,
-    setSaving,
+    savingProfile,
+    setSavingProfile,
   ] =
     useState(false);
 
   const [
-    deleting,
-    setDeleting,
+    savingEmail,
+    setSavingEmail,
+  ] =
+    useState(false);
+
+  const [
+    savingPassword,
+    setSavingPassword,
+  ] =
+    useState(false);
+
+  const [
+    deletingAccount,
+    setDeletingAccount,
   ] =
     useState(false);
 
@@ -283,12 +322,12 @@ function SettingsPage() {
   function openProfile() {
     setProfileName(
       profile?.name ??
-      "",
+        "",
     );
 
     setProfileUsername(
       profile?.username ??
-      "",
+        "",
     );
 
     setProfileOpen(
@@ -302,59 +341,79 @@ function SettingsPage() {
       profileName.trim();
 
     const username =
-      normalizeUsername(
-        profileUsername,
-      );
+      profileUsername
+        .trim()
+        .replace(
+          /^@/,
+          "",
+        )
+        .toLowerCase();
 
-    if (
-      !name
-    ) {
+
+    if (!name) {
       toast.error(
         "Informe seu nome.",
       );
+
       return;
     }
 
+
+    if (!username) {
+      toast.error(
+        "Informe seu nome de usuário.",
+      );
+
+      return;
+    }
+
+
     if (
-      username.length <
-      3
+      username.length < 3
     ) {
       toast.error(
         "O nome de usuário precisa ter pelo menos 3 caracteres.",
       );
+
       return;
     }
 
+
     if (
-      !/^[a-z0-9._-]+$/i.test(
+      !/^[a-zA-Z0-9._-]+$/.test(
         username,
       )
     ) {
       toast.error(
         "Use apenas letras, números, ponto, hífen ou underline.",
       );
+
       return;
     }
 
-    setSaving(
+
+    setSavingProfile(
       true,
     );
+
 
     try {
       const {
         data,
-        error: userError,
+        error: authError,
       } =
         await supabase.auth.getUser();
 
+
       if (
-        userError ||
+        authError ||
         !data.user
       ) {
         throw new Error(
           "Usuário não autenticado.",
         );
       }
+
 
       const {
         error,
@@ -369,6 +428,7 @@ function SettingsPage() {
                 0,
                 80,
               ),
+
             username:
               username.slice(
                 0,
@@ -380,11 +440,11 @@ function SettingsPage() {
             data.user.id,
           );
 
-      if (
-        error
-      ) {
+
+      if (error) {
         throw error;
       }
+
 
       await queryClient.invalidateQueries({
         queryKey: [
@@ -392,19 +452,21 @@ function SettingsPage() {
         ],
       });
 
+
       toast.success(
-        "Perfil atualizado.",
+        "Perfil atualizado com sucesso.",
       );
+
 
       setProfileOpen(
         false,
       );
     } catch {
       toast.error(
-        "Não foi possível atualizar o perfil.",
+        "Não foi possível atualizar seu perfil.",
       );
     } finally {
-      setSaving(
+      setSavingProfile(
         false,
       );
     }
@@ -415,9 +477,11 @@ function SettingsPage() {
     setCurrentEmail(
       "",
     );
+
     setNewEmail(
       "",
     );
+
     setEmailOpen(
       true,
     );
@@ -435,41 +499,66 @@ function SettingsPage() {
         .trim()
         .toLowerCase();
 
+
+    if (!current) {
+      toast.error(
+        "Informe o e-mail atual.",
+      );
+
+      return;
+    }
+
+
     if (
       current !==
       accountEmail.toLowerCase()
     ) {
       toast.error(
-        "Informe corretamente o e-mail atual.",
+        "O e-mail atual informado não corresponde à sua conta.",
       );
+
       return;
     }
 
+
+    if (!next) {
+      toast.error(
+        "Informe o novo e-mail.",
+      );
+
+      return;
+    }
+
+
     if (
-      !next ||
       !next.includes(
         "@",
       )
     ) {
       toast.error(
-        "Informe um novo e-mail válido.",
+        "Informe um e-mail válido.",
       );
+
       return;
     }
+
 
     if (
       next ===
       accountEmail.toLowerCase()
     ) {
       toast.error(
-        "O novo e-mail deve ser diferente do atual.",
+        "O novo e-mail precisa ser diferente do atual.",
       );
+
       return;
     }
 
-    setSaving(
+
+    setSavingEmail(
       true,
     );
+
 
     try {
       const {
@@ -480,25 +569,26 @@ function SettingsPage() {
             next,
         });
 
-      if (
-        error
-      ) {
+
+      if (error) {
         throw error;
       }
 
+
       toast.success(
-        "Enviamos uma confirmação para o novo e-mail.",
+        "Enviamos uma confirmação para concluir a alteração do seu e-mail.",
       );
+
 
       setEmailOpen(
         false,
       );
     } catch {
       toast.error(
-        "Não foi possível alterar o e-mail.",
+        "Não foi possível solicitar a alteração do e-mail.",
       );
     } finally {
-      setSaving(
+      setSavingEmail(
         false,
       );
     }
@@ -509,12 +599,15 @@ function SettingsPage() {
     setNewPassword(
       "",
     );
+
     setConfirmPassword(
       "",
     );
+
     setShowPassword(
       false,
     );
+
     setPasswordOpen(
       true,
     );
@@ -522,6 +615,15 @@ function SettingsPage() {
 
 
   async function savePassword() {
+    if (!newPassword) {
+      toast.error(
+        "Informe uma nova senha.",
+      );
+
+      return;
+    }
+
+
     if (
       newPassword.length <
       6
@@ -529,8 +631,10 @@ function SettingsPage() {
       toast.error(
         "A senha precisa ter pelo menos 6 caracteres.",
       );
+
       return;
     }
+
 
     if (
       newPassword !==
@@ -539,12 +643,15 @@ function SettingsPage() {
       toast.error(
         "As senhas não coincidem.",
       );
+
       return;
     }
 
-    setSaving(
+
+    setSavingPassword(
       true,
     );
+
 
     try {
       const {
@@ -555,25 +662,26 @@ function SettingsPage() {
             newPassword,
         });
 
-      if (
-        error
-      ) {
+
+      if (error) {
         throw error;
       }
 
+
       toast.success(
-        "Senha alterada.",
+        "Senha alterada com sucesso.",
       );
+
 
       setPasswordOpen(
         false,
       );
     } catch {
       toast.error(
-        "Não foi possível alterar a senha.",
+        "Não foi possível alterar sua senha.",
       );
     } finally {
-      setSaving(
+      setSavingPassword(
         false,
       );
     }
@@ -586,6 +694,19 @@ function SettingsPage() {
     setTheme(
       value,
     );
+
+
+    const name =
+      value === "light"
+        ? "tema claro"
+        : value === "dark"
+          ? "tema escuro"
+          : "tema do sistema";
+
+
+    toast.success(
+      `Aparência alterada para ${name}.`,
+    );
   }
 
 
@@ -594,6 +715,13 @@ function SettingsPage() {
   ) {
     setThemeStyle(
       value,
+    );
+
+
+    toast.success(
+      value === "real"
+        ? "Estilo Real ativado."
+        : "Estilo Verdant ativado.",
     );
   }
 
@@ -610,43 +738,56 @@ function SettingsPage() {
           color,
       );
 
+
     if (
       selected?.premium
     ) {
       toast.info(
         "Esta cor está disponível no FinanLook Premium.",
       );
+
       return;
     }
 
+
     setThemeColor(
       color,
+    );
+
+
+    toast.success(
+      `Cor ${selected?.label ?? ""} ativada.`,
     );
   }
 
 
   async function signOut() {
     try {
+      await queryClient.cancelQueries();
+
       queryClient.clear();
+
 
       const {
         error,
       } =
         await supabase.auth.signOut();
 
-      if (
-        error
-      ) {
+
+      if (error) {
         throw error;
       }
+
 
       await navigate({
         to:
           "/auth",
+
         search: {
           modo:
             "entrar",
         },
+
         replace:
           true,
       });
@@ -659,35 +800,106 @@ function SettingsPage() {
 
 
   function openDeleteAccount() {
-    setDeleteUsername(
+    setDeleteStep(
+      1,
+    );
+
+    setDeleteUsernameFirst(
       "",
     );
+
+    setDeleteUsernameFinal(
+      "",
+    );
+
     setDeleteOpen(
       true,
     );
   }
 
 
-  async function deleteAccount() {
+  function confirmDeleteStepOne() {
     const typed =
-      normalizeUsername(
-        deleteUsername,
-      );
+      deleteUsernameFirst
+        .trim()
+        .replace(
+          /^@/,
+          "",
+        )
+        .toLowerCase();
+
 
     if (
-      !accountUsername ||
+      !accountUsername
+    ) {
+      toast.error(
+        "Não foi possível identificar seu nome de usuário.",
+      );
+
+      return;
+    }
+
+
+    if (
       typed !==
       accountUsername.toLowerCase()
     ) {
       toast.error(
         "O nome de usuário não corresponde à sua conta.",
       );
+
       return;
     }
 
-    setDeleting(
+
+    setDeleteStep(
+      2,
+    );
+
+    setDeleteUsernameFinal(
+      "",
+    );
+  }
+
+
+  async function deleteAccount() {
+    const typed =
+      deleteUsernameFinal
+        .trim()
+        .replace(
+          /^@/,
+          "",
+        )
+        .toLowerCase();
+
+
+    if (
+      !accountUsername
+    ) {
+      toast.error(
+        "Não foi possível identificar seu nome de usuário.",
+      );
+
+      return;
+    }
+
+
+    if (
+      typed !==
+      accountUsername.toLowerCase()
+    ) {
+      toast.error(
+        "O nome de usuário não corresponde à sua conta.",
+      );
+
+      return;
+    }
+
+
+    setDeletingAccount(
       true,
     );
+
 
     try {
       const {
@@ -697,32 +909,35 @@ function SettingsPage() {
           "delete-account",
         );
 
-      if (
-        error
-      ) {
+
+      if (error) {
         throw error;
       }
+
 
       await supabase.auth.signOut();
 
       queryClient.clear();
 
+
       toast.success(
         "Sua conta foi excluída.",
       );
 
+
       await navigate({
         to:
           "/",
+
         replace:
           true,
       });
     } catch {
       toast.error(
-        "Não foi possível excluir a conta.",
+        "Não foi possível excluir sua conta.",
       );
     } finally {
-      setDeleting(
+      setDeletingAccount(
         false,
       );
     }
@@ -734,7 +949,7 @@ function SettingsPage() {
 
       <PageHeader
         title="Configurações"
-        subtitle="Gerencie sua conta e personalize sua experiência."
+        subtitle="Gerencie sua conta e personalize sua experiência no FinanLook."
       />
 
 
@@ -752,12 +967,13 @@ function SettingsPage() {
           }
         />
 
+
         <SettingsCard
           icon={
             <ShieldCheck className="size-6" />
           }
           title="Conta e segurança"
-          description="Gerencie e-mail e senha."
+          description="Gerencie seu e-mail e senha."
           buttonText="Configurar"
           onClick={() =>
             setSecurityOpen(
@@ -766,12 +982,13 @@ function SettingsPage() {
           }
         />
 
+
         <SettingsCard
           icon={
             <Palette className="size-6" />
           }
           title="Aparência"
-          description="Escolha modo, estilo e cor."
+          description="Personalize o modo, estilo e cores do FinanLook."
           buttonText="Personalizar"
           onClick={() =>
             setAppearanceOpen(
@@ -800,7 +1017,7 @@ function SettingsPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
 
-          <SettingsCard
+          <DangerCard
             icon={
               <LogOut className="size-6" />
             }
@@ -810,10 +1027,10 @@ function SettingsPage() {
             onClick={() =>
               void signOut()
             }
-            danger
           />
 
-          <SettingsCard
+
+          <DangerCard
             icon={
               <Trash2 className="size-6" />
             }
@@ -823,13 +1040,14 @@ function SettingsPage() {
             onClick={
               openDeleteAccount
             }
-            danger
           />
 
         </div>
 
       </section>
 
+
+      {/* PERFIL */}
 
       <Dialog
         open={
@@ -857,29 +1075,56 @@ function SettingsPage() {
 
           <div className="space-y-4">
 
-            <Field
-              id="profile-name"
-              label="Nome"
-              value={
-                profileName
-              }
-              onChange={
-                setProfileName
-              }
-              placeholder="Seu nome"
-            />
+            <div className="space-y-1.5">
 
-            <Field
-              id="profile-username"
-              label="Nome de usuário"
-              value={
-                profileUsername
-              }
-              onChange={
-                setProfileUsername
-              }
-              placeholder="seuusername"
-            />
+              <Label htmlFor="profile-name">
+                Nome
+              </Label>
+
+              <Input
+                id="profile-name"
+                className="h-11"
+                value={
+                  profileName
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setProfileName(
+                    event.target.value,
+                  )
+                }
+                placeholder="Seu nome"
+                maxLength={80}
+              />
+
+            </div>
+
+
+            <div className="space-y-1.5">
+
+              <Label htmlFor="profile-username">
+                Nome de usuário
+              </Label>
+
+              <Input
+                id="profile-username"
+                className="h-11"
+                value={
+                  profileUsername
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setProfileUsername(
+                    event.target.value,
+                  )
+                }
+                placeholder="seuusername"
+                maxLength={40}
+              />
+
+            </div>
 
           </div>
 
@@ -889,7 +1134,7 @@ function SettingsPage() {
             <Button
               className="h-11 w-full"
               disabled={
-                saving
+                savingProfile
               }
               onClick={() =>
                 void saveProfile()
@@ -898,9 +1143,9 @@ function SettingsPage() {
 
               <Save className="size-4" />
 
-              {saving
+              {savingProfile
                 ? "Salvando..."
-                : "Salvar"}
+                : "Salvar alterações"}
 
             </Button>
 
@@ -910,6 +1155,344 @@ function SettingsPage() {
 
       </Dialog>
 
+
+      {/* APARÊNCIA */}
+
+      <Dialog
+        open={
+          appearanceOpen
+        }
+        onOpenChange={
+          setAppearanceOpen
+        }
+      >
+
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+
+          <DialogHeader>
+
+            <DialogTitle>
+              Aparência
+            </DialogTitle>
+
+            <DialogDescription>
+              Personalize como o FinanLook aparece para você.
+            </DialogDescription>
+
+          </DialogHeader>
+
+
+          <div className="space-y-8 py-2">
+
+            <div>
+
+              <h3 className="font-semibold">
+                Modo
+              </h3>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Escolha a aparência clara, escura ou siga o sistema.
+              </p>
+
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+
+                <ThemeOption
+                  icon={
+                    <Sun className="size-5" />
+                  }
+                  title="Claro"
+                  description="Sempre usar claro"
+                  active={
+                    theme ===
+                    "light"
+                  }
+                  onClick={() =>
+                    changeTheme(
+                      "light",
+                    )
+                  }
+                />
+
+
+                <ThemeOption
+                  icon={
+                    <Moon className="size-5" />
+                  }
+                  title="Escuro"
+                  description="Sempre usar escuro"
+                  active={
+                    theme ===
+                    "dark"
+                  }
+                  onClick={() =>
+                    changeTheme(
+                      "dark",
+                    )
+                  }
+                />
+
+
+                <ThemeOption
+                  icon={
+                    <Monitor className="size-5" />
+                  }
+                  title="Sistema"
+                  description="Seguir dispositivo"
+                  active={
+                    theme ===
+                    "system"
+                  }
+                  onClick={() =>
+                    changeTheme(
+                      "system",
+                    )
+                  }
+                />
+
+              </div>
+
+            </div>
+
+
+            <div className="border-t pt-6">
+
+              <h3 className="font-semibold">
+                Estilo da interface
+              </h3>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Escolha o estilo visual geral.
+              </p>
+
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+                <ThemeOption
+                  title="Real"
+                  description="Visual padrão e equilibrado"
+                  active={
+                    themeStyle ===
+                    "real"
+                  }
+                  onClick={() =>
+                    changeThemeStyle(
+                      "real",
+                    )
+                  }
+                />
+
+
+                <ThemeOption
+                  title="Verdant"
+                  description="Visual com identidade mais natural"
+                  active={
+                    themeStyle ===
+                    "verdant"
+                  }
+                  onClick={() =>
+                    changeThemeStyle(
+                      "verdant",
+                    )
+                  }
+                />
+
+              </div>
+
+            </div>
+
+
+            <div className="border-t pt-6">
+
+              <h3 className="font-semibold">
+                Cor de destaque
+              </h3>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Altera botões, destaques e elementos principais.
+              </p>
+
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+                {THEME_COLORS.map(
+                  (
+                    color,
+                  ) => {
+
+                    const active =
+                      themeColor ===
+                      color.key;
+
+                    const swatch =
+                      themeColorSwatch(
+                        color.key,
+                        customColor,
+                      );
+
+
+                    return (
+                      <button
+                        key={
+                          color.key
+                        }
+                        type="button"
+                        onClick={() =>
+                          changeThemeColor(
+                            color.key,
+                          )
+                        }
+                        className={cn(
+                          "relative flex items-center gap-4 rounded-xl border p-4 text-left transition-all",
+
+                          active
+                            ? "border-primary bg-primary/10 shadow-sm"
+                            : "hover:border-primary/30 hover:bg-muted/50",
+                        )}
+                      >
+
+                        <div
+                          className="size-11 shrink-0 rounded-xl border shadow-sm"
+                          style={{
+                            backgroundColor:
+                              swatch,
+                          }}
+                        />
+
+
+                        <div className="min-w-0 flex-1">
+
+                          <div className="flex items-center gap-2">
+
+                            <p className="font-medium">
+                              {
+                                color.label
+                              }
+                            </p>
+
+
+                            {color.premium ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+
+                                <Crown className="size-3" />
+
+                                Premium
+
+                              </span>
+                            ) : null}
+
+                          </div>
+
+
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {
+                              color.description
+                            }
+                          </p>
+
+                        </div>
+
+
+                        {active ? (
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+
+                            <Check className="size-3.5" />
+
+                          </span>
+                        ) : color.premium ? (
+
+                          <Lock className="size-4 shrink-0 text-muted-foreground" />
+
+                        ) : null}
+
+                      </button>
+                    );
+                  },
+                )}
+
+              </div>
+
+
+              {themeColor ===
+              "custom" ? (
+
+                <div className="mt-5 rounded-xl border bg-muted/30 p-4">
+
+                  <Label htmlFor="custom-color">
+                    Cor personalizada
+                  </Label>
+
+
+                  <div className="mt-3 flex gap-3">
+
+                    <input
+                      id="custom-color"
+                      type="color"
+                      value={
+                        customColor
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setCustomColor(
+                          event.target.value,
+                        )
+                      }
+                      className="h-11 w-14 cursor-pointer rounded-lg border bg-transparent p-1"
+                    />
+
+
+                    <Input
+                      value={
+                        customColor
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setCustomColor(
+                          event.target.value,
+                        )
+                      }
+                      placeholder="#2f6df6"
+                      className="h-11 flex-1 uppercase"
+                    />
+
+                  </div>
+
+                </div>
+
+              ) : null}
+
+            </div>
+
+          </div>
+
+
+          <DialogFooter>
+
+            <Button
+              className="h-11 w-full"
+              onClick={() =>
+                setAppearanceOpen(
+                  false,
+                )
+              }
+            >
+
+              <Check className="size-4" />
+
+              Concluir
+
+            </Button>
+
+          </DialogFooter>
+
+        </DialogContent>
+
+      </Dialog>
+
+
+      {/* SEGURANÇA */}
 
       <Dialog
         open={
@@ -929,7 +1512,7 @@ function SettingsPage() {
             </DialogTitle>
 
             <DialogDescription>
-              Gerencie suas credenciais de acesso.
+              Gerencie suas informações e credenciais de acesso.
             </DialogDescription>
 
           </DialogHeader>
@@ -948,24 +1531,29 @@ function SettingsPage() {
                 ) ||
                 "Nenhum e-mail disponível"
               }
+              action="Alterar"
               onClick={() => {
                 setSecurityOpen(
                   false,
                 );
+
                 openEmail();
               }}
             />
+
 
             <SettingsRow
               icon={
                 <LockKeyhole className="size-5" />
               }
               title="Senha"
-              description="Alterar senha de acesso."
+              description="Altere sua senha de acesso."
+              action="Alterar"
               onClick={() => {
                 setSecurityOpen(
                   false,
                 );
+
                 openPassword();
               }}
             />
@@ -976,6 +1564,8 @@ function SettingsPage() {
 
       </Dialog>
 
+
+      {/* E-MAIL */}
 
       <Dialog
         open={
@@ -995,7 +1585,7 @@ function SettingsPage() {
             </DialogTitle>
 
             <DialogDescription>
-              Confirme o endereço atual e informe o novo.
+              Confirme o e-mail atual e informe o novo endereço.
             </DialogDescription>
 
           </DialogHeader>
@@ -1003,31 +1593,54 @@ function SettingsPage() {
 
           <div className="space-y-4">
 
-            <Field
-              id="current-email"
-              label="E-mail atual"
-              type="email"
-              value={
-                currentEmail
-              }
-              onChange={
-                setCurrentEmail
-              }
-              placeholder="Digite seu e-mail atual"
-            />
+            <div className="space-y-1.5">
 
-            <Field
-              id="new-email"
-              label="Novo e-mail"
-              type="email"
-              value={
-                newEmail
-              }
-              onChange={
-                setNewEmail
-              }
-              placeholder="Digite seu novo e-mail"
-            />
+              <Label htmlFor="current-email">
+                E-mail atual
+              </Label>
+
+              <Input
+                id="current-email"
+                type="email"
+                className="h-11"
+                value={
+                  currentEmail
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setCurrentEmail(
+                    event.target.value,
+                  )
+                }
+              />
+
+            </div>
+
+
+            <div className="space-y-1.5">
+
+              <Label htmlFor="new-email">
+                Novo e-mail
+              </Label>
+
+              <Input
+                id="new-email"
+                type="email"
+                className="h-11"
+                value={
+                  newEmail
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setNewEmail(
+                    event.target.value,
+                  )
+                }
+              />
+
+            </div>
 
           </div>
 
@@ -1037,7 +1650,7 @@ function SettingsPage() {
             <Button
               className="h-11 w-full"
               disabled={
-                saving
+                savingEmail
               }
               onClick={() =>
                 void saveEmail()
@@ -1046,7 +1659,7 @@ function SettingsPage() {
 
               <Mail className="size-4" />
 
-              {saving
+              {savingEmail
                 ? "Enviando..."
                 : "Continuar"}
 
@@ -1058,6 +1671,8 @@ function SettingsPage() {
 
       </Dialog>
 
+
+      {/* SENHA */}
 
       <Dialog
         open={
@@ -1091,6 +1706,7 @@ function SettingsPage() {
                 Nova senha
               </Label>
 
+
               <div className="relative">
 
                 <Input
@@ -1111,19 +1727,21 @@ function SettingsPage() {
                       event.target.value,
                     )
                   }
+                  autoComplete="new-password"
                 />
+
 
                 <button
                   type="button"
-                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center"
                   onClick={() =>
                     setShowPassword(
                       (
-                        value,
+                        current,
                       ) =>
-                        !value,
+                        !current,
                     )
                   }
+                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground"
                 >
 
                   {showPassword ? (
@@ -1139,668 +1757,24 @@ function SettingsPage() {
             </div>
 
 
-            <Field
-              id="confirm-password"
-              label="Confirmar nova senha"
-              type={
-                showPassword
-                  ? "text"
-                  : "password"
-              }
-              value={
-                confirmPassword
-              }
-              onChange={
-                setConfirmPassword
-              }
-              placeholder="Repita a nova senha"
-            />
-
-          </div>
-
-
-          <DialogFooter>
-
-            <Button
-              className="h-11 w-full"
-              disabled={
-                saving
-              }
-              onClick={() =>
-                void savePassword()
-              }
-            >
-
-              <LockKeyhole className="size-4" />
-
-              {saving
-                ? "Alterando..."
-                : "Alterar senha"}
-
-            </Button>
-
-          </DialogFooter>
-
-        </DialogContent>
-
-      </Dialog>
-
-
-      <Dialog
-        open={
-          appearanceOpen
-        }
-        onOpenChange={
-          setAppearanceOpen
-        }
-      >
-
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-
-          <DialogHeader>
-
-            <DialogTitle>
-              Aparência
-            </DialogTitle>
-
-            <DialogDescription>
-              Personalize como o FinanLook aparece para você.
-            </DialogDescription>
-
-          </DialogHeader>
-
-
-          <div className="space-y-7">
-
-            <AppearanceSection
-              title="Modo"
-              description="Escolha claro, escuro ou sistema."
-            >
-
-              <div className="grid gap-3 sm:grid-cols-3">
-
-                <ThemeButton
-                  icon={
-                    <Sun className="size-5" />
-                  }
-                  title="Claro"
-                  active={
-                    theme ===
-                    "light"
-                  }
-                  onClick={() =>
-                    changeTheme(
-                      "light",
-                    )
-                  }
-                />
-
-                <ThemeButton
-                  icon={
-                    <Moon className="size-5" />
-                  }
-                  title="Escuro"
-                  active={
-                    theme ===
-                    "dark"
-                  }
-                  onClick={() =>
-                    changeTheme(
-                      "dark",
-                    )
-                  }
-                />
-
-                <ThemeButton
-                  icon={
-                    <Monitor className="size-5" />
-                  }
-                  title="Sistema"
-                  active={
-                    theme ===
-                    "system"
-                  }
-                  onClick={() =>
-                    changeTheme(
-                      "system",
-                    )
-                  }
-                />
-
-              </div>
-
-            </AppearanceSection>
-
-
-            <AppearanceSection
-              title="Estilo"
-              description="Escolha o estilo visual da interface."
-            >
-
-              <div className="grid gap-3 sm:grid-cols-2">
-
-                <ThemeButton
-                  title="Real"
-                  description="Visual neutro e equilibrado."
-                  active={
-                    themeStyle ===
-                    "real"
-                  }
-                  onClick={() =>
-                    changeThemeStyle(
-                      "real",
-                    )
-                  }
-                />
-
-                <ThemeButton
-                  title="Verdant"
-                  description="Visual com personalidade esverdeada."
-                  active={
-                    themeStyle ===
-                    "verdant"
-                  }
-                  onClick={() =>
-                    changeThemeStyle(
-                      "verdant",
-                    )
-                  }
-                />
-
-              </div>
-
-            </AppearanceSection>
-
-
-            <AppearanceSection
-              title="Cor de destaque"
-              description="Altera botões, destaques e elementos principais."
-            >
-
-              <div className="grid gap-3 sm:grid-cols-2">
-
-                {THEME_COLORS.map(
-                  (
-                    color,
-                  ) => {
-
-                    const active =
-                      themeColor ===
-                      color.key;
-
-                    const swatch =
-                      themeColorSwatch(
-                        color.key,
-                        customColor,
-                      );
-
-                    return (
-                      <button
-                        key={
-                          color.key
-                        }
-                        type="button"
-                        onClick={() =>
-                          changeThemeColor(
-                            color.key,
-                          )
-                        }
-                        className={cn(
-                          "relative flex items-center gap-3 rounded-xl border p-4 text-left transition-all",
-                          active
-                            ? "border-primary bg-primary/10"
-                            : "hover:border-primary/40",
-                        )}
-                      >
-
-                        <span
-                          className="size-10 shrink-0 rounded-lg border"
-                          style={{
-                            backgroundColor:
-                              swatch,
-                          }}
-                        />
-
-                        <span className="min-w-0 flex-1">
-
-                          <span className="block font-medium">
-                            {
-                              color.label
-                            }
-                          </span>
-
-                          <span className="mt-1 block text-sm text-muted-foreground">
-                            {
-                              color.description
-                            }
-                          </span>
-
-                        </span>
-
-
-                        {active ? (
-                          <Check className="size-5 text-primary" />
-                        ) : null}
-
-                      </button>
-                    );
-                  },
-                )}
-
-              </div>
-
-
-              {themeColor ===
-              "custom" ? (
-
-                <div className="mt-4 flex gap-3 rounded-xl border p-4">
-
-                  <input
-                    type="color"
-                    value={
-                      customColor
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      setCustomColor(
-                        event.target.value,
-                      )
-                    }
-                    className="h-11 w-14"
-                  />
-
-                  <Input
-                    value={
-                      customColor
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      setCustomColor(
-                        event.target.value,
-                      )
-                    }
-                    className="h-11 flex-1"
-                  />
-
-                </div>
-
-              ) : null}
-
-            </AppearanceSection>
-
-          </div>
-
-
-          <DialogFooter>
-
-            <Button
-              className="h-11 w-full"
-              onClick={() =>
-                setAppearanceOpen(
-                  false,
-                )
-              }
-            >
-              Concluir
-            </Button>
-
-          </DialogFooter>
-
-        </DialogContent>
-
-      </Dialog>
-
-
-      <Dialog
-        open={
-          deleteOpen
-        }
-        onOpenChange={
-          setDeleteOpen
-        }
-      >
-
-        <DialogContent className="sm:max-w-md">
-
-          <DialogHeader>
-
-            <DialogTitle>
-              Excluir conta
-            </DialogTitle>
-
-            <DialogDescription>
-              Esta ação é permanente e não poderá ser desfeita.
-            </DialogDescription>
-
-          </DialogHeader>
-
-
-          <div className="space-y-4">
-
-            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-
-              <p className="font-medium text-destructive">
-                Atenção
-              </p>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Para confirmar, digite seu nome de usuário.
-              </p>
-
-            </div>
-
-
-            <Field
-              id="delete-username"
-              label="Nome de usuário"
-              value={
-                deleteUsername
-              }
-              onChange={
-                setDeleteUsername
-              }
-              placeholder={
-                accountUsername
-                  ? `@${accountUsername}`
-                  : "Seu nome de usuário"
-              }
-              disabled={
-                deleting
-              }
-            />
-
-          </div>
-
-
-          <DialogFooter className="gap-2">
-
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full"
-              disabled={
-                deleting
-              }
-              onClick={() =>
-                setDeleteOpen(
-                  false,
-                )
-              }
-            >
-              Cancelar
-            </Button>
-
-            <Button
-              type="button"
-              variant="destructive"
-              className="h-11 w-full"
-              disabled={
-                deleting
-              }
-              onClick={() =>
-                void deleteAccount()
-              }
-            >
-
-              <Trash2 className="size-4" />
-
-              {deleting
-                ? "Excluindo..."
-                : "Excluir conta"}
-
-            </Button>
-
-          </DialogFooter>
-
-        </DialogContent>
-
-      </Dialog>
-
-    </div>
-  );
-}
-
-
-type SettingsCardProps = {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  buttonText: string;
-  onClick: () => void;
-  danger?: boolean;
-};
-
-
-function SettingsCard({
-  icon,
-  title,
-  description,
-  buttonText,
-  onClick,
-  danger = false,
-}: SettingsCardProps) {
-  return (
-    <div className="rounded-xl border bg-card p-5 shadow-sm">
-
-      <div
-        className={cn(
-          "flex size-11 items-center justify-center rounded-xl",
-          danger
-            ? "bg-destructive/10 text-destructive"
-            : "bg-primary/10 text-primary",
-        )}
-      >
-        {icon}
-      </div>
-
-
-      <h2 className="mt-4 font-display text-lg font-semibold">
-        {title}
-      </h2>
-
-      <p className="mt-1 text-sm text-muted-foreground">
-        {description}
-      </p>
-
-
-      <Button
-        type="button"
-        variant={
-          danger
-            ? "destructive"
-            : "outline"
-        }
-        className="mt-5 w-full"
-        onClick={onClick}
-      >
-        {buttonText}
-        {!danger ? (
-          <ChevronRight className="size-4" />
-        ) : null}
-      </Button>
-
-    </div>
-  );
-}
-
-
-type SettingsRowProps = {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  onClick: () => void;
-};
-
-
-function SettingsRow({
-  icon,
-  title,
-  description,
-  onClick,
-}: SettingsRowProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3 p-4 text-left hover:bg-muted/50"
-    >
-
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        {icon}
-      </span>
-
-      <span className="min-w-0 flex-1">
-
-        <span className="block font-medium">
-          {title}
-        </span>
-
-        <span className="block truncate text-sm text-muted-foreground">
-          {description}
-        </span>
-
-      </span>
-
-      <ChevronRight className="size-4 text-muted-foreground" />
-
-    </button>
-  );
-}
-
-
-type FieldProps = {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  type?: string;
-  disabled?: boolean;
-};
-
-
-function Field({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-  disabled = false,
-}: FieldProps) {
-  return (
-    <div className="space-y-1.5">
-
-      <Label htmlFor={id}>
-        {label}
-      </Label>
-
-      <Input
-        id={id}
-        type={type}
-        className="h-11"
-        value={value}
-        onChange={(
-          event,
-        ) =>
-          onChange(
-            event.target.value,
-          )
-        }
-        placeholder={placeholder}
-        disabled={disabled}
-      />
-
-    </div>
-  );
-}
-
-
-type ThemeButtonProps = {
-  icon?: ReactNode;
-  title: string;
-  description?: string;
-  active: boolean;
-  onClick: () => void;
-};
-
-
-function ThemeButton({
-  icon,
-  title,
-  description,
-  active,
-  onClick,
-}: ThemeButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative rounded-xl border p-4 text-left transition-all",
-        active
-          ? "border-primary bg-primary/10"
-          : "hover:border-primary/40 hover:bg-muted/50",
-      )}
-    >
-
-      {active ? (
-        <Check className="absolute right-3 top-3 size-4 text-primary" />
-      ) : null}
-
-
-      {icon ? (
-        <div className="mb-3 text-muted-foreground">
-          {icon}
-        </div>
-      ) : null}
-
-
-      <p className="font-medium">
-        {title}
-      </p>
-
-
-      {description ? (
-        <p className="mt-1 text-sm text-muted-foreground">
-          {description}
-        </p>
-      ) : null}
-
-    </button>
-  );
-}
-
-
-type AppearanceSectionProps = {
-  title: string;
-  description: string;
-  children: ReactNode;
-};
-
-
-function AppearanceSection({
-  title,
-  description,
-  children,
-}: AppearanceSectionProps) {
-  return (
-    <section className="border-t pt-6">
-
-      <h3 className="font-semibold">
-        {title}
-      </h3>
-
-      <p className="mt-1 text-sm text-muted-foreground">
-        {description}
-      </p>
-
-      <div className="mt-4">
-        {children}
-      </div>
-
-    </section>
-  );
-}
+            <div className="space-y-1.5">
+
+              <Label htmlFor="confirm-password">
+                Confirmar nova senha
+              </Label>
+
+              <Input
+                id="confirm-password"
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
+                className="h-11"
+                value={
+                  confirmPassword
+                }
+                onChange={(
+                  event,
+                ) =>
+                 
