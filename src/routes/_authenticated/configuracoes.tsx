@@ -83,7 +83,7 @@ function SettingsPage() {
               Gerencie seu perfil, nome de usuário,
               e-mail e senha.
             "
-            to="/configuracoes/conta"
+            to="/configuracao/conta"
           />
 
 
