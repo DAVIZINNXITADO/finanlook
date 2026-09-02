@@ -21,7 +21,7 @@ import {
 
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracoes",
+    "/_authenticated/configuracao",
   )({
     head: () => ({
       meta: [
