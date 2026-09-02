@@ -1,494 +1,408 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+export type ThemeColorKey =
+  | "classic"
+  | "gold"
+  | "red"
+  | "blue"
+  | "yellow"
+  | "green"
+  | "purple"
+  | "custom";
 
-import {
-  buildThemeColorVars,
-  getThemeColor,
-  DEFAULT_CUSTOM_COLOR,
-  type ThemeColorKey,
-} from "@/lib/theme-colors";
+export const DEFAULT_CUSTOM_COLOR =
+  "#2f6df6";
 
-/* =========================================================
-   TIPOS
-   ========================================================= */
-
-export type Theme =
-  | "light"
-  | "dark"
-  | "system";
-
-export type ThemeStyle =
-  | "real"
-  | "verdant";
-
-type ThemeProviderProps = {
-  children: ReactNode;
-  defaultTheme?: Theme;
-  storageKey?: string;
+type ThemeColor = {
+  key: ThemeColorKey;
+  hue: number;
+  chroma: number;
+  light: number;
+  dark: number;
 };
 
-type ThemeProviderState = {
-  theme: Theme;
-
-  setTheme: (
-    theme: Theme,
-  ) => void;
-
-  resolvedTheme:
-    | "light"
-    | "dark";
-
-  themeColor: ThemeColorKey;
-
-  setThemeColor: (
-    color: ThemeColorKey,
-  ) => void;
-
-  customColor: string;
-
-  setCustomColor: (
-    hex: string,
-  ) => void;
-
-  themeStyle: ThemeStyle;
-
-  setThemeStyle: (
-    style: ThemeStyle,
-  ) => void;
-};
-
-/* =========================================================
-   CONTEXTO
-   ========================================================= */
-
-const ThemeProviderContext =
-  createContext<
-    ThemeProviderState | undefined
-  >(undefined);
-
-/* =========================================================
-   STORAGE KEYS
-   ========================================================= */
-
-const COLOR_STORAGE_KEY =
-  "finanlook-theme-color";
-
-const CUSTOM_STORAGE_KEY =
-  "finanlook-theme-custom-color";
-
-const STYLE_STORAGE_KEY =
-  "finanlook-theme-style";
-
-/* =========================================================
-   SISTEMA
-   ========================================================= */
-
-function getSystemTheme():
-  | "light"
-  | "dark" {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
-    return "light";
-  }
-
-  return window.matchMedia(
-    "(prefers-color-scheme: dark)",
-  ).matches
-    ? "dark"
-    : "light";
-}
-
-/* =========================================================
-   PROVIDER
-   ========================================================= */
-
-export function ThemeProvider({
-  children,
-  defaultTheme = "system",
-  storageKey = "finanlook-theme",
-}: ThemeProviderProps) {
-  /* =======================================================
-     ESTADO DO TEMA CLARO / ESCURO
-     ======================================================= */
-
-  const [
-    theme,
-    setThemeState,
-  ] =
-    useState<Theme>(
-      defaultTheme,
-    );
-
-  const [
-    resolvedTheme,
-    setResolvedTheme,
-  ] =
-    useState<
-      "light" | "dark"
-    >("light");
-
-  /* =======================================================
-     COR
-     ======================================================= */
-
-  const [
-    themeColor,
-    setThemeColorState,
-  ] =
-    useState<ThemeColorKey>(
-      "classic",
-    );
-
-  const [
-    customColor,
-    setCustomColorState,
-  ] =
-    useState<string>(
-      DEFAULT_CUSTOM_COLOR,
-    );
-
-  /* =======================================================
-     ESTILO DA COR
-     ======================================================= */
-
-  const [
-    themeStyle,
-    setThemeStyleState,
-  ] =
-    useState<ThemeStyle>(
-      "real",
-    );
-
-  /* =======================================================
-     CARREGAR PREFERÊNCIAS
-     ======================================================= */
-
-  useEffect(() => {
-    const savedTheme =
-      window.localStorage.getItem(
-        storageKey,
-      );
-
-    if (
-      savedTheme === "light" ||
-      savedTheme === "dark" ||
-      savedTheme === "system"
-    ) {
-      setThemeState(
-        savedTheme,
-      );
-    }
-
-    /* ----------------------------------------------------- */
-
-    const savedColor =
-      window.localStorage.getItem(
-        COLOR_STORAGE_KEY,
-      ) as ThemeColorKey | null;
-
-    if (
-      savedColor &&
-      getThemeColor(
-        savedColor,
-      ).key === savedColor
-    ) {
-      setThemeColorState(
-        savedColor,
-      );
-    }
-
-    /* ----------------------------------------------------- */
-
-    const savedCustom =
-      window.localStorage.getItem(
-        CUSTOM_STORAGE_KEY,
-      );
-
-    if (
-      savedCustom &&
-      /^#[0-9a-fA-F]{6}$/.test(
-        savedCustom,
-      )
-    ) {
-      setCustomColorState(
-        savedCustom,
-      );
-    }
-
-    /* ----------------------------------------------------- */
-
-    const savedStyle =
-      window.localStorage.getItem(
-        STYLE_STORAGE_KEY,
-      );
-
-    if (
-      savedStyle === "real" ||
-      savedStyle === "verdant"
-    ) {
-      setThemeStyleState(
-        savedStyle,
-      );
-    }
-  }, [
-    storageKey,
-  ]);
-
-  /* =======================================================
-     APLICAR CLARO / ESCURO
-     ======================================================= */
-
-  useEffect(() => {
-    const root =
-      window.document
-        .documentElement;
-
-    function applyTheme(
-      selectedTheme: Theme,
-    ) {
-      const resolved =
-        selectedTheme ===
-        "system"
-          ? getSystemTheme()
-          : selectedTheme;
-
-      root.classList.toggle(
-        "dark",
-        resolved === "dark",
-      );
-
-      setResolvedTheme(
-        resolved,
-      );
-    }
-
-    applyTheme(
-      theme,
-    );
-
-    if (
-      theme !==
-      "system"
-    ) {
-      return;
-    }
-
-    const mediaQuery =
-      window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      );
-
-    function handleChange() {
-      applyTheme(
-        "system",
-      );
-    }
-
-    mediaQuery.addEventListener(
-      "change",
-      handleChange,
-    );
-
-    return () => {
-      mediaQuery.removeEventListener(
-        "change",
-        handleChange,
-      );
-    };
-  }, [
-    theme,
-  ]);
-
-  /* =======================================================
-     APLICAR PALETA
-     ======================================================= */
-
-  useEffect(() => {
-    const root =
-      window.document
-        .documentElement;
-
-    /*
-     * buildThemeColorVars agora recebe também
-     * o estilo escolhido.
-     */
-
-    const vars =
-      buildThemeColorVars(
-        themeColor,
-        resolvedTheme,
-        customColor,
-        themeStyle,
-      );
-
-    const keys = [
-      "--primary",
-      "--primary-foreground",
-      "--ring",
-      "--accent",
-      "--accent-foreground",
-      "--sidebar-primary",
-      "--sidebar-primary-foreground",
-      "--sidebar-accent",
-      "--sidebar-accent-foreground",
-      "--sidebar-ring",
-      "--chart-1",
-    ];
-
-    /*
-     * Remove as variáveis anteriores antes
-     * de aplicar as novas.
-     */
-
-    keys.forEach(
-      (key) => {
-        root.style.removeProperty(
-          key,
-        );
-      },
-    );
-
-    if (
-      !vars
-    ) {
-      return;
-    }
-
-    Object.entries(
-      vars,
-    ).forEach(
-      ([
-        key,
-        value,
-      ]) => {
-        root.style.setProperty(
-          key,
-          value,
-        );
-      },
-    );
-  }, [
-    themeColor,
-    customColor,
-    resolvedTheme,
-    themeStyle,
-  ]);
-
-  /* =======================================================
-     AÇÕES
-     ======================================================= */
-
-  function setTheme(
-    newTheme: Theme,
-  ) {
-    window.localStorage.setItem(
-      storageKey,
-      newTheme,
-    );
-
-    setThemeState(
-      newTheme,
-    );
-  }
-
-  function setThemeColor(
-    color: ThemeColorKey,
-  ) {
-    window.localStorage.setItem(
-      COLOR_STORAGE_KEY,
-      color,
-    );
-
-    setThemeColorState(
-      color,
-    );
-  }
-
-  function setCustomColor(
-    hex: string,
-  ) {
-    if (
-      !/^#[0-9a-fA-F]{6}$/.test(
-        hex,
-      )
-    ) {
-      return;
-    }
-
-    window.localStorage.setItem(
-      CUSTOM_STORAGE_KEY,
-      hex,
-    );
-
-    setCustomColorState(
-      hex,
-    );
-  }
-
-  function setThemeStyle(
-    style: ThemeStyle,
-  ) {
-    window.localStorage.setItem(
-      STYLE_STORAGE_KEY,
-      style,
-    );
-
-    setThemeStyleState(
-      style,
-    );
-  }
-
-  /* =======================================================
-     PROVIDER
-     ======================================================= */
-
+const THEME_COLORS: ThemeColor[] = [
+  {
+    key: "classic",
+    hue: 162,
+    chroma: 0.13,
+    light: 0.56,
+    dark: 0.72,
+  },
+  {
+    key: "gold",
+    hue: 85,
+    chroma: 0.11,
+    light: 0.62,
+    dark: 0.78,
+  },
+  {
+    key: "red",
+    hue: 25,
+    chroma: 0.17,
+    light: 0.55,
+    dark: 0.67,
+  },
+  {
+    key: "blue",
+    hue: 250,
+    chroma: 0.14,
+    light: 0.55,
+    dark: 0.7,
+  },
+  {
+    key: "yellow",
+    hue: 95,
+    chroma: 0.14,
+    light: 0.72,
+    dark: 0.84,
+  },
+  {
+    key: "green",
+    hue: 145,
+    chroma: 0.15,
+    light: 0.58,
+    dark: 0.73,
+  },
+  {
+    key: "purple",
+    hue: 300,
+    chroma: 0.15,
+    light: 0.55,
+    dark: 0.71,
+  },
+  {
+    key: "custom",
+    hue: 200,
+    chroma: 0.13,
+    light: 0.56,
+    dark: 0.72,
+  },
+];
+
+export function getThemeColor(
+  key: ThemeColorKey,
+) {
   return (
-    <ThemeProviderContext.Provider
-      value={{
-        theme,
-        setTheme,
-
-        resolvedTheme,
-
-        themeColor,
-        setThemeColor,
-
-        customColor,
-        setCustomColor,
-
-        themeStyle,
-        setThemeStyle,
-      }}
-    >
-      {children}
-    </ThemeProviderContext.Provider>
+    THEME_COLORS.find(
+      (color) =>
+        color.key === key,
+    ) ??
+    THEME_COLORS[0]
   );
 }
 
-/* =========================================================
-   HOOK
-   ========================================================= */
+function clamp(
+  value: number,
+  min: number,
+  max: number,
+) {
+  return Math.min(
+    max,
+    Math.max(
+      min,
+      value,
+    ),
+  );
+}
 
-export function useTheme() {
-  const context =
-    useContext(
-      ThemeProviderContext,
+function oklch(
+  lightness: number,
+  chroma: number,
+  hue: number,
+) {
+  return `oklch(${lightness} ${chroma} ${hue})`;
+}
+
+function hexToRgb(
+  hex: string,
+) {
+  const value =
+    hex.replace(
+      "#",
+      "",
     );
 
   if (
-    !context
+    !/^[0-9a-fA-F]{6}$/.test(
+      value,
+    )
   ) {
-    throw new Error(
-      "useTheme must be used inside ThemeProvider.",
-    );
+    return {
+      r: 47,
+      g: 109,
+      b: 246,
+    };
   }
 
-  return context;
+  return {
+    r: parseInt(
+      value.slice(0, 2),
+      16,
+    ),
+
+    g: parseInt(
+      value.slice(2, 4),
+      16,
+    ),
+
+    b: parseInt(
+      value.slice(4, 6),
+      16,
+    ),
+  };
+}
+
+function hexToOklch(
+  hex: string,
+) {
+  const {
+    r,
+    g,
+    b,
+  } =
+    hexToRgb(
+      hex,
+    );
+
+  const max =
+    Math.max(
+      r,
+      g,
+      b,
+    ) / 255;
+
+  const min =
+    Math.min(
+      r,
+      g,
+      b,
+    ) / 255;
+
+  const lightness =
+    clamp(
+      (max + min) /
+        2,
+      0.48,
+      0.78,
+    );
+
+  const chroma =
+    clamp(
+      (max - min) *
+        0.16,
+      0.05,
+      0.16,
+    );
+
+  let hue = 220;
+
+  if (
+    max !== min
+  ) {
+    const red =
+      r / 255;
+
+    const green =
+      g / 255;
+
+    const blue =
+      b / 255;
+
+    if (
+      max === red
+    ) {
+      hue =
+        60 *
+        (
+          (green - blue) /
+          (max - min)
+        );
+    } else if (
+      max === green
+    ) {
+      hue =
+        60 *
+        (
+          2 +
+          (
+            red - blue
+          ) /
+            (max - min)
+        );
+    } else {
+      hue =
+        60 *
+        (
+          4 +
+          (
+            red - green
+          ) /
+            (max - min)
+        );
+    }
+
+    if (
+      hue < 0
+    ) {
+      hue += 360;
+    }
+  }
+
+  return {
+    lightness,
+    chroma,
+    hue,
+  };
+}
+
+export function buildThemeColorVars(
+  key: ThemeColorKey,
+  mode: "light" | "dark",
+  customHex: string,
+  themeStyle?: "real" | "verdant",
+): Record<string, string> | null {
+  if (
+    key ===
+    "classic"
+  ) {
+    return null;
+  }
+
+  const color =
+    getThemeColor(
+      key,
+    );
+
+  let hue =
+    color.hue;
+
+  let chroma =
+    color.chroma;
+
+  let lightness =
+    mode === "dark"
+      ? color.dark
+      : color.light;
+
+  if (
+    key ===
+    "custom"
+  ) {
+    const parsed =
+      hexToOklch(
+        customHex,
+      );
+
+    hue =
+      parsed.hue;
+
+    chroma =
+      parsed.chroma;
+
+    lightness =
+      mode === "dark"
+        ? clamp(
+            parsed.lightness,
+            0.62,
+            0.84,
+          )
+        : clamp(
+            parsed.lightness,
+            0.48,
+            0.68,
+          );
+  }
+
+  if (
+    themeStyle ===
+    "verdant"
+  ) {
+    chroma =
+      Math.min(
+        chroma +
+          0.005,
+        0.16,
+      );
+  }
+
+  const primary =
+    oklch(
+      lightness,
+      chroma,
+      hue,
+    );
+
+  const isLight =
+    lightness >=
+    0.68;
+
+  const primaryForeground =
+    isLight
+      ? oklch(
+          0.2,
+          0.02,
+          hue,
+        )
+      : oklch(
+          0.98,
+          0.01,
+          hue,
+        );
+
+  const accent =
+    mode === "dark"
+      ? oklch(
+          0.32,
+          Math.min(
+            chroma,
+            0.06,
+          ),
+          hue,
+        )
+      : oklch(
+          0.93,
+          Math.min(
+            chroma,
+            0.05,
+          ),
+          hue,
+        );
+
+  return {
+    "--primary":
+      primary,
+
+    "--primary-foreground":
+      primaryForeground,
+
+    "--ring":
+      primary,
+
+    "--accent":
+      accent,
+
+    "--accent-foreground":
+      mode === "dark"
+        ? "oklch(0.96 0.01 0)"
+        : "oklch(0.3 0.03 0)",
+
+    "--sidebar-primary":
+      primary,
+
+    "--sidebar-primary-foreground":
+      primaryForeground,
+
+    "--sidebar-accent":
+      accent,
+
+    "--sidebar-accent-foreground":
+      mode === "dark"
+        ? "oklch(0.96 0.01 0)"
+        : "oklch(0.3 0.03 0)",
+
+    "--sidebar-ring":
+      primary,
+
+    "--chart-1":
+      primary,
+  };
 }
