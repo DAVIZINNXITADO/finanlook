@@ -13,10 +13,18 @@ import {
   type ThemeColorKey,
 } from "@/lib/theme-colors";
 
+/* =========================================================
+   TIPOS
+   ========================================================= */
+
 export type Theme =
   | "light"
   | "dark"
   | "system";
+
+export type ThemeStyle =
+  | "real"
+  | "verdant";
 
 type ThemeProviderProps = {
   children: ReactNode;
@@ -26,18 +34,46 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme;
-  setTheme: (theme: Theme) => void;
-  resolvedTheme: "light" | "dark";
+
+  setTheme: (
+    theme: Theme,
+  ) => void;
+
+  resolvedTheme:
+    | "light"
+    | "dark";
+
   themeColor: ThemeColorKey;
-  setThemeColor: (color: ThemeColorKey) => void;
+
+  setThemeColor: (
+    color: ThemeColorKey,
+  ) => void;
+
   customColor: string;
-  setCustomColor: (hex: string) => void;
+
+  setCustomColor: (
+    hex: string,
+  ) => void;
+
+  themeStyle: ThemeStyle;
+
+  setThemeStyle: (
+    style: ThemeStyle,
+  ) => void;
 };
 
+/* =========================================================
+   CONTEXTO
+   ========================================================= */
+
 const ThemeProviderContext =
-  createContext<ThemeProviderState | undefined>(
-    undefined,
-  );
+  createContext<
+    ThemeProviderState | undefined
+  >(undefined);
+
+/* =========================================================
+   STORAGE KEYS
+   ========================================================= */
 
 const COLOR_STORAGE_KEY =
   "finanlook-theme-color";
@@ -45,12 +81,20 @@ const COLOR_STORAGE_KEY =
 const CUSTOM_STORAGE_KEY =
   "finanlook-theme-custom-color";
 
+const STYLE_STORAGE_KEY =
+  "finanlook-theme-style";
+
 /* =========================================================
    SISTEMA
    ========================================================= */
 
-function getSystemTheme(): "light" | "dark" {
-  if (typeof window === "undefined") {
+function getSystemTheme():
+  | "light"
+  | "dark" {
+  if (
+    typeof window ===
+    "undefined"
+  ) {
     return "light";
   }
 
@@ -62,7 +106,7 @@ function getSystemTheme(): "light" | "dark" {
 }
 
 /* =========================================================
-   THEME PROVIDER
+   PROVIDER
    ========================================================= */
 
 export function ThemeProvider({
@@ -70,41 +114,79 @@ export function ThemeProvider({
   defaultTheme = "system",
   storageKey = "finanlook-theme",
 }: ThemeProviderProps) {
+  /* =======================================================
+     ESTADO DO TEMA CLARO / ESCURO
+     ======================================================= */
+
   const [
     theme,
     setThemeState,
-  ] = useState<Theme>(defaultTheme);
+  ] =
+    useState<Theme>(
+      defaultTheme,
+    );
 
   const [
     resolvedTheme,
     setResolvedTheme,
-  ] = useState<"light" | "dark">("light");
+  ] =
+    useState<
+      "light" | "dark"
+    >("light");
+
+  /* =======================================================
+     COR
+     ======================================================= */
 
   const [
     themeColor,
     setThemeColorState,
-  ] = useState<ThemeColorKey>("classic");
+  ] =
+    useState<ThemeColorKey>(
+      "classic",
+    );
 
   const [
     customColor,
     setCustomColorState,
-  ] = useState<string>(DEFAULT_CUSTOM_COLOR);
+  ] =
+    useState<string>(
+      DEFAULT_CUSTOM_COLOR,
+    );
 
   /* =======================================================
-     CARREGAR PREFERÊNCIAS SALVAS
+     ESTILO DA COR
+     ======================================================= */
+
+  const [
+    themeStyle,
+    setThemeStyleState,
+  ] =
+    useState<ThemeStyle>(
+      "real",
+    );
+
+  /* =======================================================
+     CARREGAR PREFERÊNCIAS
      ======================================================= */
 
   useEffect(() => {
     const savedTheme =
-      window.localStorage.getItem(storageKey);
+      window.localStorage.getItem(
+        storageKey,
+      );
 
     if (
       savedTheme === "light" ||
       savedTheme === "dark" ||
       savedTheme === "system"
     ) {
-      setThemeState(savedTheme);
+      setThemeState(
+        savedTheme,
+      );
     }
+
+    /* ----------------------------------------------------- */
 
     const savedColor =
       window.localStorage.getItem(
@@ -113,10 +195,16 @@ export function ThemeProvider({
 
     if (
       savedColor &&
-      getThemeColor(savedColor).key === savedColor
+      getThemeColor(
+        savedColor,
+      ).key === savedColor
     ) {
-      setThemeColorState(savedColor);
+      setThemeColorState(
+        savedColor,
+      );
     }
+
+    /* ----------------------------------------------------- */
 
     const savedCustom =
       window.localStorage.getItem(
@@ -125,22 +213,49 @@ export function ThemeProvider({
 
     if (
       savedCustom &&
-      /^#[0-9a-fA-F]{6}$/.test(savedCustom)
+      /^#[0-9a-fA-F]{6}$/.test(
+        savedCustom,
+      )
     ) {
-      setCustomColorState(savedCustom);
+      setCustomColorState(
+        savedCustom,
+      );
     }
-  }, [storageKey]);
+
+    /* ----------------------------------------------------- */
+
+    const savedStyle =
+      window.localStorage.getItem(
+        STYLE_STORAGE_KEY,
+      );
+
+    if (
+      savedStyle === "real" ||
+      savedStyle === "verdant"
+    ) {
+      setThemeStyleState(
+        savedStyle,
+      );
+    }
+  }, [
+    storageKey,
+  ]);
 
   /* =======================================================
      APLICAR CLARO / ESCURO
      ======================================================= */
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    const root =
+      window.document
+        .documentElement;
 
-    function applyTheme(selectedTheme: Theme) {
+    function applyTheme(
+      selectedTheme: Theme,
+    ) {
       const resolved =
-        selectedTheme === "system"
+        selectedTheme ===
+        "system"
           ? getSystemTheme()
           : selectedTheme;
 
@@ -149,21 +264,31 @@ export function ThemeProvider({
         resolved === "dark",
       );
 
-      setResolvedTheme(resolved);
+      setResolvedTheme(
+        resolved,
+      );
     }
 
-    applyTheme(theme);
+    applyTheme(
+      theme,
+    );
 
-    if (theme !== "system") {
+    if (
+      theme !==
+      "system"
+    ) {
       return;
     }
 
-    const mediaQuery = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    );
+    const mediaQuery =
+      window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      );
 
     function handleChange() {
-      applyTheme("system");
+      applyTheme(
+        "system",
+      );
     }
 
     mediaQuery.addEventListener(
@@ -177,20 +302,31 @@ export function ThemeProvider({
         handleChange,
       );
     };
-  }, [theme]);
+  }, [
+    theme,
+  ]);
 
   /* =======================================================
-     APLICAR PALETA DE COR
+     APLICAR PALETA
      ======================================================= */
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    const root =
+      window.document
+        .documentElement;
 
-    const vars = buildThemeColorVars(
-      themeColor,
-      resolvedTheme,
-      customColor,
-    );
+    /*
+     * buildThemeColorVars agora recebe também
+     * o estilo escolhido.
+     */
+
+    const vars =
+      buildThemeColorVars(
+        themeColor,
+        resolvedTheme,
+        customColor,
+        themeStyle,
+      );
 
     const keys = [
       "--primary",
@@ -206,66 +342,129 @@ export function ThemeProvider({
       "--chart-1",
     ];
 
-    keys.forEach((key) => {
-      root.style.removeProperty(key);
-    });
+    /*
+     * Remove as variáveis anteriores antes
+     * de aplicar as novas.
+     */
 
-    if (!vars) {
+    keys.forEach(
+      (key) => {
+        root.style.removeProperty(
+          key,
+        );
+      },
+    );
+
+    if (
+      !vars
+    ) {
       return;
     }
 
-    Object.entries(vars).forEach(
-      ([key, value]) => {
-        root.style.setProperty(key, value);
+    Object.entries(
+      vars,
+    ).forEach(
+      ([
+        key,
+        value,
+      ]) => {
+        root.style.setProperty(
+          key,
+          value,
+        );
       },
     );
   }, [
     themeColor,
     customColor,
     resolvedTheme,
+    themeStyle,
   ]);
 
   /* =======================================================
      AÇÕES
      ======================================================= */
 
-  function setTheme(newTheme: Theme) {
+  function setTheme(
+    newTheme: Theme,
+  ) {
     window.localStorage.setItem(
       storageKey,
       newTheme,
     );
 
-    setThemeState(newTheme);
+    setThemeState(
+      newTheme,
+    );
   }
 
-  function setThemeColor(color: ThemeColorKey) {
+  function setThemeColor(
+    color: ThemeColorKey,
+  ) {
     window.localStorage.setItem(
       COLOR_STORAGE_KEY,
       color,
     );
 
-    setThemeColorState(color);
+    setThemeColorState(
+      color,
+    );
   }
 
-  function setCustomColor(hex: string) {
+  function setCustomColor(
+    hex: string,
+  ) {
+    if (
+      !/^#[0-9a-fA-F]{6}$/.test(
+        hex,
+      )
+    ) {
+      return;
+    }
+
     window.localStorage.setItem(
       CUSTOM_STORAGE_KEY,
       hex,
     );
 
-    setCustomColorState(hex);
+    setCustomColorState(
+      hex,
+    );
   }
+
+  function setThemeStyle(
+    style: ThemeStyle,
+  ) {
+    window.localStorage.setItem(
+      STYLE_STORAGE_KEY,
+      style,
+    );
+
+    setThemeStyleState(
+      style,
+    );
+  }
+
+  /* =======================================================
+     PROVIDER
+     ======================================================= */
 
   return (
     <ThemeProviderContext.Provider
       value={{
         theme,
         setTheme,
+
         resolvedTheme,
+
         themeColor,
         setThemeColor,
+
         customColor,
         setCustomColor,
+
+        themeStyle,
+        setThemeStyle,
       }}
     >
       {children}
@@ -278,11 +477,14 @@ export function ThemeProvider({
    ========================================================= */
 
 export function useTheme() {
-  const context = useContext(
-    ThemeProviderContext,
-  );
+  const context =
+    useContext(
+      ThemeProviderContext,
+    );
 
-  if (!context) {
+  if (
+    !context
+  ) {
     throw new Error(
       "useTheme must be used inside ThemeProvider.",
     );
