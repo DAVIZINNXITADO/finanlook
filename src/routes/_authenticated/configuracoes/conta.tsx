@@ -8,8 +8,13 @@ import {
   useState,
 } from "react";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import {
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import {
+  toast,
+} from "sonner";
 
 import {
   ArrowLeft,
@@ -22,12 +27,25 @@ import {
   User,
 } from "lucide-react";
 
-import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  PageHeader,
+} from "@/components/PageHeader";
 
-import { supabase } from "@/integrations/supabase/client";
+import {
+  Button,
+} from "@/components/ui/button";
+
+import {
+  Input,
+} from "@/components/ui/input";
+
+import {
+  Label,
+} from "@/components/ui/label";
+
+import {
+  supabase,
+} from "@/integrations/supabase/client";
 
 import {
   useProfile,
@@ -35,249 +53,673 @@ import {
 } from "@/lib/data";
 
 
-export const Route = createFileRoute(
-  "/_authenticated/configuracoes/conta"
-)({
-  head: () => ({
-    meta: [
-      {
-        title: "Conta — FinanLook",
-      },
-      {
-        name: "description",
-        content: "Gerencie seu perfil, e-mail e senha.",
-      },
-    ],
-  }),
+/* =========================================================
+   ROTA
+   ========================================================= */
 
-  component: ContaPage,
-});
+export const Route =
+  createFileRoute(
+    "/_authenticated/configuracoes/conta",
+  )({
+    head: () => ({
+      meta: [
+        {
+          title:
+            "Conta — FinanLook",
+        },
+        {
+          name:
+            "description",
+          content:
+            "Gerencie seu perfil, e-mail e senha.",
+        },
+      ],
+    }),
 
+    component:
+      ContaPage,
+  });
+
+
+/* =========================================================
+   PÁGINA
+   ========================================================= */
 
 function ContaPage() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  const { data: profile } = useProfile();
-  const { data: authUser } = useUser();
+  const navigate =
+    useNavigate();
 
-
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [currentEmail, setCurrentEmail] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [savingEmail, setSavingEmail] = useState(false);
-  const [savingPassword, setSavingPassword] = useState(false);
+  const queryClient =
+    useQueryClient();
 
 
-  useEffect(() => {
-    setName(profile?.name ?? "");
-    setUsername(profile?.username ?? "");
-  }, [
-    profile?.name,
-    profile?.username,
-  ]);
+  /* =======================================================
+     DADOS
+     ======================================================= */
+
+  const {
+    data: profile,
+  } =
+    useProfile();
 
 
-  useEffect(() => {
-    setCurrentEmail(authUser?.email ?? "");
-  }, [
-    authUser?.email,
-  ]);
+  const {
+    data: authUser,
+  } =
+    useUser();
 
+
+  /* =======================================================
+     ESTADOS DO PERFIL
+     ======================================================= */
+
+  const [
+    name,
+    setName,
+  ] =
+    useState("");
+
+
+  const [
+    username,
+    setUsername,
+  ] =
+    useState("");
+
+
+  /* =======================================================
+     ESTADOS DO E-MAIL
+     ======================================================= */
+
+  const [
+    currentEmail,
+    setCurrentEmail,
+  ] =
+    useState("");
+
+
+  const [
+    newEmail,
+    setNewEmail,
+  ] =
+    useState("");
+
+
+  /* =======================================================
+     ESTADOS DA SENHA
+     ======================================================= */
+
+  const [
+    newPassword,
+    setNewPassword,
+  ] =
+    useState("");
+
+
+  const [
+    confirmPassword,
+    setConfirmPassword,
+  ] =
+    useState("");
+
+
+  const [
+    showPassword,
+    setShowPassword,
+  ] =
+    useState(false);
+
+
+  /* =======================================================
+     ESTADOS DE CARREGAMENTO
+     ======================================================= */
+
+  const [
+    savingProfile,
+    setSavingProfile,
+  ] =
+    useState(false);
+
+
+  const [
+    savingEmail,
+    setSavingEmail,
+  ] =
+    useState(false);
+
+
+  const [
+    savingPassword,
+    setSavingPassword,
+  ] =
+    useState(false);
+
+
+  /* =======================================================
+     CARREGAR PERFIL
+     ======================================================= */
+
+  useEffect(
+    () => {
+
+      setName(
+        profile?.name ??
+        "",
+      );
+
+
+      setUsername(
+        profile?.username ??
+        "",
+      );
+
+    },
+    [
+      profile?.name,
+      profile?.username,
+    ],
+  );
+
+
+  /* =======================================================
+     CARREGAR E-MAIL ATUAL
+     ======================================================= */
+
+  useEffect(
+    () => {
+
+      setCurrentEmail(
+        authUser?.email ??
+        "",
+      );
+
+    },
+    [
+      authUser?.email,
+    ],
+  );
+
+
+  /* =======================================================
+     SALVAR PERFIL
+     ======================================================= */
 
   async function saveProfile() {
-    const cleanName = name.trim();
 
-    const cleanUsername = username
-      .trim()
-      .replace(/^@/, "")
-      .toLowerCase();
+    const cleanName =
+      name.trim();
 
 
-    if (!cleanName) {
-      toast.error("Informe seu nome.");
-      return;
-    }
+    const cleanUsername =
+      username
+        .trim()
+        .replace(
+          /^@/,
+          "",
+        )
+        .toLowerCase();
 
 
-    if (!cleanUsername) {
-      toast.error("Informe seu nome de usuário.");
-      return;
-    }
+    if (
+      !cleanName
+    ) {
 
-
-    if (cleanUsername.length < 3) {
       toast.error(
-        "O nome de usuário precisa ter pelo menos 3 caracteres."
+        "Informe seu nome.",
       );
 
       return;
     }
 
 
-    if (!/^[a-zA-Z0-9._-]+$/.test(cleanUsername)) {
+    if (
+      !cleanUsername
+    ) {
+
       toast.error(
-        "Use apenas letras, números, ponto, hífen ou underline."
+        "Informe seu nome de usuário.",
       );
 
       return;
     }
 
 
-    setSavingProfile(true);
+    if (
+      cleanUsername.length <
+      3
+    ) {
+
+      toast.error(
+        "O nome de usuário precisa ter pelo menos 3 caracteres.",
+      );
+
+      return;
+    }
+
+
+    if (
+      !/^[a-zA-Z0-9._-]+$/.test(
+        cleanUsername,
+      )
+    ) {
+
+      toast.error(
+        "Use apenas letras, números, ponto, hífen ou underline.",
+      );
+
+      return;
+    }
+
+
+    setSavingProfile(
+      true,
+    );
 
 
     try {
+
       const {
         data,
         error: userError,
-      } = await supabase.auth.getUser();
+      } =
+        await supabase
+          .auth
+          .getUser();
 
 
-      if (userError || !data.user) {
+      if (
+        userError ||
+        !data.user
+      ) {
+
         throw new Error(
-          "Usuário não autenticado."
+          "Usuário não autenticado.",
         );
       }
 
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          name: cleanName.slice(0, 80),
-          username: cleanUsername.slice(0, 40),
-        })
-        .eq("id", data.user.id);
+      const {
+        error,
+      } =
+        await supabase
+          .from("profiles")
+          .update({
+            name:
+              cleanName.slice(
+                0,
+                80,
+              ),
+
+            username:
+              cleanUsername.slice(
+                0,
+                40,
+              ),
+          })
+          .eq(
+            "id",
+            data.user.id,
+          );
 
 
-      if (error) {
+      if (
+        error
+      ) {
+
         throw error;
       }
 
 
       await queryClient.invalidateQueries({
-        queryKey: ["profile"],
+        queryKey: [
+          "profile",
+        ],
       });
 
 
       toast.success(
-        "Perfil atualizado com sucesso."
+        "Perfil atualizado com sucesso.",
       );
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        error,
+      );
+
+
       toast.error(
         error instanceof Error
           ? error.message
-          : "Não foi possível atualizar seu perfil."
+          : "Não foi possível atualizar seu perfil.",
       );
+
     } finally {
-      setSavingProfile(false);
+
+      setSavingProfile(
+        false,
+      );
     }
   }
 
 
+  /* =======================================================
+     ALTERAR E-MAIL
+     ======================================================= */
+
   async function saveEmail() {
-    const current = currentEmail.trim().toLowerCase();
-    const next = newEmail.trim().toLowerCase();
-    const accountEmail = authUser?.email?.trim().toLowerCase() ?? "";
 
-    if (!accountEmail) {
-      toast.error("Não foi possível identificar o e-mail da sua conta.");
+    const current =
+      currentEmail
+        .trim()
+        .toLowerCase();
+
+
+    const next =
+      newEmail
+        .trim()
+        .toLowerCase();
+
+
+    const accountEmail =
+      authUser
+        ?.email
+        ?.trim()
+        .toLowerCase() ??
+      "";
+
+
+    /* -----------------------------------------------------
+       VERIFICAR USUÁRIO
+       ----------------------------------------------------- */
+
+    if (
+      !accountEmail
+    ) {
+
+      toast.error(
+        "Não foi possível identificar o e-mail da sua conta.",
+      );
+
       return;
     }
 
-    if (current !== accountEmail) {
-      toast.error("Digite corretamente o seu e-mail atual.");
+
+    /* -----------------------------------------------------
+       VERIFICAR E-MAIL ATUAL
+       ----------------------------------------------------- */
+
+    if (
+      current !==
+      accountEmail
+    ) {
+
+      toast.error(
+        "Digite corretamente o seu e-mail atual.",
+      );
+
       return;
     }
 
-    if (!next) {
-      toast.error("Informe o novo e-mail.");
+
+    /* -----------------------------------------------------
+       VERIFICAR NOVO E-MAIL
+       ----------------------------------------------------- */
+
+    if (
+      !next
+    ) {
+
+      toast.error(
+        "Informe o novo e-mail.",
+      );
+
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next)) {
-      toast.error("Informe um e-mail válido.");
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        next,
+      )
+    ) {
+
+      toast.error(
+        "Informe um e-mail válido.",
+      );
+
       return;
     }
 
-    if (next === accountEmail) {
-      toast.error("O novo e-mail precisa ser diferente do atual.");
+
+    if (
+      next ===
+      accountEmail
+    ) {
+
+      toast.error(
+        "O novo e-mail precisa ser diferente do atual.",
+      );
+
       return;
     }
 
-    setSavingEmail(true);
+
+    setSavingEmail(
+      true,
+    );
+
 
     try {
-      const { error } = await supabase.auth.updateUser({ email: next });
 
-      if (error) {
+      const {
+        error,
+      } =
+        await supabase
+          .auth
+          .updateUser({
+            email:
+              next,
+          });
+
+
+      if (
+        error
+      ) {
+
         throw error;
       }
 
-      setNewEmail("");
-      await queryClient.invalidateQueries({ queryKey: ["user"] });
-      toast.success("Verifique seu e-mail para confirmar a alteração.");
-    } catch (error) {
+
+      /*
+       * Limpa o campo do novo e-mail.
+       */
+
+      setNewEmail(
+        "",
+      );
+
+
+      /*
+       * IMPORTANTE:
+       *
+       * useUser() em data.ts usa:
+       *
+       * queryKey: ["auth-user"]
+       *
+       * Portanto precisamos invalidar
+       * exatamente essa query.
+       */
+
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "auth-user",
+        ],
+      });
+
+
+      /*
+       * Atualiza novamente os dados
+       * do usuário no Supabase.
+       */
+
+      await queryClient.refetchQueries({
+        queryKey: [
+          "auth-user",
+        ],
+      });
+
+
+      toast.success(
+        "Solicitação enviada. Verifique os e-mails necessários para confirmar a alteração.",
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        error,
+      );
+
+
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível alterar o e-mail.",
       );
+
     } finally {
-      setSavingEmail(false);
+
+      setSavingEmail(
+        false,
+      );
     }
   }
 
+
+  /* =======================================================
+     ALTERAR SENHA
+     ======================================================= */
+
   async function savePassword() {
-    if (!newPassword) {
-      toast.error("Informe uma nova senha.");
+
+    if (
+      !newPassword
+    ) {
+
+      toast.error(
+        "Informe uma nova senha.",
+      );
+
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast.error("A senha precisa ter pelo menos 6 caracteres.");
+
+    if (
+      newPassword.length <
+      6
+    ) {
+
+      toast.error(
+        "A senha precisa ter pelo menos 6 caracteres.",
+      );
+
       return;
     }
 
-    if (newPassword !== confirmPassword) {
-      toast.error("As senhas não coincidem.");
+
+    if (
+      newPassword !==
+      confirmPassword
+    ) {
+
+      toast.error(
+        "As senhas não coincidem.",
+      );
+
       return;
     }
 
-    setSavingPassword(true);
+
+    setSavingPassword(
+      true,
+    );
+
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
 
-      if (error) {
+      const {
+        error,
+      } =
+        await supabase
+          .auth
+          .updateUser({
+            password:
+              newPassword,
+          });
+
+
+      if (
+        error
+      ) {
+
         throw error;
       }
 
-      setNewPassword("");
-      setConfirmPassword("");
-      toast.success("Senha alterada com sucesso.");
-    } catch (error) {
+
+      setNewPassword(
+        "",
+      );
+
+
+      setConfirmPassword(
+        "",
+      );
+
+
+      toast.success(
+        "Senha alterada com sucesso.",
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        error,
+      );
+
+
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível alterar a senha.",
       );
+
     } finally {
-      setSavingPassword(false);
+
+      setSavingPassword(
+        false,
+      );
     }
   }
 
 
+  /* =======================================================
+     RENDER
+     ======================================================= */
+
   return (
     <div className="space-y-6">
+
+
+      {/* ===================================================
+          CABEÇALHO
+          =================================================== */}
 
       <div className="flex items-center gap-3">
 
@@ -287,12 +729,15 @@ function ContaPage() {
           size="icon"
           onClick={() =>
             navigate({
-              to: "/configuracoes",
+              to:
+                "/configuracoes",
             })
           }
           aria-label="Voltar para configurações"
         >
+
           <ArrowLeft className="size-5" />
+
         </Button>
 
 
@@ -304,12 +749,18 @@ function ContaPage() {
       </div>
 
 
+      {/* ===================================================
+          PERFIL
+          =================================================== */}
+
       <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
 
         <div className="mb-6 flex items-start gap-3">
 
           <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+
             <User className="size-5" />
+
           </div>
 
 
@@ -318,6 +769,7 @@ function ContaPage() {
             <h2 className="font-display text-lg font-semibold">
               Perfil
             </h2>
+
 
             <p className="mt-1 text-sm text-muted-foreground">
               Atualize as informações exibidas na sua conta.
@@ -330,26 +782,40 @@ function ContaPage() {
 
         <div className="grid gap-4 md:grid-cols-2">
 
+
+          {/* NOME */}
+
           <div className="space-y-1.5">
 
             <Label htmlFor="account-name">
               Nome
             </Label>
 
+
             <Input
               id="account-name"
               className="h-11"
-              value={name}
-              onChange={(event) =>
-                setName(event.target.value)
+              value={
+                name
+              }
+              onChange={(
+                event,
+              ) =>
+                setName(
+                  event.target.value,
+                )
               }
               placeholder="Seu nome"
-              maxLength={80}
+              maxLength={
+                80
+              }
               autoComplete="name"
             />
 
           </div>
 
+
+          {/* USERNAME */}
 
           <div className="space-y-1.5">
 
@@ -357,15 +823,24 @@ function ContaPage() {
               Nome de usuário
             </Label>
 
+
             <Input
               id="account-username"
               className="h-11"
-              value={username}
-              onChange={(event) =>
-                setUsername(event.target.value)
+              value={
+                username
+              }
+              onChange={(
+                event,
+              ) =>
+                setUsername(
+                  event.target.value,
+                )
               }
               placeholder="seuusername"
-              maxLength={40}
+              maxLength={
+                40
+              }
               autoComplete="username"
             />
 
@@ -378,11 +853,16 @@ function ContaPage() {
 
           <Button
             type="button"
-            disabled={savingProfile}
-            onClick={() => void saveProfile()}
+            disabled={
+              savingProfile
+            }
+            onClick={() =>
+              void saveProfile()
+            }
           >
 
             <Save className="size-4" />
+
 
             {savingProfile
               ? "Salvando..."
@@ -395,12 +875,18 @@ function ContaPage() {
       </section>
 
 
+      {/* ===================================================
+          E-MAIL
+          =================================================== */}
+
       <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
 
         <div className="mb-6 flex items-start gap-3">
 
           <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+
             <Mail className="size-5" />
+
           </div>
 
 
@@ -409,6 +895,7 @@ function ContaPage() {
             <h2 className="font-display text-lg font-semibold">
               E-mail
             </h2>
+
 
             <p className="mt-1 text-sm text-muted-foreground">
               Confirme seu e-mail atual e informe o novo endereço.
@@ -421,26 +908,40 @@ function ContaPage() {
 
         <div className="grid gap-4 md:grid-cols-2">
 
+
+          {/* E-MAIL ATUAL */}
+
           <div className="space-y-1.5">
 
             <Label htmlFor="current-email">
               E-mail atual
             </Label>
 
+
             <Input
               id="current-email"
               type="email"
               className="h-11"
-              value={currentEmail}
-              onChange={(event) =>
-                setCurrentEmail(event.target.value)
+              value={
+                currentEmail
+              }
+              onChange={(
+                event,
+              ) =>
+                setCurrentEmail(
+                  event.target.value,
+                )
               }
               autoComplete="email"
-              maxLength={255}
+              maxLength={
+                255
+              }
             />
 
           </div>
 
+
+          {/* NOVO E-MAIL */}
 
           <div className="space-y-1.5">
 
@@ -448,17 +949,26 @@ function ContaPage() {
               Novo e-mail
             </Label>
 
+
             <Input
               id="new-email"
               type="email"
               className="h-11"
-              value={newEmail}
-              onChange={(event) =>
-                setNewEmail(event.target.value)
+              value={
+                newEmail
+              }
+              onChange={(
+                event,
+              ) =>
+                setNewEmail(
+                  event.target.value,
+                )
               }
               placeholder="novo@email.com"
               autoComplete="email"
-              maxLength={255}
+              maxLength={
+                255
+              }
             />
 
           </div>
@@ -470,11 +980,16 @@ function ContaPage() {
 
           <Button
             type="button"
-            disabled={savingEmail}
-            onClick={() => void saveEmail()}
+            disabled={
+              savingEmail
+            }
+            onClick={() =>
+              void saveEmail()
+            }
           >
 
             <Mail className="size-4" />
+
 
             {savingEmail
               ? "Enviando..."
@@ -487,12 +1002,18 @@ function ContaPage() {
       </section>
 
 
+      {/* ===================================================
+          SENHA
+          =================================================== */}
+
       <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
 
         <div className="mb-6 flex items-start gap-3">
 
           <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+
             <ShieldCheck className="size-5" />
+
           </div>
 
 
@@ -501,6 +1022,7 @@ function ContaPage() {
             <h2 className="font-display text-lg font-semibold">
               Senha
             </h2>
+
 
             <p className="mt-1 text-sm text-muted-foreground">
               Escolha uma nova senha para proteger sua conta.
@@ -512,6 +1034,9 @@ function ContaPage() {
 
 
         <div className="grid gap-4 md:grid-cols-2">
+
+
+          {/* NOVA SENHA */}
 
           <div className="space-y-1.5">
 
@@ -530,12 +1055,20 @@ function ContaPage() {
                     : "password"
                 }
                 className="h-11 pr-11"
-                value={newPassword}
-                onChange={(event) =>
-                  setNewPassword(event.target.value)
+                value={
+                  newPassword
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setNewPassword(
+                    event.target.value,
+                  )
                 }
                 autoComplete="new-password"
-                maxLength={1000}
+                maxLength={
+                  1000
+                }
               />
 
 
@@ -543,7 +1076,10 @@ function ContaPage() {
                 type="button"
                 onClick={() =>
                   setShowPassword(
-                    (current) => !current
+                    (
+                      current,
+                    ) =>
+                      !current,
                   )
                 }
                 className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground"
@@ -555,9 +1091,13 @@ function ContaPage() {
               >
 
                 {showPassword ? (
+
                   <EyeOff className="size-4" />
+
                 ) : (
+
                   <Eye className="size-4" />
+
                 )}
 
               </button>
@@ -567,11 +1107,14 @@ function ContaPage() {
           </div>
 
 
+          {/* CONFIRMAR SENHA */}
+
           <div className="space-y-1.5">
 
             <Label htmlFor="confirm-password">
               Confirmar nova senha
             </Label>
+
 
             <Input
               id="confirm-password"
@@ -581,12 +1124,20 @@ function ContaPage() {
                   : "password"
               }
               className="h-11"
-              value={confirmPassword}
-              onChange={(event) =>
-                setConfirmPassword(event.target.value)
+              value={
+                confirmPassword
+              }
+              onChange={(
+                event,
+              ) =>
+                setConfirmPassword(
+                  event.target.value,
+                )
               }
               autoComplete="new-password"
-              maxLength={1000}
+              maxLength={
+                1000
+              }
             />
 
           </div>
@@ -598,11 +1149,16 @@ function ContaPage() {
 
           <Button
             type="button"
-            disabled={savingPassword}
-            onClick={() => void savePassword()}
+            disabled={
+              savingPassword
+            }
+            onClick={() =>
+              void savePassword()
+            }
           >
 
             <LockKeyhole className="size-4" />
+
 
             {savingPassword
               ? "Alterando..."
