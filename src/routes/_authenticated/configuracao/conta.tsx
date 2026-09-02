@@ -17,12 +17,10 @@ import {
 
 import {
   ArrowLeft,
-  Eye,
-  EyeOff,
-  LockKeyhole,
+  ChevronRight,
+  KeyRound,
   Mail,
   Save,
-  ShieldCheck,
   User,
 } from "lucide-react";
 
@@ -113,53 +111,8 @@ function ContaPage() {
     );
 
   const [
-    currentEmail,
-    setCurrentEmail,
-  ] =
-    useState(
-      authUser?.email ??
-      "",
-    );
-
-  const [
-    newEmail,
-    setNewEmail,
-  ] =
-    useState("");
-
-  const [
-    newPassword,
-    setNewPassword,
-  ] =
-    useState("");
-
-  const [
-    confirmPassword,
-    setConfirmPassword,
-  ] =
-    useState("");
-
-  const [
-    showPassword,
-    setShowPassword,
-  ] =
-    useState(false);
-
-  const [
     savingProfile,
     setSavingProfile,
-  ] =
-    useState(false);
-
-  const [
-    savingEmail,
-    setSavingEmail,
-  ] =
-    useState(false);
-
-  const [
-    savingPassword,
-    setSavingPassword,
   ] =
     useState(false);
 
@@ -293,201 +246,6 @@ function ContaPage() {
       );
     } finally {
       setSavingProfile(
-        false,
-      );
-    }
-  }
-
-
-  async function saveEmail() {
-    const current =
-      currentEmail
-        .trim()
-        .toLowerCase();
-
-    const next =
-      newEmail
-        .trim()
-        .toLowerCase();
-
-    const accountEmail =
-      authUser?.email
-        ?.trim()
-        .toLowerCase() ??
-      "";
-
-
-    if (!accountEmail) {
-      toast.error(
-        "Não foi possível identificar o e-mail da sua conta.",
-      );
-
-      return;
-    }
-
-
-    if (
-      current !==
-      accountEmail
-    ) {
-      toast.error(
-        "Digite corretamente o seu e-mail atual.",
-      );
-
-      return;
-    }
-
-
-    if (!next) {
-      toast.error(
-        "Informe o novo e-mail.",
-      );
-
-      return;
-    }
-
-
-    if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        next,
-      )
-    ) {
-      toast.error(
-        "Informe um e-mail válido.",
-      );
-
-      return;
-    }
-
-
-    if (
-      next ===
-      accountEmail
-    ) {
-      toast.error(
-        "O novo e-mail precisa ser diferente do atual.",
-      );
-
-      return;
-    }
-
-
-    setSavingEmail(
-      true,
-    );
-
-
-    try {
-      const {
-        error,
-      } =
-        await supabase.auth.updateUser({
-          email:
-            next,
-        });
-
-
-      if (error) {
-        throw error;
-      }
-
-
-      setNewEmail(
-        "",
-      );
-
-
-      toast.success(
-        "Verifique seu e-mail para confirmar a alteração.",
-      );
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível alterar o e-mail.",
-      );
-    } finally {
-      setSavingEmail(
-        false,
-      );
-    }
-  }
-
-
-  async function savePassword() {
-    if (!newPassword) {
-      toast.error(
-        "Informe uma nova senha.",
-      );
-
-      return;
-    }
-
-
-    if (
-      newPassword.length <
-      6
-    ) {
-      toast.error(
-        "A senha precisa ter pelo menos 6 caracteres.",
-      );
-
-      return;
-    }
-
-
-    if (
-      newPassword !==
-      confirmPassword
-    ) {
-      toast.error(
-        "As senhas não coincidem.",
-      );
-
-      return;
-    }
-
-
-    setSavingPassword(
-      true,
-    );
-
-
-    try {
-      const {
-        error,
-      } =
-        await supabase.auth.updateUser({
-          password:
-            newPassword,
-        });
-
-
-      if (error) {
-        throw error;
-      }
-
-
-      setNewPassword(
-        "",
-      );
-
-      setConfirmPassword(
-        "",
-      );
-
-
-      toast.success(
-        "Senha alterada com sucesso.",
-      );
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível alterar a senha.",
-      );
-    } finally {
-      setSavingPassword(
         false,
       );
     }
@@ -634,264 +392,98 @@ function ContaPage() {
       </section>
 
 
-      <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
+      <section className="rounded-2xl border bg-card shadow-sm">
 
-        <div className="mb-6 flex items-start gap-3">
+        <div className="p-5 pb-3 sm:p-6 sm:pb-3">
 
-          <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+          <h2 className="font-display text-lg font-semibold">
+            Segurança e acesso
+          </h2>
 
-            <Mail className="size-5" />
-
-          </div>
-
-
-          <div>
-
-            <h2 className="font-display text-lg font-semibold">
-              E-mail
-            </h2>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Confirme seu e-mail atual e informe o novo endereço.
-            </p>
-
-          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Altere seu e-mail ou sua senha de acesso.
+          </p>
 
         </div>
 
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="divide-y">
 
-          <div className="space-y-1.5">
-
-            <Label htmlFor="current-email">
-              E-mail atual
-            </Label>
-
-            <Input
-              id="current-email"
-              type="email"
-              className="h-11"
-              value={
-                currentEmail
-              }
-              onChange={(
-                event,
-              ) =>
-                setCurrentEmail(
-                  event.target.value,
-                )
-              }
-              autoComplete="email"
-              maxLength={255}
-            />
-
-          </div>
-
-
-          <div className="space-y-1.5">
-
-            <Label htmlFor="new-email">
-              Novo e-mail
-            </Label>
-
-            <Input
-              id="new-email"
-              type="email"
-              className="h-11"
-              value={
-                newEmail
-              }
-              onChange={(
-                event,
-              ) =>
-                setNewEmail(
-                  event.target.value,
-                )
-              }
-              placeholder="novo@email.com"
-              autoComplete="email"
-              maxLength={255}
-            />
-
-          </div>
-
-        </div>
-
-
-        <div className="mt-5">
-
-          <Button
-            type="button"
-            disabled={
-              savingEmail
+          <NavRow
+            icon={<Mail className="size-5" />}
+            title="Trocar e-mail"
+            description={
+              authUser?.email ??
+              "Gerencie o e-mail da sua conta"
             }
             onClick={() =>
-              void saveEmail()
+              navigate({
+                to:
+                  "/_authenticated/configuracoes/conta/email",
+              })
             }
-          >
-
-            <Mail className="size-4" />
-
-            {savingEmail
-              ? "Enviando..."
-              : "Alterar e-mail"}
-
-          </Button>
-
-        </div>
-
-      </section>
+          />
 
 
-      <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
-
-        <div className="mb-6 flex items-start gap-3">
-
-          <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-
-            <ShieldCheck className="size-5" />
-
-          </div>
-
-
-          <div>
-
-            <h2 className="font-display text-lg font-semibold">
-              Senha
-            </h2>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Escolha uma nova senha para proteger sua conta.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div className="grid gap-4 md:grid-cols-2">
-
-          <div className="space-y-1.5">
-
-            <Label htmlFor="new-password">
-              Nova senha
-            </Label>
-
-
-            <div className="relative">
-
-              <Input
-                id="new-password"
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
-                className="h-11 pr-11"
-                value={
-                  newPassword
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setNewPassword(
-                    event.target.value,
-                  )
-                }
-                autoComplete="new-password"
-                maxLength={1000}
-              />
-
-
-              <button
-                type="button"
-                onClick={() =>
-                  setShowPassword(
-                    (
-                      current,
-                    ) =>
-                      !current,
-                  )
-                }
-                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground"
-                aria-label={
-                  showPassword
-                    ? "Ocultar senha"
-                    : "Mostrar senha"
-                }
-              >
-
-                {showPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-
-              </button>
-
-            </div>
-
-          </div>
-
-
-          <div className="space-y-1.5">
-
-            <Label htmlFor="confirm-password">
-              Confirmar nova senha
-            </Label>
-
-            <Input
-              id="confirm-password"
-              type={
-                showPassword
-                  ? "text"
-                  : "password"
-              }
-              className="h-11"
-              value={
-                confirmPassword
-              }
-              onChange={(
-                event,
-              ) =>
-                setConfirmPassword(
-                  event.target.value,
-                )
-              }
-              autoComplete="new-password"
-              maxLength={1000}
-            />
-
-          </div>
-
-        </div>
-
-
-        <div className="mt-5">
-
-          <Button
-            type="button"
-            disabled={
-              savingPassword
-            }
+          <NavRow
+            icon={<KeyRound className="size-5" />}
+            title="Trocar senha"
+            description="Altere a senha usada para entrar na sua conta"
             onClick={() =>
-              void savePassword()
+              navigate({
+                to:
+                  "/_authenticated/configuracoes/conta/senha",
+              })
             }
-          >
-
-            <LockKeyhole className="size-4" />
-
-            {savingPassword
-              ? "Alterando..."
-              : "Alterar senha"}
-
-          </Button>
+          />
 
         </div>
 
       </section>
 
     </div>
+  );
+}
+
+
+function NavRow({
+  icon,
+  title,
+  description,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-muted/50 sm:px-6"
+    >
+
+      <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+        {icon}
+      </div>
+
+
+      <div className="min-w-0 flex-1">
+
+        <p className="font-medium">
+          {title}
+        </p>
+
+        <p className="truncate text-sm text-muted-foreground">
+          {description}
+        </p>
+
+      </div>
+
+
+      <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+
+    </button>
   );
 }
