@@ -8,20 +8,16 @@ import {
 } from "react";
 
 import {
-  useQueryClient,
-} from "@tanstack/react-query";
-
-import {
   toast,
 } from "sonner";
 
 import {
   ArrowLeft,
-  ChevronRight,
+  Eye,
+  EyeOff,
   KeyRound,
+  LockKeyhole,
   Mail,
-  Save,
-  User,
 } from "lucide-react";
 
 import {
@@ -45,46 +41,42 @@ import {
 } from "@/integrations/supabase/client";
 
 import {
-  useProfile,
   useUser,
 } from "@/lib/data";
 
 
+type PasswordMethod =
+  | "senha"
+  | "email";
+
+
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracoes/conta",
+    "/_authenticated/configuracoes/conta/senha",
   )({
     head: () => ({
       meta: [
         {
           title:
-            "Conta — FinanLook",
+            "Trocar senha — FinanLook",
         },
         {
           name:
             "description",
           content:
-            "Gerencie seu perfil, e-mail e senha.",
+            "Altere a senha da sua conta.",
         },
       ],
     }),
 
     component:
-      ContaPage,
+      TrocarSenhaPage,
   });
 
 
-function ContaPage() {
+function TrocarSenhaPage() {
   const navigate =
     useNavigate();
-
-  const queryClient =
-    useQueryClient();
-
-  const {
-    data: profile,
-  } =
-    useProfile();
 
   const {
     data: authUser,
@@ -93,56 +85,87 @@ function ContaPage() {
 
 
   const [
-    name,
-    setName,
+    method,
+    setMethod,
   ] =
-    useState(
-      profile?.name ??
-      "",
+    useState<PasswordMethod>(
+      "senha",
     );
 
   const [
-    username,
-    setUsername,
+    currentPassword,
+    setCurrentPassword,
   ] =
-    useState(
-      profile?.username ??
-      "",
-    );
+    useState("");
 
   const [
-    savingProfile,
-    setSavingProfile,
+    newPassword,
+    setNewPassword,
+  ] =
+    useState("");
+
+  const [
+    confirmPassword,
+    setConfirmPassword,
+  ] =
+    useState("");
+
+  const [
+    showPassword,
+    setShowPassword,
+  ] =
+    useState(false);
+
+  const [
+    saving,
+    setSaving,
+  ] =
+    useState(false);
+
+  const [
+    sendingLink,
+    setSendingLink,
   ] =
     useState(false);
 
 
-  async function saveProfile() {
-    const cleanName =
-      name.trim();
-
-    const cleanUsername =
-      username
-        .trim()
-        .replace(
-          /^@/,
-          "",
-        )
-        .toLowerCase();
+  function goBack() {
+    navigate({
+      to:
+        "/_authenticated/configuracoes/conta",
+    });
+  }
 
 
-    if (!cleanName) {
+  async function handleChangeWithPassword() {
+    const accountEmail =
+      authUser?.email
+        ?.trim()
+        .toLowerCase() ??
+      "";
+
+
+    if (!accountEmail) {
       toast.error(
-        "Informe seu nome.",
+        "Não foi possível identificar o e-mail da sua conta.",
       );
 
       return;
     }
 
 
-    if (!cleanUsername) {
+    if (!currentPassword) {
       toast.error(
-        "Informe seu nome de usuário.",
+        "Informe sua senha atual.",
+      );
+
+      return;
+    }
+
+
+    if (!newPassword) {
+      toast.error(
+        "Informe uma nova senha.",
       );
 
       return;
@@ -150,11 +173,11 @@ function ContaPage() {
 
 
     if (
-      cleanUsername.length <
-      3
+      newPassword.length <
+      6
     ) {
       toast.error(
-        "O nome de usuário precisa ter pelo menos 3 caracteres.",
+        "A senha precisa ter pelo menos 6 caracteres.",
       );
 
       return;
@@ -162,37 +185,50 @@ function ContaPage() {
 
 
     if (
-      !/^[a-zA-Z0-9._-]+$/.test(
-        cleanUsername,
-      )
+      newPassword !==
+      confirmPassword
     ) {
       toast.error(
-        "Use apenas letras, números, ponto, hífen ou underline.",
+        "As senhas não coincidem.",
       );
 
       return;
     }
 
 
-    setSavingProfile(
+    if (
+      newPassword ===
+      currentPassword
+    ) {
+      toast.error(
+        "A nova senha precisa ser diferente da atual.",
+      );
+
+      return;
+    }
+
+
+    setSaving(
       true,
     );
 
 
     try {
       const {
-        data,
-        error: userError,
+        error: signInError,
       } =
-        await supabase.auth.getUser();
+        await supabase.auth.signInWithPassword({
+          email:
+            accountEmail,
+
+          password:
+            currentPassword,
+        });
 
 
-      if (
-        userError ||
-        !data.user
-      ) {
+      if (signInError) {
         throw new Error(
-          "Usuário não autenticado.",
+          "Senha atual incorreta.",
         );
       }
 
@@ -200,27 +236,10 @@ function ContaPage() {
       const {
         error,
       } =
-        await supabase
-          .from(
-            "profiles",
-          )
-          .update({
-            name:
-              cleanName.slice(
-                0,
-                80,
-              ),
-
-            username:
-              cleanUsername.slice(
-                0,
-                40,
-              ),
-          })
-          .eq(
-            "id",
-            data.user.id,
-          );
+        await supabase.auth.updateUser({
+          password:
+            newPassword,
+        });
 
 
       if (error) {
@@ -228,24 +247,90 @@ function ContaPage() {
       }
 
 
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "profile",
-        ],
-      });
+      setCurrentPassword(
+        "",
+      );
+
+      setNewPassword(
+        "",
+      );
+
+      setConfirmPassword(
+        "",
+      );
 
 
       toast.success(
-        "Perfil atualizado com sucesso.",
+        "Senha alterada com sucesso.",
+      );
+
+
+      goBack();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível alterar a senha.",
+      );
+    } finally {
+      setSaving(
+        false,
+      );
+    }
+  }
+
+
+  async function handleSendRecoveryLink() {
+    const accountEmail =
+      authUser?.email
+        ?.trim()
+        .toLowerCase() ??
+      "";
+
+
+    if (!accountEmail) {
+      toast.error(
+        "Não foi possível identificar o e-mail da sua conta.",
+      );
+
+      return;
+    }
+
+
+    setSendingLink(
+      true,
+    );
+
+
+    try {
+      const {
+        error,
+      } =
+        await supabase.auth.resetPasswordForEmail(
+          accountEmail,
+          {
+            redirectTo:
+              `${window.location.origin}/nova-senha`,
+          },
+        );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      toast.success(
+        "Enviamos um link para redefinir sua senha para o seu e-mail.",
       );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Não foi possível atualizar seu perfil.",
+          : "Não foi possível enviar o e-mail de recuperação.",
       );
     } finally {
-      setSavingProfile(
+      setSendingLink(
         false,
       );
     }
@@ -261,13 +346,10 @@ function ContaPage() {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() =>
-            navigate({
-              to:
-                "/_authenticated/configuracoes",
-            })
+          onClick={
+            goBack
           }
-          aria-label="Voltar para configurações"
+          aria-label="Voltar para conta"
         >
 
           <ArrowLeft className="size-5" />
@@ -276,8 +358,8 @@ function ContaPage() {
 
 
         <PageHeader
-          title="Conta"
-          subtitle="Gerencie seu perfil, e-mail e senha."
+          title="Trocar senha"
+          subtitle="Escolha como você quer alterar sua senha."
         />
 
       </div>
@@ -289,7 +371,7 @@ function ContaPage() {
 
           <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
 
-            <User className="size-5" />
+            <LockKeyhole className="size-5" />
 
           </div>
 
@@ -297,11 +379,11 @@ function ContaPage() {
           <div>
 
             <h2 className="font-display text-lg font-semibold">
-              Perfil
+              Senha
             </h2>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Atualize as informações exibidas na sua conta.
+              Por segurança, confirme sua senha atual ou use um link enviado por e-mail.
             </p>
 
           </div>
@@ -309,181 +391,252 @@ function ContaPage() {
         </div>
 
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
 
-          <div className="space-y-1.5">
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
 
-            <Label htmlFor="account-name">
-              Nome
-            </Label>
-
-            <Input
-              id="account-name"
-              className="h-11"
-              value={
-                name
-              }
-              onChange={(
-                event,
-              ) =>
-                setName(
-                  event.target.value,
+            <button
+              type="button"
+              onClick={() =>
+                setMethod(
+                  "senha",
                 )
               }
-              placeholder="Seu nome"
-              maxLength={80}
-              autoComplete="name"
-            />
+              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                method ===
+                "senha"
+                  ? "bg-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
 
-          </div>
+              <KeyRound className="size-4" />
+
+              Confirmar com senha atual
+
+            </button>
 
 
-          <div className="space-y-1.5">
-
-            <Label htmlFor="account-username">
-              Nome de usuário
-            </Label>
-
-            <Input
-              id="account-username"
-              className="h-11"
-              value={
-                username
-              }
-              onChange={(
-                event,
-              ) =>
-                setUsername(
-                  event.target.value,
+            <button
+              type="button"
+              onClick={() =>
+                setMethod(
+                  "email",
                 )
               }
-              placeholder="seuusername"
-              maxLength={40}
-              autoComplete="username"
-            />
+              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                method ===
+                "email"
+                  ? "bg-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+
+              <Mail className="size-4" />
+
+              Receber link por e-mail
+
+            </button>
 
           </div>
 
         </div>
 
 
-        <div className="mt-5">
+        {method ===
+        "senha" ? (
+          <form
+            className="mt-5 space-y-5"
+            onSubmit={(
+              event,
+            ) => {
+              event.preventDefault();
 
-          <Button
-            type="button"
-            disabled={
-              savingProfile
-            }
-            onClick={() =>
-              void saveProfile()
-            }
+              void handleChangeWithPassword();
+            }}
           >
 
-            <Save className="size-4" />
+            <div className="space-y-1.5">
 
-            {savingProfile
-              ? "Salvando..."
-              : "Salvar perfil"}
+              <Label htmlFor="current-password">
+                Senha atual
+              </Label>
 
-          </Button>
+              <Input
+                id="current-password"
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
+                className="h-11"
+                value={
+                  currentPassword
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setCurrentPassword(
+                    event.target.value,
+                  )
+                }
+                autoComplete="current-password"
+                maxLength={1000}
+              />
 
-        </div>
-
-      </section>
-
-
-      <section className="rounded-2xl border bg-card shadow-sm">
-
-        <div className="p-5 pb-3 sm:p-6 sm:pb-3">
-
-          <h2 className="font-display text-lg font-semibold">
-            Segurança e acesso
-          </h2>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Altere seu e-mail ou sua senha de acesso.
-          </p>
-
-        </div>
-
-
-        <div className="divide-y">
-
-          <NavRow
-            icon={<Mail className="size-5" />}
-            title="Trocar e-mail"
-            description={
-              authUser?.email ??
-              "Gerencie o e-mail da sua conta"
-            }
-            onClick={() =>
-              navigate({
-                to:
-                  "/_authenticated/configuracoes/conta/email",
-              })
-            }
-          />
+            </div>
 
 
-          <NavRow
-            icon={<KeyRound className="size-5" />}
-            title="Trocar senha"
-            description="Altere a senha usada para entrar na sua conta"
-            onClick={() =>
-              navigate({
-                to:
-                  "/_authenticated/configuracoes/conta/senha",
-              })
-            }
-          />
+            <div className="grid gap-4 md:grid-cols-2">
 
-        </div>
+              <div className="space-y-1.5">
+
+                <Label htmlFor="new-password">
+                  Nova senha
+                </Label>
+
+
+                <div className="relative">
+
+                  <Input
+                    id="new-password"
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
+                    className="h-11 pr-11"
+                    value={
+                      newPassword
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setNewPassword(
+                        event.target.value,
+                      )
+                    }
+                    autoComplete="new-password"
+                    maxLength={1000}
+                  />
+
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPassword(
+                        (
+                          current,
+                        ) =>
+                          !current,
+                      )
+                    }
+                    className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+                    aria-label={
+                      showPassword
+                        ? "Ocultar senha"
+                        : "Mostrar senha"
+                    }
+                  >
+
+                    {showPassword ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
+
+                  </button>
+
+                </div>
+
+              </div>
+
+
+              <div className="space-y-1.5">
+
+                <Label htmlFor="confirm-password">
+                  Confirmar nova senha
+                </Label>
+
+                <Input
+                  id="confirm-password"
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
+                  className="h-11"
+                  value={
+                    confirmPassword
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setConfirmPassword(
+                      event.target.value,
+                    )
+                  }
+                  autoComplete="new-password"
+                  maxLength={1000}
+                />
+
+              </div>
+
+            </div>
+
+
+            <Button
+              type="submit"
+              className="h-11 w-full sm:w-auto"
+              disabled={
+                saving
+              }
+            >
+
+              <LockKeyhole className="size-4" />
+
+              {saving
+                ? "Alterando..."
+                : "Alterar senha"}
+
+            </Button>
+
+          </form>
+        ) : (
+          <div className="mt-5 space-y-4">
+
+            <p className="text-sm text-muted-foreground">
+              Enviaremos um link de redefinição para {
+                authUser?.email ??
+                "o e-mail da sua conta"
+              }. Clique no link para escolher uma nova senha.
+            </p>
+
+
+            <Button
+              type="button"
+              className="h-11 w-full sm:w-auto"
+              disabled={
+                sendingLink
+              }
+              onClick={() =>
+                void handleSendRecoveryLink()
+              }
+            >
+
+              <Mail className="size-4" />
+
+              {sendingLink
+                ? "Enviando..."
+                : "Enviar link de redefinição"}
+
+            </Button>
+
+          </div>
+        )}
 
       </section>
 
     </div>
-  );
-}
-
-
-function NavRow({
-  icon,
-  title,
-  description,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-muted/50 sm:px-6"
-    >
-
-      <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-        {icon}
-      </div>
-
-
-      <div className="min-w-0 flex-1">
-
-        <p className="font-medium">
-          {title}
-        </p>
-
-        <p className="truncate text-sm text-muted-foreground">
-          {description}
-        </p>
-
-      </div>
-
-
-      <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
-
-    </button>
   );
 }
