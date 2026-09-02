@@ -1926,4 +1926,423 @@ function SettingsPage() {
                     Atenção
                   </p>
 
-                  <p className="mt"
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+  A exclusão da conta é permanente e não poderá ser desfeita.
+  Seus dados poderão deixar de estar disponíveis após a conclusão
+  do processo.
+</p>
+
+</div>
+
+
+<div className="space-y-1.5">
+
+  <Label htmlFor="delete-username-first">
+    Para continuar, digite seu nome de usuário
+  </Label>
+
+
+  <Input
+    id="delete-username-first"
+    className="h-11"
+    value={
+      deleteUsernameFirst
+    }
+    onChange={(
+      event,
+    ) =>
+      setDeleteUsernameFirst(
+        event.target.value,
+      )
+    }
+    placeholder={
+      accountUsername
+        ? `@${accountUsername}`
+        : "Seu nome de usuário"
+    }
+    autoComplete="off"
+  />
+
+</div>
+
+</div>
+
+
+<DialogFooter className="gap-2 sm:gap-0">
+
+  <Button
+    type="button"
+    variant="outline"
+    className="h-11 w-full"
+    onClick={() =>
+      setDeleteOpen(
+        false,
+      )
+    }
+  >
+    Cancelar
+  </Button>
+
+
+  <Button
+    type="button"
+    variant="destructive"
+    className="h-11 w-full"
+    onClick={
+      confirmDeleteStepOne
+    }
+  >
+    Continuar
+  </Button>
+
+</DialogFooter>
+
+</>
+
+) : (
+
+<>
+
+  <DialogHeader>
+
+    <DialogTitle>
+      Confirmar exclusão
+    </DialogTitle>
+
+    <DialogDescription>
+      Esta é a última confirmação antes da exclusão permanente
+      da sua conta.
+    </DialogDescription>
+
+  </DialogHeader>
+
+
+  <div className="space-y-4">
+
+    <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+
+      <p className="text-sm font-medium text-destructive">
+        Confirmação final
+      </p>
+
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+        Digite novamente seu nome de usuário para confirmar que
+        deseja excluir permanentemente sua conta.
+      </p>
+
+    </div>
+
+
+    <div className="space-y-1.5">
+
+      <Label htmlFor="delete-username-final">
+        Confirme seu nome de usuário
+      </Label>
+
+
+      <Input
+        id="delete-username-final"
+        className="h-11"
+        value={
+          deleteUsernameFinal
+        }
+        onChange={(
+          event,
+        ) =>
+          setDeleteUsernameFinal(
+            event.target.value,
+          )
+        }
+        placeholder={
+          accountUsername
+            ? `@${accountUsername}`
+            : "Seu nome de usuário"
+        }
+        autoComplete="off"
+        disabled={
+          deletingAccount
+        }
+      />
+
+    </div>
+
+  </div>
+
+
+  <DialogFooter className="gap-2 sm:gap-0">
+
+    <Button
+      type="button"
+      variant="outline"
+      className="h-11 w-full"
+      disabled={
+        deletingAccount
+      }
+      onClick={() =>
+        setDeleteStep(
+          1,
+        )
+      }
+    >
+      Voltar
+    </Button>
+
+
+    <Button
+      type="button"
+      variant="destructive"
+      className="h-11 w-full"
+      disabled={
+        deletingAccount
+      }
+      onClick={() =>
+        void deleteAccount()
+      }
+    >
+
+      <Trash2 className="size-4" />
+
+      {deletingAccount
+        ? "Excluindo..."
+        : "Excluir permanentemente"}
+
+    </Button>
+
+  </DialogFooter>
+
+</>
+
+)}
+
+        </DialogContent>
+
+      </Dialog>
+
+    </div>
+  );
+}
+
+
+/* =========================================================
+   COMPONENTES AUXILIARES
+   ========================================================= */
+
+
+type SettingsCardProps = {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  buttonText: string;
+  onClick: () => void;
+};
+
+
+function SettingsCard({
+  icon,
+  title,
+  description,
+  buttonText,
+  onClick,
+}: SettingsCardProps) {
+  return (
+    <div className="rounded-xl border bg-card p-5 shadow-sm">
+
+      <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        {icon}
+      </div>
+
+
+      <div className="mt-4">
+
+        <h2 className="font-display text-lg font-semibold">
+          {title}
+        </h2>
+
+
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+
+      </div>
+
+
+      <Button
+        type="button"
+        variant="outline"
+        className="mt-5 w-full"
+        onClick={onClick}
+      >
+        {buttonText}
+
+        <ChevronRight className="size-4" />
+
+      </Button>
+
+    </div>
+  );
+}
+
+
+type DangerCardProps = {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  buttonText: string;
+  onClick: () => void;
+};
+
+
+function DangerCard({
+  icon,
+  title,
+  description,
+  buttonText,
+  onClick,
+}: DangerCardProps) {
+  return (
+    <div className="rounded-xl border border-destructive/20 bg-card p-5 shadow-sm">
+
+      <div className="flex size-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+        {icon}
+      </div>
+
+
+      <div className="mt-4">
+
+        <h2 className="font-display text-lg font-semibold">
+          {title}
+        </h2>
+
+
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+
+      </div>
+
+
+      <Button
+        type="button"
+        variant="destructive"
+        className="mt-5 w-full"
+        onClick={onClick}
+      >
+        {buttonText}
+
+      </Button>
+
+    </div>
+  );
+}
+
+
+type SettingsRowProps = {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  action: string;
+  onClick: () => void;
+};
+
+
+function SettingsRow({
+  icon,
+  title,
+  description,
+  action,
+  onClick,
+}: SettingsRowProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/50"
+    >
+
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        {icon}
+      </div>
+
+
+      <div className="min-w-0 flex-1">
+
+        <p className="font-medium">
+          {title}
+        </p>
+
+
+        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+          {description}
+        </p>
+
+      </div>
+
+
+      <div className="flex items-center gap-2 text-sm font-medium text-primary">
+
+        <span>
+          {action}
+        </span>
+
+        <ChevronRight className="size-4" />
+
+      </div>
+
+    </button>
+  );
+}
+
+
+type ThemeOptionProps = {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  active: boolean;
+  onClick: () => void;
+};
+
+
+function ThemeOption({
+  icon,
+  title,
+  description,
+  active,
+  onClick,
+}: ThemeOptionProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative rounded-xl border p-4 text-left transition-all",
+
+        active
+          ? "border-primary bg-primary/10 shadow-sm"
+          : "hover:border-primary/30 hover:bg-muted/50",
+      )}
+    >
+
+      {active ? (
+        <span className="absolute right-3 top-3 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <Check className="size-3.5" />
+        </span>
+      ) : null}
+
+
+      <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+        {icon}
+      </div>
+
+
+      <p className="font-medium">
+        {title}
+      </p>
+
+
+      <p className="mt-1 text-sm text-muted-foreground">
+        {description}
+      </p>
+
+    </button>
+  );
+}
