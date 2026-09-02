@@ -160,6 +160,7 @@ type SettingsCardProps = {
   title: string;
 
   description: string;
+
   to:
     | "/configuracoes/conta"
     | "/configuracoes/aparencia";
@@ -180,6 +181,7 @@ function SettingsCard({
         group
         flex
         w-full
+        cursor-pointer
         items-center
         gap-4
         rounded-2xl
@@ -221,16 +223,12 @@ function SettingsCard({
       <div className="min-w-0 flex-1">
 
         <h3 className="font-semibold">
-
           {title}
-
         </h3>
 
 
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-
           {description}
-
         </p>
 
       </div>
