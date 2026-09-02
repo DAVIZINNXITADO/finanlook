@@ -182,155 +182,93 @@ function ContaPage() {
 
 
   async function saveEmail() {
-    const current = currentEmail
-      .trim()
-      .toLowerCase();
-
-    const next = newEmail
-      .trim()
-      .toLowerCase();
-
-    const accountEmail = authUser?.email
-      ?.trim()
-      .toLowerCase() ?? "";
-
+    const current = currentEmail.trim().toLowerCase();
+    const next = newEmail.trim().toLowerCase();
+    const accountEmail = authUser?.email?.trim().toLowerCase() ?? "";
 
     if (!accountEmail) {
-      toast.error(
-        "Não foi possível identificar o e-mail da sua conta."
-      );
-
+      toast.error("Não foi possível identificar o e-mail da sua conta.");
       return;
     }
-
 
     if (current !== accountEmail) {
-      toast.error(
-        "Digite corretamente o seu e-mail atual."
-      );
-
+      toast.error("Digite corretamente o seu e-mail atual.");
       return;
     }
-
 
     if (!next) {
-      toast.error(
-        "Informe o novo e-mail."
-      );
-
+      toast.error("Informe o novo e-mail.");
       return;
     }
-
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next)) {
-      toast.error(
-        "Informe um e-mail válido."
-      );
-
+      toast.error("Informe um e-mail válido.");
       return;
     }
-
 
     if (next === accountEmail) {
-      toast.error(
-        "O novo e-mail precisa ser diferente do atual."
-      );
-
+      toast.error("O novo e-mail precisa ser diferente do atual.");
       return;
     }
-
 
     setSavingEmail(true);
 
-
     try {
-      const { error } = await supabase.auth.updateUser({
-        email: next,
-      });
-
+      const { error } = await supabase.auth.updateUser({ email: next });
 
       if (error) {
         throw error;
       }
 
-
       setNewEmail("");
-
-
-      await queryClient.invalidateQueries({
-        queryKey: ["user"],
-      });
-
-
-      toast.success(
-        "Verifique seu e-mail para confirmar a alteração."
-      );
+      await queryClient.invalidateQueries({ queryKey: ["user"] });
+      toast.success("Verifique seu e-mail para confirmar a alteração.");
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Não foi possível alterar o e-mail."
+          : "Não foi possível alterar o e-mail.",
       );
     } finally {
       setSavingEmail(false);
     }
   }
 
-
   async function savePassword() {
     if (!newPassword) {
-      toast.error(
-        "Informe uma nova senha."
-      );
-
+      toast.error("Informe uma nova senha.");
       return;
     }
-
 
     if (newPassword.length < 6) {
-      toast.error(
-        "A senha precisa ter pelo menos 6 caracteres."
-      );
-
+      toast.error("A senha precisa ter pelo menos 6 caracteres.");
       return;
     }
-
 
     if (newPassword !== confirmPassword) {
-      toast.error(
-        "As senhas não coincidem."
-      );
-
+      toast.error("As senhas não coincidem.");
       return;
     }
 
-
     setSavingPassword(true);
-
 
     try {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
 
-
       if (error) {
         throw error;
       }
 
-
       setNewPassword("");
       setConfirmPassword("");
-
-
-      toast.success(
-        "Senha alterada com sucesso."
-      );
+      toast.success("Senha alterada com sucesso.");
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Não foi possível alterar a senha."
+          : "Não foi possível alterar a senha.",
       );
     } finally {
       setSavingPassword(false);

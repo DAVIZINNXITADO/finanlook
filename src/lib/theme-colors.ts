@@ -32,17 +32,23 @@ export const DEFAULT_CUSTOM_COLOR =
    COLOR CONFIGURATION
    ========================================================= */
 
-type ThemeColor = {
+export type ThemeColor = {
   key: ThemeColorKey;
+  label: string;
+  description: string;
+  premium: boolean;
   hue: number;
   chroma: number;
   light: number;
   dark: number;
 };
 
-const THEME_COLORS: ThemeColor[] = [
+export const THEME_COLORS: ThemeColor[] = [
   {
     key: "classic",
+    label: "Clássico",
+    description: "A paleta original do FinanLook",
+    premium: false,
     hue: 162,
     chroma: 0.13,
     light: 0.56,
@@ -51,6 +57,9 @@ const THEME_COLORS: ThemeColor[] = [
 
   {
     key: "gold",
+    label: "Dourado",
+    description: "Um destaque quente e acolhedor",
+    premium: false,
     hue: 85,
     chroma: 0.11,
     light: 0.62,
@@ -59,6 +68,9 @@ const THEME_COLORS: ThemeColor[] = [
 
   {
     key: "red",
+    label: "Coral",
+    description: "Uma paleta vibrante e energética",
+    premium: false,
     hue: 25,
     chroma: 0.17,
     light: 0.55,
@@ -67,6 +79,9 @@ const THEME_COLORS: ThemeColor[] = [
 
   {
     key: "blue",
+    label: "Azul",
+    description: "Uma paleta tranquila e confiável",
+    premium: false,
     hue: 250,
     chroma: 0.14,
     light: 0.55,
@@ -75,6 +90,9 @@ const THEME_COLORS: ThemeColor[] = [
 
   {
     key: "yellow",
+    label: "Amarelo",
+    description: "Uma paleta iluminada e otimista",
+    premium: false,
     hue: 95,
     chroma: 0.14,
     light: 0.72,
@@ -83,6 +101,9 @@ const THEME_COLORS: ThemeColor[] = [
 
   {
     key: "green",
+    label: "Verde",
+    description: "Uma paleta natural e equilibrada",
+    premium: false,
     hue: 145,
     chroma: 0.15,
     light: 0.58,
@@ -91,6 +112,9 @@ const THEME_COLORS: ThemeColor[] = [
 
   {
     key: "purple",
+    label: "Roxo",
+    description: "Uma paleta criativa e marcante",
+    premium: false,
     hue: 300,
     chroma: 0.15,
     light: 0.55,
@@ -99,6 +123,9 @@ const THEME_COLORS: ThemeColor[] = [
 
   {
     key: "custom",
+    label: "Personalizada",
+    description: "Escolha sua própria cor de destaque",
+    premium: false,
     hue: 200,
     chroma: 0.13,
     light: 0.56,
@@ -123,6 +150,18 @@ export function getThemeColor(
     ) ??
     THEME_COLORS[0]
   );
+}
+
+export function themeColorSwatch(
+  key: ThemeColorKey,
+  customHex: string,
+) {
+  if (key === "custom") {
+    return customHex;
+  }
+
+  const color = getThemeColor(key);
+  return oklch(color.light, color.chroma, color.hue);
 }
 
 /* =========================================================

@@ -1,6 +1,6 @@
-# Finan Look
+# FinanLook
 
-Crie uma aplicação web completa chamada FinanFácil.
+Crie uma aplicação web completa chamada FinanLook.
 
 
 
@@ -8,7 +8,7 @@ OBJETIVO
 
 
 
-O FinanFácil é um aplicativo de organização financeira pessoal.
+O FinanLook é um aplicativo de organização financeira pessoal.
 
 
 
@@ -1286,7 +1286,7 @@ Depois de criar uma conta, mostrar:
 
 
 
-Bem-vindo ao FinanFácil! 👋
+Bem-vindo ao FinanLook! 👋
 
 
 
