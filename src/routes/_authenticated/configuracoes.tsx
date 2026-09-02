@@ -4,18 +4,9 @@ import {
 } from "@tanstack/react-router";
 
 import {
-  useQueryClient,
-} from "@tanstack/react-query";
-
-import {
-  toast,
-} from "sonner";
-
-import {
-  ChevronRight,
-  LogOut,
   Palette,
   ShieldCheck,
+  ChevronRight,
   User,
 } from "lucide-react";
 
@@ -24,12 +15,8 @@ import {
 } from "@/components/PageHeader";
 
 import {
-  Button,
-} from "@/components/ui/button";
-
-import {
-  supabase,
-} from "@/integrations/supabase/client";
+  cn,
+} from "@/lib/utils";
 
 
 export const Route =
@@ -60,47 +47,6 @@ function SettingsPage() {
   const navigate =
     useNavigate();
 
-  const queryClient =
-    useQueryClient();
-
-
-  async function signOut() {
-    try {
-      await queryClient.cancelQueries();
-
-      queryClient.clear();
-
-
-      const {
-        error,
-      } =
-        await supabase.auth.signOut();
-
-
-      if (error) {
-        throw error;
-      }
-
-
-      await navigate({
-        to:
-          "/auth",
-
-        search: {
-          modo:
-            "entrar",
-        },
-
-        replace:
-          true,
-      });
-    } catch {
-      toast.error(
-        "Não foi possível sair da conta.",
-      );
-    }
-  }
-
 
   return (
     <div className="space-y-6">
@@ -111,7 +57,7 @@ function SettingsPage() {
       />
 
 
-      <section className="space-y-3">
+      <section className="space-y-4">
 
         <div>
 
@@ -120,35 +66,27 @@ function SettingsPage() {
           </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Escolha uma categoria para gerenciar suas preferências.
+            Escolha uma categoria para continuar.
           </p>
 
         </div>
 
 
-        <div className="overflow-hidden rounded-2xl border bg-card">
+        <div className="grid gap-4 md:grid-cols-2">
 
-          <SettingsMenuItem
+          <SettingsCard
             icon={
-              <User className="size-5" />
+              <ShieldCheck className="size-6" />
             }
-            title="Perfil"
-            description="Atualize seu nome e nome de usuário."
-            onClick={() =>
-              navigate({
-                to:
-                  "/configuracoes/perfil",
-              })
-            }
-          />
-
-
-          <SettingsMenuItem
-            icon={
-              <ShieldCheck className="size-5" />
-            }
-            title="Conta e segurança"
-            description="Gerencie seu e-mail, senha e segurança da conta."
+            iconClassName="
+              bg-primary/10
+              text-primary
+            "
+            title="Conta"
+            description="
+              Gerencie seu perfil, nome de usuário,
+              e-mail e senha.
+            "
             onClick={() =>
               navigate({
                 to:
@@ -158,12 +96,19 @@ function SettingsPage() {
           />
 
 
-          <SettingsMenuItem
+          <SettingsCard
             icon={
-              <Palette className="size-5" />
+              <Palette className="size-6" />
             }
+            iconClassName="
+              bg-primary/10
+              text-primary
+            "
             title="Aparência"
-            description="Personalize o tema, estilo e cores do FinanLook."
+            description="
+              Personalize o tema, estilo visual
+              e as cores do FinanLook.
+            "
             onClick={() =>
               navigate({
                 to:
@@ -177,63 +122,38 @@ function SettingsPage() {
       </section>
 
 
-      <section className="space-y-3">
+      <section className="rounded-2xl border bg-card p-5">
 
-        <div>
+        <div className="flex items-start gap-4">
 
-          <h2 className="font-display text-lg font-semibold">
-            Sessão
-          </h2>
+          <div
+            className="
+              flex
+              size-11
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              bg-muted
+            "
+          >
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Gerencie o acesso à sua conta neste dispositivo.
-          </p>
+            <User className="size-5 text-muted-foreground" />
 
-        </div>
-
-
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4">
-
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-            <div className="flex items-start gap-3">
-
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
-
-                <LogOut className="size-5" />
-
-              </div>
+          </div>
 
 
-              <div>
+          <div>
 
-                <h3 className="font-medium">
-                  Sair da conta
-                </h3>
+            <h3 className="font-medium">
+              Suas configurações
+            </h3>
 
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  Encerrar sua sessão neste dispositivo.
-                </p>
-
-              </div>
-
-            </div>
-
-
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 shrink-0"
-              onClick={() =>
-                void signOut()
-              }
-            >
-
-              <LogOut className="size-4" />
-
-              Sair
-
-            </Button>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              As informações da sua conta e suas preferências
+              ficam separadas em áreas específicas para facilitar
+              o gerenciamento e evitar alterações acidentais.
+            </p>
 
           </div>
 
@@ -246,57 +166,98 @@ function SettingsPage() {
 }
 
 
-type SettingsMenuItemProps = {
-  icon:
-    React.ReactNode;
+type SettingsCardProps = {
+  icon: React.ReactNode;
 
-  title:
-    string;
+  iconClassName?: string;
 
-  description:
-    string;
+  title: string;
 
-  onClick:
-    () => void;
+  description: string;
+
+  onClick: () => void;
 };
 
 
-function SettingsMenuItem({
+function SettingsCard({
   icon,
+  iconClassName,
   title,
   description,
   onClick,
-}: SettingsMenuItemProps) {
+}: SettingsCardProps) {
   return (
     <button
       type="button"
       onClick={
         onClick
       }
-      className="flex w-full items-center gap-4 border-b p-4 text-left transition-colors last:border-b-0 hover:bg-muted/50"
+      className="
+        group
+        flex
+        w-full
+        items-center
+        gap-4
+        rounded-2xl
+        border
+        bg-card
+        p-5
+        text-left
+        transition-all
+        hover:border-primary/40
+        hover:bg-muted/30
+        hover:shadow-sm
+      "
     >
 
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <div
+        className={
+          cn(
+            `
+              flex
+              size-12
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+            `,
+            iconClassName,
+          )
+        }
+      >
 
         {icon}
 
-      </span>
+      </div>
 
 
-      <span className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1">
 
-        <span className="block font-medium">
+        <h3 className="font-semibold">
+
           {title}
-        </span>
 
-        <span className="mt-1 block text-sm text-muted-foreground">
+        </h3>
+
+
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+
           {description}
-        </span>
 
-      </span>
+        </p>
+
+      </div>
 
 
-      <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+      <ChevronRight
+        className="
+          size-5
+          shrink-0
+          text-muted-foreground
+          transition-transform
+          group-hover:translate-x-1
+        "
+      />
 
     </button>
   );
