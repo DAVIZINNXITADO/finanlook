@@ -16,13 +16,16 @@ import { Route as NovaSenhaRouteImport } from './routes/nova-senha'
 import { Route as AuthenticatedBemVindoRouteImport } from './routes/_authenticated/bem-vindo'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated/contas'
+import { Route as AuthenticatedCookiesRouteImport } from './routes/_authenticated/cookies'
 import { Route as AuthenticatedInvestimentosRouteImport } from './routes/_authenticated/investimentos'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
 import { Route as AuthenticatedOrganizarSalarioRouteImport } from './routes/_authenticated/organizar-salario'
 import { Route as AuthenticatedPlanejamentoRouteImport } from './routes/_authenticated/planejamento'
+import { Route as AuthenticatedPoliticaDePrivacidadeRouteImport } from './routes/_authenticated/politica-de-privacidade'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedReservaRouteImport } from './routes/_authenticated/reserva'
+import { Route as AuthenticatedTermosDeUsoRouteImport } from './routes/_authenticated/termos-de-uso'
 import { Route as AuthenticatedVisaoGeralRouteImport } from './routes/_authenticated/visao-geral'
 
 const IndexRoute = IndexRouteImport.update({
@@ -30,89 +33,92 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-
 const NovaSenhaRoute = NovaSenhaRouteImport.update({
   id: '/nova-senha',
   path: '/nova-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
-
 const AuthenticatedBemVindoRoute = AuthenticatedBemVindoRouteImport.update({
   id: '/bem-vindo',
   path: '/bem-vindo',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
     id: '/configuracoes',
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-
 const AuthenticatedContasRoute = AuthenticatedContasRouteImport.update({
   id: '/contas',
   path: '/contas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-
+const AuthenticatedCookiesRoute = AuthenticatedCookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInvestimentosRoute =
   AuthenticatedInvestimentosRouteImport.update({
     id: '/investimentos',
     path: '/investimentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-
 const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
   id: '/metas',
   path: '/metas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-
 const AuthenticatedMovimentacoesRoute =
   AuthenticatedMovimentacoesRouteImport.update({
     id: '/movimentacoes',
     path: '/movimentacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-
 const AuthenticatedOrganizarSalarioRoute =
   AuthenticatedOrganizarSalarioRouteImport.update({
     id: '/organizar-salario',
     path: '/organizar-salario',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-
 const AuthenticatedPlanejamentoRoute =
   AuthenticatedPlanejamentoRouteImport.update({
     id: '/planejamento',
     path: '/planejamento',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-
+const AuthenticatedPoliticaDePrivacidadeRoute =
+  AuthenticatedPoliticaDePrivacidadeRouteImport.update({
+    id: '/politica-de-privacidade',
+    path: '/politica-de-privacidade',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-
 const AuthenticatedReservaRoute = AuthenticatedReservaRouteImport.update({
   id: '/reserva',
   path: '/reserva',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-
+const AuthenticatedTermosDeUsoRoute =
+  AuthenticatedTermosDeUsoRouteImport.update({
+    id: '/termos-de-uso',
+    path: '/termos-de-uso',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedVisaoGeralRoute = AuthenticatedVisaoGeralRouteImport.update({
   id: '/visao-geral',
   path: '/visao-geral',
@@ -126,16 +132,18 @@ export interface FileRoutesByFullPath {
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
+  '/cookies': typeof AuthenticatedCookiesRoute
   '/investimentos': typeof AuthenticatedInvestimentosRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
   '/planejamento': typeof AuthenticatedPlanejamentoRoute
+  '/politica-de-privacidade': typeof AuthenticatedPoliticaDePrivacidadeRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/reserva': typeof AuthenticatedReservaRoute
+  '/termos-de-uso': typeof AuthenticatedTermosDeUsoRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
@@ -143,16 +151,18 @@ export interface FileRoutesByTo {
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
+  '/cookies': typeof AuthenticatedCookiesRoute
   '/investimentos': typeof AuthenticatedInvestimentosRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
   '/planejamento': typeof AuthenticatedPlanejamentoRoute
+  '/politica-de-privacidade': typeof AuthenticatedPoliticaDePrivacidadeRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/reserva': typeof AuthenticatedReservaRoute
+  '/termos-de-uso': typeof AuthenticatedTermosDeUsoRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
-
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
@@ -162,19 +172,20 @@ export interface FileRoutesById {
   '/_authenticated/bem-vindo': typeof AuthenticatedBemVindoRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/contas': typeof AuthenticatedContasRoute
+  '/_authenticated/cookies': typeof AuthenticatedCookiesRoute
   '/_authenticated/investimentos': typeof AuthenticatedInvestimentosRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/_authenticated/organizar-salario': typeof AuthenticatedOrganizarSalarioRoute
   '/_authenticated/planejamento': typeof AuthenticatedPlanejamentoRoute
+  '/_authenticated/politica-de-privacidade': typeof AuthenticatedPoliticaDePrivacidadeRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/reserva': typeof AuthenticatedReservaRoute
+  '/_authenticated/termos-de-uso': typeof AuthenticatedTermosDeUsoRoute
   '/_authenticated/visao-geral': typeof AuthenticatedVisaoGeralRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-
   fullPaths:
     | '/'
     | '/auth'
@@ -182,17 +193,18 @@ export interface FileRouteTypes {
     | '/bem-vindo'
     | '/configuracoes'
     | '/contas'
+    | '/cookies'
     | '/investimentos'
     | '/metas'
     | '/movimentacoes'
     | '/organizar-salario'
     | '/planejamento'
+    | '/politica-de-privacidade'
     | '/relatorios'
     | '/reserva'
+    | '/termos-de-uso'
     | '/visao-geral'
-
   fileRoutesByTo: FileRoutesByTo
-
   to:
     | '/'
     | '/auth'
@@ -200,15 +212,17 @@ export interface FileRouteTypes {
     | '/bem-vindo'
     | '/configuracoes'
     | '/contas'
+    | '/cookies'
     | '/investimentos'
     | '/metas'
     | '/movimentacoes'
     | '/organizar-salario'
     | '/planejamento'
+    | '/politica-de-privacidade'
     | '/relatorios'
     | '/reserva'
+    | '/termos-de-uso'
     | '/visao-geral'
-
   id:
     | '__root__'
     | '/'
@@ -218,18 +232,19 @@ export interface FileRouteTypes {
     | '/_authenticated/bem-vindo'
     | '/_authenticated/configuracoes'
     | '/_authenticated/contas'
+    | '/_authenticated/cookies'
     | '/_authenticated/investimentos'
     | '/_authenticated/metas'
     | '/_authenticated/movimentacoes'
     | '/_authenticated/organizar-salario'
     | '/_authenticated/planejamento'
+    | '/_authenticated/politica-de-privacidade'
     | '/_authenticated/relatorios'
     | '/_authenticated/reserva'
+    | '/_authenticated/termos-de-uso'
     | '/_authenticated/visao-geral'
-
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
@@ -246,7 +261,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -254,7 +268,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -262,7 +275,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-
     '/nova-senha': {
       id: '/nova-senha'
       path: '/nova-senha'
@@ -270,7 +282,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NovaSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
-
     '/_authenticated/bem-vindo': {
       id: '/_authenticated/bem-vindo'
       path: '/bem-vindo'
@@ -278,7 +289,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBemVindoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
     '/_authenticated/configuracoes': {
       id: '/_authenticated/configuracoes'
       path: '/configuracoes'
@@ -286,7 +296,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
     '/_authenticated/contas': {
       id: '/_authenticated/contas'
       path: '/contas'
@@ -294,7 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
+    '/_authenticated/cookies': {
+      id: '/_authenticated/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof AuthenticatedCookiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/investimentos': {
       id: '/_authenticated/investimentos'
       path: '/investimentos'
@@ -302,7 +317,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvestimentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
     '/_authenticated/metas': {
       id: '/_authenticated/metas'
       path: '/metas'
@@ -310,7 +324,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMetasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
     '/_authenticated/movimentacoes': {
       id: '/_authenticated/movimentacoes'
       path: '/movimentacoes'
@@ -318,7 +331,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMovimentacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
     '/_authenticated/organizar-salario': {
       id: '/_authenticated/organizar-salario'
       path: '/organizar-salario'
@@ -326,7 +338,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrganizarSalarioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
     '/_authenticated/planejamento': {
       id: '/_authenticated/planejamento'
       path: '/planejamento'
@@ -334,7 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlanejamentoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
+    '/_authenticated/politica-de-privacidade': {
+      id: '/_authenticated/politica-de-privacidade'
+      path: '/politica-de-privacidade'
+      fullPath: '/politica-de-privacidade'
+      preLoaderRoute: typeof AuthenticatedPoliticaDePrivacidadeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/relatorios': {
       id: '/_authenticated/relatorios'
       path: '/relatorios'
@@ -342,7 +359,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
     '/_authenticated/reserva': {
       id: '/_authenticated/reserva'
       path: '/reserva'
@@ -350,7 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReservaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-
+    '/_authenticated/termos-de-uso': {
+      id: '/_authenticated/termos-de-uso'
+      path: '/termos-de-uso'
+      fullPath: '/termos-de-uso'
+      preLoaderRoute: typeof AuthenticatedTermosDeUsoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/visao-geral': {
       id: '/_authenticated/visao-geral'
       path: '/visao-geral'
@@ -365,13 +387,16 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBemVindoRoute: typeof AuthenticatedBemVindoRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedContasRoute: typeof AuthenticatedContasRoute
+  AuthenticatedCookiesRoute: typeof AuthenticatedCookiesRoute
   AuthenticatedInvestimentosRoute: typeof AuthenticatedInvestimentosRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
   AuthenticatedOrganizarSalarioRoute: typeof AuthenticatedOrganizarSalarioRoute
   AuthenticatedPlanejamentoRoute: typeof AuthenticatedPlanejamentoRoute
+  AuthenticatedPoliticaDePrivacidadeRoute: typeof AuthenticatedPoliticaDePrivacidadeRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedReservaRoute: typeof AuthenticatedReservaRoute
+  AuthenticatedTermosDeUsoRoute: typeof AuthenticatedTermosDeUsoRoute
   AuthenticatedVisaoGeralRoute: typeof AuthenticatedVisaoGeralRoute
 }
 
@@ -379,53 +404,37 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBemVindoRoute: AuthenticatedBemVindoRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedContasRoute: AuthenticatedContasRoute,
+  AuthenticatedCookiesRoute: AuthenticatedCookiesRoute,
   AuthenticatedInvestimentosRoute: AuthenticatedInvestimentosRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
   AuthenticatedOrganizarSalarioRoute: AuthenticatedOrganizarSalarioRoute,
   AuthenticatedPlanejamentoRoute: AuthenticatedPlanejamentoRoute,
+  AuthenticatedPoliticaDePrivacidadeRoute:
+    AuthenticatedPoliticaDePrivacidadeRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedReservaRoute: AuthenticatedReservaRoute,
+  AuthenticatedTermosDeUsoRoute: AuthenticatedTermosDeUsoRoute,
   AuthenticatedVisaoGeralRoute: AuthenticatedVisaoGeralRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(
-    AuthenticatedRouteRouteChildren,
-  )
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute:
-    AuthenticatedRouteRouteWithChildren,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   NovaSenhaRoute: NovaSenhaRoute,
 }
-
 export const routeTree = rootRouteImport
-  ._addFileChildren(
-    rootRouteChildren,
-  )
+  ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type {
-  getRouter,
-} from './router.tsx'
-
-import type {
-  startInstance,
-} from './start.ts'
 
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
-    router: Awaited<
-      ReturnType<typeof getRouter>
-    >
-    config: Awaited<
-      ReturnType<
-        typeof startInstance.getOptions
-      >
-    >
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

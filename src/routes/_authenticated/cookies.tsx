@@ -10,7 +10,7 @@ import {
 
 export const Route =
   createFileRoute(
-    "/cookies",
+    "/_authenticated/cookies",
   )({
     head: () => ({
       meta: [

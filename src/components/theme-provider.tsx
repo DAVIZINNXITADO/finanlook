@@ -6,6 +6,13 @@ import {
   type ReactNode,
 } from "react";
 
+import {
+  buildThemeColorVars,
+  getThemeColor,
+  DEFAULT_CUSTOM_COLOR,
+  type ThemeColorKey,
+} from "@/lib/theme-colors";
+
 export type Theme =
   | "light"
   | "dark"
@@ -19,25 +26,31 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme;
-  setTheme: (
-    theme: Theme,
-  ) => void;
+  setTheme: (theme: Theme) => void;
+  resolvedTheme: "light" | "dark";
+  themeColor: ThemeColorKey;
+  setThemeColor: (color: ThemeColorKey) => void;
+  customColor: string;
+  setCustomColor: (hex: string) => void;
 };
 
 const ThemeProviderContext =
-  createContext<
-    ThemeProviderState | undefined
-  >(undefined);
+  createContext<ThemeProviderState | undefined>(
+    undefined,
+  );
+
+const COLOR_STORAGE_KEY =
+  "finanlook-theme-color";
+
+const CUSTOM_STORAGE_KEY =
+  "finanlook-theme-custom-color";
 
 /* =========================================================
    SISTEMA
    ========================================================= */
 
 function getSystemTheme(): "light" | "dark" {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
+  if (typeof window === "undefined") {
     return "light";
   }
 
@@ -60,90 +73,97 @@ export function ThemeProvider({
   const [
     theme,
     setThemeState,
-  ] =
-    useState<Theme>(
-      defaultTheme,
-    );
+  ] = useState<Theme>(defaultTheme);
+
+  const [
+    resolvedTheme,
+    setResolvedTheme,
+  ] = useState<"light" | "dark">("light");
+
+  const [
+    themeColor,
+    setThemeColorState,
+  ] = useState<ThemeColorKey>("classic");
+
+  const [
+    customColor,
+    setCustomColorState,
+  ] = useState<string>(DEFAULT_CUSTOM_COLOR);
 
   /* =======================================================
-     CARREGAR TEMA SALVO
+     CARREGAR PREFERÊNCIAS SALVAS
      ======================================================= */
 
   useEffect(() => {
     const savedTheme =
-      window.localStorage.getItem(
-        storageKey,
-      );
+      window.localStorage.getItem(storageKey);
 
     if (
       savedTheme === "light" ||
       savedTheme === "dark" ||
       savedTheme === "system"
     ) {
-      setThemeState(
-        savedTheme,
-      );
+      setThemeState(savedTheme);
     }
-  }, [
-    storageKey,
-  ]);
+
+    const savedColor =
+      window.localStorage.getItem(
+        COLOR_STORAGE_KEY,
+      ) as ThemeColorKey | null;
+
+    if (
+      savedColor &&
+      getThemeColor(savedColor).key === savedColor
+    ) {
+      setThemeColorState(savedColor);
+    }
+
+    const savedCustom =
+      window.localStorage.getItem(
+        CUSTOM_STORAGE_KEY,
+      );
+
+    if (
+      savedCustom &&
+      /^#[0-9a-fA-F]{6}$/.test(savedCustom)
+    ) {
+      setCustomColorState(savedCustom);
+    }
+  }, [storageKey]);
 
   /* =======================================================
-     APLICAR TEMA
+     APLICAR CLARO / ESCURO
      ======================================================= */
 
   useEffect(() => {
-    const root =
-      window.document.documentElement;
+    const root = window.document.documentElement;
 
-    function applyTheme(
-      selectedTheme: Theme,
-    ) {
-      const resolvedTheme =
+    function applyTheme(selectedTheme: Theme) {
+      const resolved =
         selectedTheme === "system"
           ? getSystemTheme()
           : selectedTheme;
 
-      /*
-       * Nosso CSS usa :root
-       * para o tema claro.
-       *
-       * Então só precisamos da classe
-       * .dark quando o tema resolvido
-       * for escuro.
-       */
-
       root.classList.toggle(
         "dark",
-        resolvedTheme ===
-          "dark",
+        resolved === "dark",
       );
+
+      setResolvedTheme(resolved);
     }
 
     applyTheme(theme);
 
-    /*
-     * Se o usuário escolheu claro ou escuro
-     * manualmente, não precisamos escutar
-     * mudanças do sistema.
-     */
-
-    if (
-      theme !==
-      "system"
-    ) {
+    if (theme !== "system") {
       return;
     }
 
-    const mediaQuery =
-      window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      );
+    const mediaQuery = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    );
 
     function handleChange() {
-      applyTheme(
-        "system",
-      );
+      applyTheme("system");
     }
 
     mediaQuery.addEventListener(
@@ -157,36 +177,95 @@ export function ThemeProvider({
         handleChange,
       );
     };
+  }, [theme]);
+
+  /* =======================================================
+     APLICAR PALETA DE COR
+     ======================================================= */
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+
+    const vars = buildThemeColorVars(
+      themeColor,
+      resolvedTheme,
+      customColor,
+    );
+
+    const keys = [
+      "--primary",
+      "--primary-foreground",
+      "--ring",
+      "--accent",
+      "--accent-foreground",
+      "--sidebar-primary",
+      "--sidebar-primary-foreground",
+      "--sidebar-accent",
+      "--sidebar-accent-foreground",
+      "--sidebar-ring",
+      "--chart-1",
+    ];
+
+    keys.forEach((key) => {
+      root.style.removeProperty(key);
+    });
+
+    if (!vars) {
+      return;
+    }
+
+    Object.entries(vars).forEach(
+      ([key, value]) => {
+        root.style.setProperty(key, value);
+      },
+    );
   }, [
-    theme,
+    themeColor,
+    customColor,
+    resolvedTheme,
   ]);
 
   /* =======================================================
-     ALTERAR TEMA
+     AÇÕES
      ======================================================= */
 
-  function setTheme(
-    newTheme: Theme,
-  ) {
+  function setTheme(newTheme: Theme) {
     window.localStorage.setItem(
       storageKey,
       newTheme,
     );
 
-    setThemeState(
-      newTheme,
-    );
+    setThemeState(newTheme);
   }
 
-  /* =======================================================
-     PROVIDER
-     ======================================================= */
+  function setThemeColor(color: ThemeColorKey) {
+    window.localStorage.setItem(
+      COLOR_STORAGE_KEY,
+      color,
+    );
+
+    setThemeColorState(color);
+  }
+
+  function setCustomColor(hex: string) {
+    window.localStorage.setItem(
+      CUSTOM_STORAGE_KEY,
+      hex,
+    );
+
+    setCustomColorState(hex);
+  }
 
   return (
     <ThemeProviderContext.Provider
       value={{
         theme,
         setTheme,
+        resolvedTheme,
+        themeColor,
+        setThemeColor,
+        customColor,
+        setCustomColor,
       }}
     >
       {children}
@@ -199,10 +278,9 @@ export function ThemeProvider({
    ========================================================= */
 
 export function useTheme() {
-  const context =
-    useContext(
-      ThemeProviderContext,
-    );
+  const context = useContext(
+    ThemeProviderContext,
+  );
 
   if (!context) {
     throw new Error(

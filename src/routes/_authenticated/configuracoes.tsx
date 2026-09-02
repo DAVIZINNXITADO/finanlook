@@ -109,11 +109,14 @@ function maskEmail(
     return "";
   }
 
-  const [
-    username,
-    domain,
-  ] =
+  const parts =
     email.split("@");
+
+  const username =
+    parts[0] ?? "";
+
+  const domain =
+    parts[1] ?? "";
 
   if (!domain) {
     return email;
