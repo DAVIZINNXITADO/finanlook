@@ -285,9 +285,7 @@ function ContaPage() {
       toast.success(
         "Perfil atualizado com sucesso.",
       );
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
@@ -402,9 +400,7 @@ function ContaPage() {
       toast.success(
         "Verifique seu e-mail para confirmar a alteração.",
       );
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
@@ -484,9 +480,7 @@ function ContaPage() {
       toast.success(
         "Senha alterada com sucesso.",
       );
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
