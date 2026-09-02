@@ -19,8 +19,10 @@ import {
 import {
   Check,
   ChevronRight,
+  Crown,
   Eye,
   EyeOff,
+  Lock,
   LockKeyhole,
   LogOut,
   Mail,
@@ -72,6 +74,13 @@ import {
   useTheme,
   type Theme,
 } from "@/components/theme-provider";
+
+import {
+  INTERFACE_STYLES,
+  THEME_COLORS,
+  themeColorSwatch,
+  type ThemeColorKey,
+} from "@/lib/theme-colors";
 
 import {
   cn,
@@ -158,6 +167,15 @@ function SettingsPage() {
   const {
     theme,
     setTheme,
+
+    interfaceStyle,
+    setInterfaceStyle,
+
+    themeColor,
+    setThemeColor,
+
+    customColor,
+    setCustomColor,
   } =
     useTheme();
 
@@ -180,6 +198,12 @@ function SettingsPage() {
   const [
     securityOpen,
     setSecurityOpen,
+  ] =
+    useState(false);
+
+  const [
+    appearanceOpen,
+    setAppearanceOpen,
   ] =
     useState(false);
 
@@ -335,7 +359,9 @@ function SettingsPage() {
     }
 
 
-    if (username.length < 3) {
+    if (
+      username.length < 3
+    ) {
       toast.error(
         "O nome de usuário precisa ter pelo menos 3 caracteres.",
       );
@@ -691,6 +717,56 @@ function SettingsPage() {
   }
 
 
+  function changeInterfaceStyle(
+    value:
+      | "neutral"
+      | "emerald",
+  ) {
+    setInterfaceStyle(
+      value,
+    );
+
+    toast.success(
+      value === "neutral"
+        ? "Estilo neutro ativado."
+        : "Estilo esverdeado ativado.",
+    );
+  }
+
+
+  function changeThemeColor(
+    color: ThemeColorKey,
+  ) {
+    const selected =
+      THEME_COLORS.find(
+        (item) =>
+          item.key ===
+          color,
+      );
+
+
+    if (
+      selected?.premium
+    ) {
+      toast.info(
+        "Esta cor está disponível no FinanLook Premium.",
+      );
+
+      return;
+    }
+
+
+    setThemeColor(
+      color,
+    );
+
+
+    toast.success(
+      `Cor ${selected?.label ?? ""} ativada.`,
+    );
+  }
+
+
   async function signOut() {
     try {
       await queryClient.cancelQueries();
@@ -854,13 +930,14 @@ function SettingsPage() {
 
   return (
     <div className="space-y-6">
+
       <PageHeader
         title="Configurações"
         subtitle="Gerencie sua conta e personalize sua experiência no FinanLook."
       />
 
 
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="grid gap-4 lg:grid-cols-3">
 
         <SettingsCard
           icon={
@@ -895,107 +972,20 @@ function SettingsPage() {
             <Palette className="size-6" />
           }
           title="Aparência"
-          description="Personalize como o FinanLook aparece para você."
+          description="Personalize o modo, estilo e cores do FinanLook."
           buttonText="Personalizar"
           onClick={() =>
-            document
-              .getElementById(
-                "appearance",
-              )
-              ?.scrollIntoView({
-                behavior:
-                  "smooth",
-              })
+            setAppearanceOpen(
+              true,
+            )
           }
         />
 
       </section>
 
 
-      <section
-        id="appearance"
-        className="surface p-5"
-      >
-        <div className="flex items-start gap-3">
-
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-            <Palette className="size-5 text-primary" />
-          </div>
-
-
-          <div>
-            <h2 className="font-display text-lg font-semibold">
-              Aparência
-            </h2>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Escolha como deseja visualizar o FinanLook.
-            </p>
-          </div>
-
-        </div>
-
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-
-          <ThemeOption
-            icon={
-              <Sun className="size-5" />
-            }
-            title="Claro"
-            description="Sempre usar aparência clara"
-            active={
-              theme ===
-              "light"
-            }
-            onClick={() =>
-              changeTheme(
-                "light",
-              )
-            }
-          />
-
-
-          <ThemeOption
-            icon={
-              <Moon className="size-5" />
-            }
-            title="Escuro"
-            description="Sempre usar aparência escura"
-            active={
-              theme ===
-              "dark"
-            }
-            onClick={() =>
-              changeTheme(
-                "dark",
-              )
-            }
-          />
-
-
-          <ThemeOption
-            icon={
-              <Monitor className="size-5" />
-            }
-            title="Sistema"
-            description="Seguir o dispositivo"
-            active={
-              theme ===
-              "system"
-            }
-            onClick={() =>
-              changeTheme(
-                "system",
-              )
-            }
-          />
-
-        </div>
-      </section>
-
-
       <section>
+
         <div className="mb-3">
           <h2 className="font-display text-lg font-semibold">
             Conta
@@ -1035,8 +1025,13 @@ function SettingsPage() {
           />
 
         </div>
+
       </section>
 
+
+      {/* ===================================== */}
+      {/* PERFIL */}
+      {/* ===================================== */}
 
       <Dialog
         open={
@@ -1062,6 +1057,7 @@ function SettingsPage() {
           <div className="space-y-4">
 
             <div className="space-y-1.5">
+
               <Label htmlFor="profile-name">
                 Nome
               </Label>
@@ -1082,19 +1078,23 @@ function SettingsPage() {
                 placeholder="Seu nome"
                 maxLength={80}
               />
+
             </div>
 
 
             <div className="space-y-1.5">
+
               <Label htmlFor="profile-username">
                 Nome de usuário
               </Label>
+
 
               <div className="relative">
 
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                   @
                 </span>
+
 
                 <Input
                   id="profile-username"
@@ -1114,12 +1114,14 @@ function SettingsPage() {
                 />
 
               </div>
+
             </div>
 
           </div>
 
 
           <DialogFooter>
+
             <Button
               className="h-11 w-full"
               disabled={
@@ -1129,6 +1131,7 @@ function SettingsPage() {
                 void saveProfile()
               }
             >
+
               <Save className="size-4" />
 
               {savingProfile
@@ -1136,11 +1139,410 @@ function SettingsPage() {
                 : "Salvar alterações"}
 
             </Button>
+
           </DialogFooter>
 
         </DialogContent>
       </Dialog>
 
+
+      {/* ===================================== */}
+      {/* APARÊNCIA */}
+      {/* ===================================== */}
+
+      <Dialog
+        open={
+          appearanceOpen
+        }
+        onOpenChange={
+          setAppearanceOpen
+        }
+      >
+
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+
+          <DialogHeader>
+
+            <DialogTitle>
+              Aparência
+            </DialogTitle>
+
+            <DialogDescription>
+              Personalize como o FinanLook aparece para você.
+            </DialogDescription>
+
+          </DialogHeader>
+
+
+          <div className="space-y-8 py-2">
+
+
+            {/* MODO */}
+
+            <div>
+
+              <div>
+
+                <h3 className="font-semibold">
+                  Modo
+                </h3>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Escolha a aparência clara, escura ou siga o sistema.
+                </p>
+
+              </div>
+
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+
+                <ThemeOption
+                  icon={
+                    <Sun className="size-5" />
+                  }
+                  title="Claro"
+                  description="Sempre usar claro"
+                  active={
+                    theme ===
+                    "light"
+                  }
+                  onClick={() =>
+                    changeTheme(
+                      "light",
+                    )
+                  }
+                />
+
+
+                <ThemeOption
+                  icon={
+                    <Moon className="size-5" />
+                  }
+                  title="Escuro"
+                  description="Sempre usar escuro"
+                  active={
+                    theme ===
+                    "dark"
+                  }
+                  onClick={() =>
+                    changeTheme(
+                      "dark",
+                    )
+                  }
+                />
+
+
+                <ThemeOption
+                  icon={
+                    <Monitor className="size-5" />
+                  }
+                  title="Sistema"
+                  description="Seguir dispositivo"
+                  active={
+                    theme ===
+                    "system"
+                  }
+                  onClick={() =>
+                    changeTheme(
+                      "system",
+                    )
+                  }
+                />
+
+              </div>
+
+            </div>
+
+
+            {/* ESTILO */}
+
+            <div className="border-t pt-6">
+
+              <div>
+
+                <h3 className="font-semibold">
+                  Estilo da interface
+                </h3>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Escolha o visual geral da interface.
+                </p>
+
+              </div>
+
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+                {INTERFACE_STYLES.map(
+                  (
+                    style,
+                  ) => {
+
+                    const active =
+                      interfaceStyle ===
+                      style.key;
+
+                    return (
+                      <button
+                        key={
+                          style.key
+                        }
+                        type="button"
+                        onClick={() =>
+                          changeInterfaceStyle(
+                            style.key,
+                          )
+                        }
+                        className={cn(
+                          "relative rounded-xl border p-4 text-left transition-all",
+
+                          active
+                            ? "border-primary bg-primary/10 shadow-sm"
+                            : "hover:border-primary/30 hover:bg-muted/50",
+                        )}
+                      >
+
+                        {active ? (
+                          <span className="absolute right-3 top-3 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                            <Check className="size-3.5" />
+                          </span>
+                        ) : null}
+
+
+                        <div
+                          className={
+                            style.key ===
+                            "neutral"
+                              ? "mb-4 h-10 rounded-lg border bg-gradient-to-r from-white via-neutral-300 to-neutral-800"
+                              : "mb-4 h-10 rounded-lg border bg-gradient-to-r from-emerald-50 via-emerald-300 to-emerald-800"
+                          }
+                        />
+
+
+                        <p className="font-medium">
+                          {
+                            style.label
+                          }
+                        </p>
+
+
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {
+                            style.description
+                          }
+                        </p>
+
+                      </button>
+                    );
+                  },
+                )}
+
+              </div>
+
+            </div>
+
+
+            {/* CORES */}
+
+            <div className="border-t pt-6">
+
+              <div>
+
+                <h3 className="font-semibold">
+                  Cor de destaque
+                </h3>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Altera botões, destaques e elementos principais.
+                </p>
+
+              </div>
+
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+                {THEME_COLORS.map(
+                  (
+                    color,
+                  ) => {
+
+                    const active =
+                      themeColor ===
+                      color.key;
+
+                    const swatch =
+                      themeColorSwatch(
+                        color.key,
+                        customColor,
+                      );
+
+                    return (
+                      <button
+                        key={
+                          color.key
+                        }
+                        type="button"
+                        onClick={() =>
+                          changeThemeColor(
+                            color.key,
+                          )
+                        }
+                        className={cn(
+                          "relative flex items-center gap-4 rounded-xl border p-4 text-left transition-all",
+
+                          active
+                            ? "border-primary bg-primary/10 shadow-sm"
+                            : "hover:border-primary/30 hover:bg-muted/50",
+
+                          color.premium &&
+                            "cursor-pointer",
+                        )}
+                      >
+
+                        <div
+                          className="size-11 shrink-0 rounded-xl border shadow-sm"
+                          style={{
+                            backgroundColor:
+                              swatch,
+                          }}
+                        />
+
+
+                        <div className="min-w-0 flex-1">
+
+                          <div className="flex items-center gap-2">
+
+                            <p className="font-medium">
+                              {
+                                color.label
+                              }
+                            </p>
+
+
+                            {color.premium ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+
+                                <Crown className="size-3" />
+
+                                Premium
+
+                              </span>
+                            ) : null}
+
+                          </div>
+
+
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {
+                              color.description
+                            }
+                          </p>
+
+                        </div>
+
+
+                        {active ? (
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                            <Check className="size-3.5" />
+                          </span>
+                        ) : color.premium ? (
+                          <Lock className="size-4 shrink-0 text-muted-foreground" />
+                        ) : null}
+
+                      </button>
+                    );
+                  },
+                )}
+
+              </div>
+
+
+              {/* COR PERSONALIZADA */}
+
+              {themeColor ===
+              "custom" ? (
+
+                <div className="mt-5 rounded-xl border bg-muted/30 p-4">
+
+                  <Label
+                    htmlFor="custom-color"
+                  >
+                    Cor personalizada
+                  </Label>
+
+
+                  <div className="mt-3 flex gap-3">
+
+                    <input
+                      id="custom-color"
+                      type="color"
+                      value={
+                        customColor
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setCustomColor(
+                          event.target.value,
+                        )
+                      }
+                      className="h-11 w-14 cursor-pointer rounded-lg border bg-transparent p-1"
+                    />
+
+
+                    <Input
+                      value={
+                        customColor
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setCustomColor(
+                          event.target.value,
+                        )
+                      }
+                      placeholder="#2f6df6"
+                      className="h-11 flex-1 uppercase"
+                    />
+
+                  </div>
+
+                </div>
+
+              ) : null}
+
+            </div>
+
+          </div>
+
+
+          <DialogFooter>
+
+            <Button
+              className="h-11 w-full"
+              onClick={() =>
+                setAppearanceOpen(
+                  false,
+                )
+              }
+            >
+
+              <Check className="size-4" />
+
+              Concluir
+
+            </Button>
+
+          </DialogFooter>
+
+        </DialogContent>
+
+      </Dialog>
+
+
+      {/* ===================================== */}
+      {/* CONTA E SEGURANÇA */}
+      {/* ===================================== */}
 
       <Dialog
         open={
@@ -1150,9 +1552,11 @@ function SettingsPage() {
           setSecurityOpen
         }
       >
+
         <DialogContent className="sm:max-w-md">
 
           <DialogHeader>
+
             <DialogTitle>
               Conta e segurança
             </DialogTitle>
@@ -1160,6 +1564,7 @@ function SettingsPage() {
             <DialogDescription>
               Gerencie suas informações e credenciais de acesso.
             </DialogDescription>
+
           </DialogHeader>
 
 
@@ -1206,8 +1611,13 @@ function SettingsPage() {
           </div>
 
         </DialogContent>
+
       </Dialog>
 
+
+      {/* ===================================== */}
+      {/* E-MAIL */}
+      {/* ===================================== */}
 
       <Dialog
         open={
@@ -1217,9 +1627,11 @@ function SettingsPage() {
           setEmailOpen
         }
       >
+
         <DialogContent className="sm:max-w-md">
 
           <DialogHeader>
+
             <DialogTitle>
               Alterar e-mail
             </DialogTitle>
@@ -1227,12 +1639,14 @@ function SettingsPage() {
             <DialogDescription>
               Confirme o e-mail atual e informe o novo endereço que deseja utilizar.
             </DialogDescription>
+
           </DialogHeader>
 
 
           <div className="space-y-4">
 
             <div className="space-y-1.5">
+
               <Label htmlFor="current-email">
                 E-mail atual
               </Label>
@@ -1254,10 +1668,12 @@ function SettingsPage() {
                 placeholder="Digite seu e-mail atual"
                 autoComplete="email"
               />
+
             </div>
 
 
             <div className="space-y-1.5">
+
               <Label htmlFor="new-email">
                 Novo e-mail
               </Label>
@@ -1279,6 +1695,7 @@ function SettingsPage() {
                 placeholder="Digite seu novo e-mail"
                 autoComplete="email"
               />
+
             </div>
 
 
@@ -1290,6 +1707,7 @@ function SettingsPage() {
 
 
           <DialogFooter>
+
             <Button
               className="h-11 w-full"
               disabled={
@@ -1299,6 +1717,7 @@ function SettingsPage() {
                 void saveEmail()
               }
             >
+
               <Mail className="size-4" />
 
               {savingEmail
@@ -1306,11 +1725,17 @@ function SettingsPage() {
                 : "Continuar"}
 
             </Button>
+
           </DialogFooter>
 
         </DialogContent>
+
       </Dialog>
 
+
+      {/* ===================================== */}
+      {/* SENHA */}
+      {/* ===================================== */}
 
       <Dialog
         open={
@@ -1320,9 +1745,11 @@ function SettingsPage() {
           setPasswordOpen
         }
       >
+
         <DialogContent className="sm:max-w-md">
 
           <DialogHeader>
+
             <DialogTitle>
               Alterar senha
             </DialogTitle>
@@ -1330,15 +1757,18 @@ function SettingsPage() {
             <DialogDescription>
               Escolha uma nova senha para acessar sua conta.
             </DialogDescription>
+
           </DialogHeader>
 
 
           <div className="space-y-4">
 
             <div className="space-y-1.5">
+
               <Label htmlFor="new-password">
                 Nova senha
               </Label>
+
 
               <div className="relative">
 
@@ -1369,7 +1799,9 @@ function SettingsPage() {
                   type="button"
                   onClick={() =>
                     setShowPassword(
-                      (current) =>
+                      (
+                        current,
+                      ) =>
                         !current,
                     )
                   }
@@ -1380,18 +1812,22 @@ function SettingsPage() {
                       : "Mostrar senha"
                   }
                 >
+
                   {showPassword ? (
                     <EyeOff className="size-4" />
                   ) : (
                     <Eye className="size-4" />
                   )}
+
                 </button>
 
               </div>
+
             </div>
 
 
             <div className="space-y-1.5">
+
               <Label htmlFor="confirm-password">
                 Confirmar nova senha
               </Label>
@@ -1417,12 +1853,14 @@ function SettingsPage() {
                 autoComplete="new-password"
                 maxLength={1000}
               />
+
             </div>
 
           </div>
 
 
           <DialogFooter>
+
             <Button
               className="h-11 w-full"
               disabled={
@@ -1432,6 +1870,7 @@ function SettingsPage() {
                 void savePassword()
               }
             >
+
               <LockKeyhole className="size-4" />
 
               {savingPassword
@@ -1439,11 +1878,17 @@ function SettingsPage() {
                 : "Alterar senha"}
 
             </Button>
+
           </DialogFooter>
 
         </DialogContent>
+
       </Dialog>
 
+
+      {/* ===================================== */}
+      {/* EXCLUIR CONTA */}
+      {/* ===================================== */}
 
       <Dialog
         open={
@@ -1453,11 +1898,15 @@ function SettingsPage() {
           setDeleteOpen
         }
       >
+
         <DialogContent className="sm:max-w-md">
 
-          {deleteStep === 1 ? (
+          {deleteStep ===
+          1 ? (
+
             <>
               <DialogHeader>
+
                 <DialogTitle>
                   Excluir conta
                 </DialogTitle>
@@ -1465,6 +1914,7 @@ function SettingsPage() {
                 <DialogDescription>
                   Esta ação iniciará o processo de exclusão permanente da sua conta.
                 </DialogDescription>
+
               </DialogHeader>
 
 
@@ -1476,344 +1926,4 @@ function SettingsPage() {
                     Atenção
                   </p>
 
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Esta é uma ação sensível e será necessário confirmar sua identidade em duas etapas.
-                  </p>
-
-                </div>
-
-
-                <div className="space-y-1.5">
-
-                  <Label htmlFor="delete-username-first">
-                    Confirme seu nome de usuário
-                  </Label>
-
-                  <p className="text-sm text-muted-foreground">
-                    Digite exatamente:
-                  </p>
-
-                  <p className="font-semibold">
-                    @{accountUsername}
-                  </p>
-
-                  <Input
-                    id="delete-username-first"
-                    className="h-11"
-                    value={
-                      deleteUsernameFirst
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      setDeleteUsernameFirst(
-                        event.target.value,
-                      )
-                    }
-                    placeholder="Digite seu username"
-                    autoComplete="off"
-                  />
-
-                </div>
-
-              </div>
-
-
-              <DialogFooter>
-                <Button
-                  variant="destructive"
-                  className="h-11 w-full"
-                  onClick={
-                    confirmDeleteStepOne
-                  }
-                >
-                  Continuar
-                </Button>
-              </DialogFooter>
-            </>
-          ) : (
-            <>
-              <DialogHeader>
-                <DialogTitle>
-                  Confirmação final
-                </DialogTitle>
-
-                <DialogDescription>
-                  Para concluir, confirme novamente seu nome de usuário.
-                </DialogDescription>
-              </DialogHeader>
-
-
-              <div className="space-y-4">
-
-                <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-
-                  <p className="text-sm font-medium text-destructive">
-                    Esta ação é permanente.
-                  </p>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Após confirmar, sua conta será enviada para exclusão.
-                  </p>
-
-                </div>
-
-
-                <div className="space-y-1.5">
-
-                  <Label htmlFor="delete-username-final">
-                    Digite novamente
-                  </Label>
-
-                  <p className="text-sm text-muted-foreground">
-                    Confirme:
-                  </p>
-
-                  <p className="font-semibold">
-                    @{accountUsername}
-                  </p>
-
-                  <Input
-                    id="delete-username-final"
-                    className="h-11"
-                    value={
-                      deleteUsernameFinal
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      setDeleteUsernameFinal(
-                        event.target.value,
-                      )
-                    }
-                    placeholder="Digite seu username novamente"
-                    autoComplete="off"
-                  />
-
-                </div>
-
-              </div>
-
-
-              <DialogFooter>
-                <Button
-                  variant="destructive"
-                  className="h-11 w-full"
-                  disabled={
-                    deletingAccount
-                  }
-                  onClick={() =>
-                    void deleteAccount()
-                  }
-                >
-                  <Trash2 className="size-4" />
-
-                  {deletingAccount
-                    ? "Excluindo..."
-                    : "Excluir minha conta"}
-
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-
-        </DialogContent>
-      </Dialog>
-
-    </div>
-  );
-}
-
-
-function SettingsCard({
-  icon,
-  title,
-  description,
-  buttonText,
-  onClick,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  buttonText: string;
-  onClick: () => void;
-}) {
-  return (
-    <section className="surface p-5">
-      <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        {icon}
-      </div>
-
-
-      <h2 className="mt-4 font-display text-lg font-semibold">
-        {title}
-      </h2>
-
-
-      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-        {description}
-      </p>
-
-
-      <Button
-        variant="ghost"
-        className="mt-4 px-0 text-primary hover:bg-transparent hover:text-primary"
-        onClick={onClick}
-      >
-        {buttonText}
-
-        <ChevronRight className="size-4" />
-      </Button>
-    </section>
-  );
-}
-
-
-function DangerCard({
-  icon,
-  title,
-  description,
-  buttonText,
-  onClick,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  buttonText: string;
-  onClick: () => void;
-}) {
-  return (
-    <section className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5">
-
-      <div className="flex size-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
-        {icon}
-      </div>
-
-
-      <h2 className="mt-4 font-display text-lg font-semibold text-destructive">
-        {title}
-      </h2>
-
-
-      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-        {description}
-      </p>
-
-
-      <Button
-        variant="outline"
-        className="mt-4 w-full border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-        onClick={onClick}
-      >
-        {buttonText}
-      </Button>
-
-    </section>
-  );
-}
-
-
-function SettingsRow({
-  icon,
-  title,
-  description,
-  action,
-  onClick,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  action: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/40"
-    >
-
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
-        {icon}
-      </div>
-
-
-      <div className="min-w-0 flex-1">
-
-        <p className="font-medium">
-          {title}
-        </p>
-
-        <p className="mt-1 truncate text-sm text-muted-foreground">
-          {description}
-        </p>
-
-      </div>
-
-
-      <div className="flex items-center gap-1 text-sm font-medium text-primary">
-
-        <span>
-          {action}
-        </span>
-
-        <ChevronRight className="size-4" />
-
-      </div>
-
-    </button>
-  );
-}
-
-
-function ThemeOption({
-  icon,
-  title,
-  description,
-  active,
-  onClick,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all",
-
-        active
-          ? "border-primary bg-primary/10 text-primary shadow-sm"
-          : "hover:border-primary/30 hover:bg-muted/50",
-      )}
-    >
-
-      {active ? (
-        <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-          <Check className="size-3" />
-        </span>
-      ) : null}
-
-
-      {icon}
-
-
-      <div>
-
-        <p className="font-medium">
-          {title}
-        </p>
-
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {description}
-        </p>
-
-      </div>
-
-    </button>
-  );
-}
+                  <p className="mt
