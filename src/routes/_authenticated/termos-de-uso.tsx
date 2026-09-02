@@ -10,7 +10,7 @@ import {
 
 export const Route =
   createFileRoute(
-    "/termos-de-uso",
+    "/_authenticated/termos-de-uso",
   )({
     head: () => ({
       meta: [

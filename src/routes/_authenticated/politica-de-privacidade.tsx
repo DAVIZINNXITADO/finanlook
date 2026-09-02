@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute(
-  "/politica-de-privacidade",
+  "/_authenticated/politica-de-privacidade",
 )({
   head: () => ({
     meta: [
