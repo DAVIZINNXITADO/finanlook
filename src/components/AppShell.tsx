@@ -39,6 +39,14 @@ import {
 } from "@/components/ui/button";
 
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import {
   Sheet,
   SheetContent,
   SheetTitle,
@@ -47,6 +55,14 @@ import {
 import {
   cn,
 } from "@/lib/utils";
+
+import {
+  AdSlot,
+} from "@/components/AdSlot";
+
+import {
+  SiteIcon,
+} from "@/components/SiteIcon";
 
 import {
   useProfile,
@@ -135,6 +151,16 @@ const MOBILE_MAIN =
     4,
   );
 
+const AD_ENABLED_PATHS = new Set([
+  "/visao-geral",
+  "/movimentacoes",
+  "/contas",
+  "/organizar-salario",
+  "/reserva",
+  "/metas",
+  "/investimentos",
+]);
+
 /* =========================================================
    APPSHELL
    ========================================================= */
@@ -164,6 +190,12 @@ export function AppShell({
   const [
     menuOpen,
     setMenuOpen,
+  ] =
+    useState(false);
+
+  const [
+    premiumOpen,
+    setPremiumOpen,
   ] =
     useState(false);
 
@@ -212,20 +244,7 @@ export function AppShell({
      ======================================================= */
 
   function handlePremium() {
-    /*
-     * Quando a página Premium existir,
-     * podemos trocar esta função por:
-     *
-     * navigate({
-     *   to: "/premium",
-     * });
-     */
-
-    if (
-      !PAYMENTS_PROVIDER_CONFIGURED
-    ) {
-      return;
-    }
+    setPremiumOpen(true);
   }
 
   /* =======================================================
@@ -257,9 +276,7 @@ export function AppShell({
           to="/visao-geral"
           className="mb-6 flex items-center gap-2 px-2"
         >
-          <img
-            src="/favicon.png"
-            alt="FinanLook"
+          <SiteIcon
             className="size-9 rounded-xl object-contain"
           />
 
@@ -359,15 +376,13 @@ export function AppShell({
             O MENU É "MAIS", EMBAIXO.
            =============================================== */}
 
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur md:hidden">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur md:justify-end">
 
           <Link
             to="/visao-geral"
-            className="flex min-w-0 items-center gap-2"
+            className="flex min-w-0 items-center gap-2 md:hidden"
           >
-            <img
-              src="/favicon.png"
-              alt="FinanLook"
+            <SiteIcon
               className="size-8 shrink-0 rounded-lg object-contain"
             />
 
@@ -376,22 +391,25 @@ export function AppShell({
             </span>
           </Link>
 
-          {/* STATUS PREMIUM */}
-
-          {
-            !isLoadingPlan &&
-            isPremium
-              ? (
-                <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-
-                  <Crown className="size-4" />
-
-                  Premium
-
-                </div>
-              )
-              : null
-          }
+          {!isLoadingPlan ? (
+            isPremium ? (
+              <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                <Crown className="size-4" />
+                Premium ativo
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handlePremium}
+                className="border-primary/30 text-primary hover:bg-primary/10"
+              >
+                <Crown className="size-4" />
+                Seja Premium
+              </Button>
+            )
+          ) : null}
 
         </header>
 
@@ -516,6 +534,57 @@ export function AppShell({
 
         </Sheet>
 
+        <Dialog
+          open={premiumOpen}
+          onOpenChange={setPremiumOpen}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:mx-0">
+                <Crown className="size-6" />
+              </div>
+
+              <DialogTitle className="pt-2">
+                FinanLook Premium
+              </DialogTitle>
+
+              <DialogDescription>
+                Tenha mais clareza para planejar, analisar e organizar sua vida financeira.
+              </DialogDescription>
+            </DialogHeader>
+
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              {[
+                "Relatórios e análises financeiras avançadas",
+                "Planejamento com projeções e limites por categoria",
+                "Mais recursos para automatizar sua organização",
+              ].map((feature) => (
+                <li key={feature} className="flex items-start gap-2">
+                  <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-muted-foreground">
+              {PAYMENTS_PROVIDER_CONFIGURED
+                ? "A assinatura será aberta na próxima etapa."
+                : "A assinatura Premium estará disponível em breve. O botão ficará ativo assim que os pagamentos forem conectados."}
+            </div>
+
+            <Button
+              type="button"
+              className="w-full"
+              disabled={!PAYMENTS_PROVIDER_CONFIGURED}
+            >
+              <Crown className="size-4" />
+              {PAYMENTS_PROVIDER_CONFIGURED
+                ? "Assinar Premium"
+                : "Disponível em breve"}
+            </Button>
+          </DialogContent>
+        </Dialog>
+
         {/* ===============================================
             CONTEÚDO
            =============================================== */}
@@ -527,6 +596,14 @@ export function AppShell({
             {
               children
             }
+
+            {AD_ENABLED_PATHS.has(pathname) ? (
+              <AdSlot
+                id={`app-shell-${pathname.slice(1).replaceAll("/", "-")}`}
+                size="banner"
+                className="mt-8"
+              />
+            ) : null}
 
             {/* ===========================================
                 RODAPÉ

@@ -36,7 +36,7 @@ import {
 
 import {
   useTheme,
-  type Theme,
+  type ThemeMode,
   type ThemeStyle,
 } from "@/components/theme-provider";
 
@@ -87,8 +87,8 @@ function AppearancePage() {
     themeStyle,
     setThemeStyle,
 
-    themeColor,
-    setThemeColor,
+    color: themeColor,
+    setColor: setThemeColor,
 
     customColor,
     setCustomColor,
@@ -97,7 +97,7 @@ function AppearancePage() {
 
 
   function changeTheme(
-    value: Theme,
+    value: ThemeMode,
   ) {
     setTheme(
       value,
@@ -183,8 +183,7 @@ function AppearancePage() {
           size="icon"
           onClick={() =>
             navigate({
-              to:
-                "/_authenticated/configuracoes",
+              to: "/configuracoes",
             })
           }
           aria-label="Voltar para configurações"
@@ -543,8 +542,7 @@ function AppearancePage() {
           type="button"
           onClick={() =>
             navigate({
-              to:
-                "/_authenticated/configuracoes",
+              to: "/configuracoes",
             })
           }
         >

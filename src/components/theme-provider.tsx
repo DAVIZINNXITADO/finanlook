@@ -130,13 +130,13 @@ const THEME_COLORS: ThemeColor[] = [
 
 export function getThemeColor(
   key: ThemeColorKey,
-) {
+): ThemeColor {
   return (
     THEME_COLORS.find(
       (color) =>
         color.key === key,
     ) ??
-    THEME_COLORS[0]
+    THEME_COLORS[0]!
   );
 }
 

@@ -243,10 +243,10 @@ export const Route =
             "icon",
 
           href:
-            "/favicon.png",
+            "/SiteIcon.svg",
 
           type:
-            "image/png",
+            "image/svg+xml",
         },
       ],
     }),

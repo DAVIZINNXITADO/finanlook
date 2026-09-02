@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SiteIcon } from "@/components/SiteIcon";
 
 const searchSchema = z.object({
   modo: z.enum(["entrar", "cadastro"]).optional().catch("entrar")
@@ -330,9 +331,7 @@ function AuthPage() {
           to="/"
           className="mb-6 flex items-center gap-2 transition-opacity hover:opacity-80"
         >
-          <span className="hero-gradient flex size-10 items-center justify-center rounded-xl text-lg">
-            💸
-          </span>
+          <SiteIcon className="size-10 rounded-xl object-contain" />
 
           <span className="font-display text-xl font-semibold">
             FinanLook
@@ -423,9 +422,7 @@ function AuthPage() {
         to="/"
         className="mb-6 flex items-center gap-2 transition-opacity hover:opacity-80"
       >
-        <span className="hero-gradient flex size-10 items-center justify-center rounded-xl text-lg">
-          💸
-        </span>
+        <SiteIcon className="size-10 rounded-xl object-contain" />
 
         <span className="font-display text-xl font-semibold">
           FinanLook

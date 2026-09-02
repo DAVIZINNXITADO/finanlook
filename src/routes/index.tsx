@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { SiteIcon } from "@/components/SiteIcon";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -76,9 +77,7 @@ function Landing() {
     <div className="min-h-screen">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2">
-          <span className="hero-gradient flex size-9 items-center justify-center rounded-xl text-lg">
-            💸
-          </span>
+          <SiteIcon className="size-9 rounded-xl object-contain" />
 
           <span className="font-display text-lg font-semibold">
             FinanLook

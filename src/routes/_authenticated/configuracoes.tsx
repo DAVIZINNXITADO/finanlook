@@ -1,6 +1,6 @@
 import {
   createFileRoute,
-  useNavigate,
+  Link,
 } from "@tanstack/react-router";
 
 import {
@@ -44,10 +44,6 @@ export const Route =
 
 
 function SettingsPage() {
-  const navigate =
-    useNavigate();
-
-
   return (
     <div className="space-y-6">
 
@@ -87,12 +83,7 @@ function SettingsPage() {
               Gerencie seu perfil, nome de usuário,
               e-mail e senha.
             "
-            onClick={() =>
-              navigate({
-                to:
-                  "/configuracoes/conta",
-              })
-            }
+            to="/configuracoes/conta"
           />
 
 
@@ -109,12 +100,7 @@ function SettingsPage() {
               Personalize o tema, estilo visual
               e as cores do FinanLook.
             "
-            onClick={() =>
-              navigate({
-                to:
-                  "/configuracoes/aparencia",
-              })
-            }
+            to="/configuracoes/aparencia"
           />
 
         </div>
@@ -174,8 +160,9 @@ type SettingsCardProps = {
   title: string;
 
   description: string;
-
-  onClick: () => void;
+  to:
+    | "/configuracoes/conta"
+    | "/configuracoes/aparencia";
 };
 
 
@@ -184,14 +171,11 @@ function SettingsCard({
   iconClassName,
   title,
   description,
-  onClick,
+  to,
 }: SettingsCardProps) {
   return (
-    <button
-      type="button"
-      onClick={
-        onClick
-      }
+    <Link
+      to={to}
       className="
         group
         flex
@@ -207,6 +191,9 @@ function SettingsCard({
         hover:border-primary/40
         hover:bg-muted/30
         hover:shadow-sm
+        focus:outline-none
+        focus:ring-2
+        focus:ring-primary
       "
     >
 
@@ -259,6 +246,6 @@ function SettingsCard({
         "
       />
 
-    </button>
+    </Link>
   );
 }

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title>SiteIcon</title>
+  <desc>Ícone temporário do FinanLook para ser substituído pelo SiteIcon definitivo.</desc>
+  <defs>
+    <linearGradient id="brand" x1="18" y1="18" x2="110" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#17233f"/>
+      <stop offset="1" stop-color="#16b89a"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="#f8fbf7"/>
+  <path fill="url(#brand)" d="M29 91V34c0-6 5-11 11-11h50c5 0 9 4 9 9s-4 9-9 9H47v12h31c5 0 9 4 9 9s-4 9-9 9H47v20c0 7-4 11-9 11s-9-4-9-11Z"/>
+  <path fill="#16b89a" d="M48 98c14 8 32 8 47-1 10-6 17-16 20-28 3-13 0-27-7-38 12 20 13 39 4 55-9 17-25 27-44 29-8 1-15-1-20-4Z"/>
+  <rect width="9" height="25" x="51" y="68" rx="4.5" fill="#16b89a"/>
+  <rect width="9" height="36" x="67" y="57" rx="4.5" fill="#16b89a"/>
+  <rect width="9" height="47" x="83" y="46" rx="4.5" fill="#16b89a"/>
+</svg>
