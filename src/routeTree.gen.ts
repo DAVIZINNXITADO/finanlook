@@ -13,8 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as NovaSenhaRouteImport } from './routes/nova-senha'
+
 import { Route as AuthenticatedBemVindoRouteImport } from './routes/_authenticated/bem-vindo'
-import { Route as AuthenticatedConfiguracaoRouteImport } from './routes/_authenticated/configuracao'
+
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+
 import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated/contas'
 import { Route as AuthenticatedCookiesRouteImport } from './routes/_authenticated/cookies'
 import { Route as AuthenticatedInvestimentosRouteImport } from './routes/_authenticated/investimentos'
@@ -27,8 +30,10 @@ import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedReservaRouteImport } from './routes/_authenticated/reserva'
 import { Route as AuthenticatedTermosDeUsoRouteImport } from './routes/_authenticated/termos-de-uso'
 import { Route as AuthenticatedVisaoGeralRouteImport } from './routes/_authenticated/visao-geral'
+
 import { Route as AuthenticatedConfiguracaoAparenciaRouteImport } from './routes/_authenticated/configuracao/aparencia'
 import { Route as AuthenticatedConfiguracaoContaRouteImport } from './routes/_authenticated/configuracao/conta'
+
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -36,10 +41,13 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
+
+const AuthenticatedRouteRoute =
+  AuthenticatedRouteRouteImport.update({
+    id: '/_authenticated',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -47,36 +55,45 @@ const AuthRoute = AuthRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 
+
 const NovaSenhaRoute = NovaSenhaRouteImport.update({
   id: '/nova-senha',
   path: '/nova-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 
-const AuthenticatedBemVindoRoute = AuthenticatedBemVindoRouteImport.update({
-  id: '/bem-vindo',
-  path: '/bem-vindo',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
-const AuthenticatedConfiguracaoRoute =
-  AuthenticatedConfiguracaoRouteImport.update({
-    id: '/configuracao',
-    path: '/configuracao',
+const AuthenticatedBemVindoRoute =
+  AuthenticatedBemVindoRouteImport.update({
+    id: '/bem-vindo',
+    path: '/bem-vindo',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
-const AuthenticatedContasRoute = AuthenticatedContasRouteImport.update({
-  id: '/contas',
-  path: '/contas',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
-const AuthenticatedCookiesRoute = AuthenticatedCookiesRouteImport.update({
-  id: '/cookies',
-  path: '/cookies',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedConfiguracoesRoute =
+  AuthenticatedConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
+
+const AuthenticatedContasRoute =
+  AuthenticatedContasRouteImport.update({
+    id: '/contas',
+    path: '/contas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
+
+const AuthenticatedCookiesRoute =
+  AuthenticatedCookiesRouteImport.update({
+    id: '/cookies',
+    path: '/cookies',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
 
 const AuthenticatedInvestimentosRoute =
   AuthenticatedInvestimentosRouteImport.update({
@@ -85,11 +102,14 @@ const AuthenticatedInvestimentosRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
-const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
-  id: '/metas',
-  path: '/metas',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+
+const AuthenticatedMetasRoute =
+  AuthenticatedMetasRouteImport.update({
+    id: '/metas',
+    path: '/metas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
 
 const AuthenticatedMovimentacoesRoute =
   AuthenticatedMovimentacoesRouteImport.update({
@@ -98,12 +118,14 @@ const AuthenticatedMovimentacoesRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
+
 const AuthenticatedOrganizarSalarioRoute =
   AuthenticatedOrganizarSalarioRouteImport.update({
     id: '/organizar-salario',
     path: '/organizar-salario',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+
 
 const AuthenticatedPlanejamentoRoute =
   AuthenticatedPlanejamentoRouteImport.update({
@@ -112,6 +134,7 @@ const AuthenticatedPlanejamentoRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
+
 const AuthenticatedPoliticaDePrivacidadeRoute =
   AuthenticatedPoliticaDePrivacidadeRouteImport.update({
     id: '/politica-de-privacidade',
@@ -119,17 +142,22 @@ const AuthenticatedPoliticaDePrivacidadeRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
-const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
-  id: '/relatorios',
-  path: '/relatorios',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
-const AuthenticatedReservaRoute = AuthenticatedReservaRouteImport.update({
-  id: '/reserva',
-  path: '/reserva',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedRelatoriosRoute =
+  AuthenticatedRelatoriosRouteImport.update({
+    id: '/relatorios',
+    path: '/relatorios',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
+
+const AuthenticatedReservaRoute =
+  AuthenticatedReservaRouteImport.update({
+    id: '/reserva',
+    path: '/reserva',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
 
 const AuthenticatedTermosDeUsoRoute =
   AuthenticatedTermosDeUsoRouteImport.update({
@@ -138,32 +166,37 @@ const AuthenticatedTermosDeUsoRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
-const AuthenticatedVisaoGeralRoute = AuthenticatedVisaoGeralRouteImport.update({
-  id: '/visao-geral',
-  path: '/visao-geral',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+
+const AuthenticatedVisaoGeralRoute =
+  AuthenticatedVisaoGeralRouteImport.update({
+    id: '/visao-geral',
+    path: '/visao-geral',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
 
 const AuthenticatedConfiguracaoAparenciaRoute =
   AuthenticatedConfiguracaoAparenciaRouteImport.update({
     id: '/aparencia',
     path: '/aparencia',
-    getParentRoute: () => AuthenticatedConfiguracaoRoute,
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
   } as any)
+
 
 const AuthenticatedConfiguracaoContaRoute =
   AuthenticatedConfiguracaoContaRouteImport.update({
     id: '/conta',
     path: '/conta',
-    getParentRoute: () => AuthenticatedConfiguracaoRoute,
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
   } as any)
+
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/nova-senha': typeof NovaSenhaRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
-  '/configuracao': typeof AuthenticatedConfiguracaoRouteWithChildren
+  '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/contas': typeof AuthenticatedContasRoute
   '/cookies': typeof AuthenticatedCookiesRoute
   '/investimentos': typeof AuthenticatedInvestimentosRoute
@@ -176,16 +209,17 @@ export interface FileRoutesByFullPath {
   '/reserva': typeof AuthenticatedReservaRoute
   '/termos-de-uso': typeof AuthenticatedTermosDeUsoRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
-  '/configuracao/aparencia': typeof AuthenticatedConfiguracaoAparenciaRoute
-  '/configuracao/conta': typeof AuthenticatedConfiguracaoContaRoute
+  '/configuracoes/aparencia': typeof AuthenticatedConfiguracaoAparenciaRoute
+  '/configuracoes/conta': typeof AuthenticatedConfiguracaoContaRoute
 }
+
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/nova-senha': typeof NovaSenhaRoute
   '/bem-vindo': typeof AuthenticatedBemVindoRoute
-  '/configuracao': typeof AuthenticatedConfiguracaoRouteWithChildren
+  '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/contas': typeof AuthenticatedContasRoute
   '/cookies': typeof AuthenticatedCookiesRoute
   '/investimentos': typeof AuthenticatedInvestimentosRoute
@@ -198,9 +232,10 @@ export interface FileRoutesByTo {
   '/reserva': typeof AuthenticatedReservaRoute
   '/termos-de-uso': typeof AuthenticatedTermosDeUsoRoute
   '/visao-geral': typeof AuthenticatedVisaoGeralRoute
-  '/configuracao/aparencia': typeof AuthenticatedConfiguracaoAparenciaRoute
-  '/configuracao/conta': typeof AuthenticatedConfiguracaoContaRoute
+  '/configuracoes/aparencia': typeof AuthenticatedConfiguracaoAparenciaRoute
+  '/configuracoes/conta': typeof AuthenticatedConfiguracaoContaRoute
 }
+
 
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -209,7 +244,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/nova-senha': typeof NovaSenhaRoute
   '/_authenticated/bem-vindo': typeof AuthenticatedBemVindoRoute
-  '/_authenticated/configuracao': typeof AuthenticatedConfiguracaoRouteWithChildren
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/_authenticated/contas': typeof AuthenticatedContasRoute
   '/_authenticated/cookies': typeof AuthenticatedCookiesRoute
   '/_authenticated/investimentos': typeof AuthenticatedInvestimentosRoute
@@ -226,6 +261,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracao/conta': typeof AuthenticatedConfiguracaoContaRoute
 }
 
+
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
 
@@ -234,7 +270,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nova-senha'
     | '/bem-vindo'
-    | '/configuracao'
+    | '/configuracoes'
     | '/contas'
     | '/cookies'
     | '/investimentos'
@@ -247,8 +283,8 @@ export interface FileRouteTypes {
     | '/reserva'
     | '/termos-de-uso'
     | '/visao-geral'
-    | '/configuracao/aparencia'
-    | '/configuracao/conta'
+    | '/configuracoes/aparencia'
+    | '/configuracoes/conta'
 
   fileRoutesByTo: FileRoutesByTo
 
@@ -257,7 +293,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nova-senha'
     | '/bem-vindo'
-    | '/configuracao'
+    | '/configuracoes'
     | '/contas'
     | '/cookies'
     | '/investimentos'
@@ -270,8 +306,8 @@ export interface FileRouteTypes {
     | '/reserva'
     | '/termos-de-uso'
     | '/visao-geral'
-    | '/configuracao/aparencia'
-    | '/configuracao/conta'
+    | '/configuracoes/aparencia'
+    | '/configuracoes/conta'
 
   id:
     | '__root__'
@@ -280,7 +316,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nova-senha'
     | '/_authenticated/bem-vindo'
-    | '/_authenticated/configuracao'
+    | '/_authenticated/configuracoes'
     | '/_authenticated/contas'
     | '/_authenticated/cookies'
     | '/_authenticated/investimentos'
@@ -299,6 +335,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 
+
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
@@ -306,8 +343,10 @@ export interface RootRouteChildren {
   NovaSenhaRoute: typeof NovaSenhaRoute
 }
 
+
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+
     '/': {
       id: '/'
       path: '/'
@@ -348,11 +387,11 @@ declare module '@tanstack/react-router' {
       parentRoute: typeof AuthenticatedRouteRoute
     }
 
-    '/_authenticated/configuracao': {
-      id: '/_authenticated/configuracao'
-      path: '/configuracao'
-      fullPath: '/configuracao'
-      preLoaderRoute: typeof AuthenticatedConfiguracaoRouteImport
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
 
@@ -455,131 +494,197 @@ declare module '@tanstack/react-router' {
     '/_authenticated/configuracao/aparencia': {
       id: '/_authenticated/configuracao/aparencia'
       path: '/aparencia'
-      fullPath: '/configuracao/aparencia'
+      fullPath: '/configuracoes/aparencia'
       preLoaderRoute: typeof AuthenticatedConfiguracaoAparenciaRouteImport
-      parentRoute: typeof AuthenticatedConfiguracaoRoute
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
     }
 
     '/_authenticated/configuracao/conta': {
       id: '/_authenticated/configuracao/conta'
       path: '/conta'
-      fullPath: '/configuracao/conta'
+      fullPath: '/configuracoes/conta'
       preLoaderRoute: typeof AuthenticatedConfiguracaoContaRouteImport
-      parentRoute: typeof AuthenticatedConfiguracaoRoute
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
     }
+
   }
 }
 
-interface AuthenticatedConfiguracaoRouteChildren {
-  AuthenticatedConfiguracaoAparenciaRoute: typeof AuthenticatedConfiguracaoAparenciaRoute
-  AuthenticatedConfiguracaoContaRoute: typeof AuthenticatedConfiguracaoContaRoute
+
+interface AuthenticatedConfiguracoesRouteChildren {
+  AuthenticatedConfiguracaoAparenciaRoute:
+    typeof AuthenticatedConfiguracaoAparenciaRoute
+
+  AuthenticatedConfiguracaoContaRoute:
+    typeof AuthenticatedConfiguracaoContaRoute
 }
 
-const AuthenticatedConfiguracaoRouteChildren: AuthenticatedConfiguracaoRouteChildren =
-  {
+
+const AuthenticatedConfiguracoesRouteChildren:
+  AuthenticatedConfiguracoesRouteChildren = {
+
     AuthenticatedConfiguracaoAparenciaRoute:
       AuthenticatedConfiguracaoAparenciaRoute,
 
     AuthenticatedConfiguracaoContaRoute:
       AuthenticatedConfiguracaoContaRoute,
+
   }
 
-const AuthenticatedConfiguracaoRouteWithChildren =
-  AuthenticatedConfiguracaoRoute._addFileChildren(
-    AuthenticatedConfiguracaoRouteChildren,
+
+const AuthenticatedConfiguracoesRouteWithChildren =
+  AuthenticatedConfiguracoesRoute._addFileChildren(
+    AuthenticatedConfiguracoesRouteChildren,
   )
 
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedBemVindoRoute: typeof AuthenticatedBemVindoRoute
 
-  AuthenticatedConfiguracaoRoute:
-    typeof AuthenticatedConfiguracaoRouteWithChildren
-
-  AuthenticatedContasRoute: typeof AuthenticatedContasRoute
-  AuthenticatedCookiesRoute: typeof AuthenticatedCookiesRoute
-  AuthenticatedInvestimentosRoute: typeof AuthenticatedInvestimentosRoute
-  AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
-  AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
-  AuthenticatedOrganizarSalarioRoute: typeof AuthenticatedOrganizarSalarioRoute
-  AuthenticatedPlanejamentoRoute: typeof AuthenticatedPlanejamentoRoute
-  AuthenticatedPoliticaDePrivacidadeRoute: typeof AuthenticatedPoliticaDePrivacidadeRoute
-  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
-  AuthenticatedReservaRoute: typeof AuthenticatedReservaRoute
-  AuthenticatedTermosDeUsoRoute: typeof AuthenticatedTermosDeUsoRoute
-  AuthenticatedVisaoGeralRoute: typeof AuthenticatedVisaoGeralRoute
-}
-
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBemVindoRoute:
-    AuthenticatedBemVindoRoute,
+    typeof AuthenticatedBemVindoRoute
 
-  AuthenticatedConfiguracaoRoute:
-    AuthenticatedConfiguracaoRouteWithChildren,
+  AuthenticatedConfiguracoesRoute:
+    typeof AuthenticatedConfiguracoesRouteWithChildren
 
   AuthenticatedContasRoute:
-    AuthenticatedContasRoute,
+    typeof AuthenticatedContasRoute
 
   AuthenticatedCookiesRoute:
-    AuthenticatedCookiesRoute,
+    typeof AuthenticatedCookiesRoute
 
   AuthenticatedInvestimentosRoute:
-    AuthenticatedInvestimentosRoute,
+    typeof AuthenticatedInvestimentosRoute
 
   AuthenticatedMetasRoute:
-    AuthenticatedMetasRoute,
+    typeof AuthenticatedMetasRoute
 
   AuthenticatedMovimentacoesRoute:
-    AuthenticatedMovimentacoesRoute,
+    typeof AuthenticatedMovimentacoesRoute
 
   AuthenticatedOrganizarSalarioRoute:
-    AuthenticatedOrganizarSalarioRoute,
+    typeof AuthenticatedOrganizarSalarioRoute
 
   AuthenticatedPlanejamentoRoute:
-    AuthenticatedPlanejamentoRoute,
+    typeof AuthenticatedPlanejamentoRoute
 
   AuthenticatedPoliticaDePrivacidadeRoute:
-    AuthenticatedPoliticaDePrivacidadeRoute,
+    typeof AuthenticatedPoliticaDePrivacidadeRoute
 
   AuthenticatedRelatoriosRoute:
-    AuthenticatedRelatoriosRoute,
+    typeof AuthenticatedRelatoriosRoute
 
   AuthenticatedReservaRoute:
-    AuthenticatedReservaRoute,
+    typeof AuthenticatedReservaRoute
 
   AuthenticatedTermosDeUsoRoute:
-    AuthenticatedTermosDeUsoRoute,
+    typeof AuthenticatedTermosDeUsoRoute
 
   AuthenticatedVisaoGeralRoute:
-    AuthenticatedVisaoGeralRoute,
+    typeof AuthenticatedVisaoGeralRoute
+
 }
+
+
+const AuthenticatedRouteRouteChildren:
+  AuthenticatedRouteRouteChildren = {
+
+    AuthenticatedBemVindoRoute:
+      AuthenticatedBemVindoRoute,
+
+    AuthenticatedConfiguracoesRoute:
+      AuthenticatedConfiguracoesRouteWithChildren,
+
+    AuthenticatedContasRoute:
+      AuthenticatedContasRoute,
+
+    AuthenticatedCookiesRoute:
+      AuthenticatedCookiesRoute,
+
+    AuthenticatedInvestimentosRoute:
+      AuthenticatedInvestimentosRoute,
+
+    AuthenticatedMetasRoute:
+      AuthenticatedMetasRoute,
+
+    AuthenticatedMovimentacoesRoute:
+      AuthenticatedMovimentacoesRoute,
+
+    AuthenticatedOrganizarSalarioRoute:
+      AuthenticatedOrganizarSalarioRoute,
+
+    AuthenticatedPlanejamentoRoute:
+      AuthenticatedPlanejamentoRoute,
+
+    AuthenticatedPoliticaDePrivacidadeRoute:
+      AuthenticatedPoliticaDePrivacidadeRoute,
+
+    AuthenticatedRelatoriosRoute:
+      AuthenticatedRelatoriosRoute,
+
+    AuthenticatedReservaRoute:
+      AuthenticatedReservaRoute,
+
+    AuthenticatedTermosDeUsoRoute:
+      AuthenticatedTermosDeUsoRoute,
+
+    AuthenticatedVisaoGeralRoute:
+      AuthenticatedVisaoGeralRoute,
+
+  }
+
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(
     AuthenticatedRouteRouteChildren,
   )
 
-const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
 
-  AuthenticatedRouteRoute:
-    AuthenticatedRouteRouteWithChildren,
+const rootRouteChildren:
+  RootRouteChildren = {
 
-  AuthRoute: AuthRoute,
+    IndexRoute:
+      IndexRoute,
 
-  NovaSenhaRoute: NovaSenhaRoute,
-}
+    AuthenticatedRouteRoute:
+      AuthenticatedRouteRouteWithChildren,
 
-export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+    AuthRoute:
+      AuthRoute,
+
+    NovaSenhaRoute:
+      NovaSenhaRoute,
+
+  }
+
+
+export const routeTree =
+  rootRouteImport
+    ._addFileChildren(
+      rootRouteChildren,
+    )
+    ._addFileTypes<FileRouteTypes>()
+
 
 import type { getRouter } from './router.tsx'
 import type { startInstance } from './start.ts'
 
+
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+
+    router:
+      Awaited<
+        ReturnType<
+          typeof getRouter
+        >
+      >
+
+    config:
+      Awaited<
+        ReturnType<
+          typeof startInstance.getOptions
+        >
+      >
   }
 }
