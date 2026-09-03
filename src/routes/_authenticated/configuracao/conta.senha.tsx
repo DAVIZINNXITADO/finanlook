@@ -310,8 +310,9 @@ function TrocarSenhaPage() {
 
     try {
       /*
-       * O servidor usa o Supabase Admin para gerar
-       * um link seguro sem enviar o e-mail automático.
+       * Gera o link de recuperação pelo servidor.
+       *
+       * O Supabase NÃO envia o e-mail automático.
        */
       const result =
         await generateRecoveryLink({
@@ -326,7 +327,7 @@ function TrocarSenhaPage() {
 
 
       /*
-       * Mantém a resposta genérica.
+       * Resposta genérica por segurança.
        */
       if (!result?.link) {
         toast.success(
@@ -338,7 +339,7 @@ function TrocarSenhaPage() {
 
 
       /*
-       * Envia o link gerado pelo Supabase usando EmailJS.
+       * Envia o link pelo EmailJS.
        */
       const response =
         await emailjs.send(
@@ -376,7 +377,7 @@ function TrocarSenhaPage() {
       );
     } catch (error) {
       console.error(
-        "Erro ao enviar recuperação de senha:",
+        "Erro ao enviar recuperação:",
         error,
       );
 
@@ -666,7 +667,8 @@ function TrocarSenhaPage() {
               Enviaremos um link de redefinição para {
                 authUser?.email ??
                 "o e-mail da sua conta"
-              }. Clique no link para escolher uma nova senha.
+              }.
+              Clique no link para escolher uma nova senha.
             </p>
 
 
