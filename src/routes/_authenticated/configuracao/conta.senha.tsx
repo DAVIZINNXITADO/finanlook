@@ -44,14 +44,6 @@ import {
   useUser,
 } from "@/lib/data";
 
-import {
-  generateRecoveryLink,
-} from "@/lib/password.recovery.functions";
-
-import {
-  sendPasswordRecoveryEmail,
-} from "@/lib/emailHolder";
-
 
 type PasswordMethod =
   | "senha"
@@ -60,7 +52,7 @@ type PasswordMethod =
 
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracao/conta.senha",
+    "/_authenticated/configuracoes/conta/senha",
   )({
     head: () => ({
       meta: [
@@ -86,7 +78,6 @@ function TrocarSenhaPage() {
   const navigate =
     useNavigate();
 
-
   const {
     data: authUser,
   } =
@@ -101,13 +92,11 @@ function TrocarSenhaPage() {
       "senha",
     );
 
-
   const [
     currentPassword,
     setCurrentPassword,
   ] =
     useState("");
-
 
   const [
     newPassword,
@@ -115,13 +104,11 @@ function TrocarSenhaPage() {
   ] =
     useState("");
 
-
   const [
     confirmPassword,
     setConfirmPassword,
   ] =
     useState("");
-
 
   const [
     showPassword,
@@ -129,13 +116,11 @@ function TrocarSenhaPage() {
   ] =
     useState(false);
 
-
   const [
     saving,
     setSaving,
   ] =
     useState(false);
-
 
   const [
     sendingLink,
@@ -147,7 +132,7 @@ function TrocarSenhaPage() {
   function goBack() {
     navigate({
       to:
-        "/configuracao/conta",
+        "/_authenticated/configuracoes/conta",
     });
   }
 
@@ -249,7 +234,7 @@ function TrocarSenhaPage() {
 
 
       const {
-        error: updateError,
+        error,
       } =
         await supabase.auth.updateUser({
           password:
@@ -257,8 +242,8 @@ function TrocarSenhaPage() {
         });
 
 
-      if (updateError) {
-        throw updateError;
+      if (error) {
+        throw error;
       }
 
 
@@ -281,14 +266,12 @@ function TrocarSenhaPage() {
 
 
       goBack();
-
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível alterar a senha.",
       );
-
     } finally {
       setSaving(
         false,
@@ -320,58 +303,32 @@ function TrocarSenhaPage() {
 
 
     try {
-      const result =
-        await generateRecoveryLink({
-          data: {
-            email:
-              accountEmail,
-
-            origin:
-              window.location.origin,
+      const {
+        error,
+      } =
+        await supabase.auth.resetPasswordForEmail(
+          accountEmail,
+          {
+            redirectTo:
+              `${window.location.origin}/nova-senha`,
           },
-        });
-
-
-      if (!result?.link) {
-        toast.success(
-          "Se existir uma conta com este e-mail, enviaremos um link de redefinição.",
         );
 
-        return;
+
+      if (error) {
+        throw error;
       }
-
-
-      await sendPasswordRecoveryEmail({
-        toEmail:
-          accountEmail,
-
-        toName:
-          authUser?.user_metadata?.name ??
-          authUser?.user_metadata?.full_name ??
-          "Usuário",
-
-        resetLink:
-          result.link,
-      });
 
 
       toast.success(
         "Enviamos um link para redefinir sua senha para o seu e-mail.",
       );
-
     } catch (error) {
-      console.error(
-        "Erro ao enviar link de recuperação:",
-        error,
-      );
-
-
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível enviar o e-mail de recuperação.",
       );
-
     } finally {
       setSendingLink(
         false,
@@ -389,7 +346,9 @@ function TrocarSenhaPage() {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={goBack}
+          onClick={
+            goBack
+          }
           aria-label="Voltar para conta"
         >
 
@@ -423,7 +382,6 @@ function TrocarSenhaPage() {
               Senha
             </h2>
 
-
             <p className="mt-1 text-sm text-muted-foreground">
               Por segurança, confirme sua senha atual ou use um link enviado por e-mail.
             </p>
@@ -433,54 +391,60 @@ function TrocarSenhaPage() {
         </div>
 
 
-        <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+        <div className="space-y-2">
 
-          <button
-            type="button"
-            onClick={() =>
-              setMethod(
-                "senha",
-              )
-            }
-            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-              method === "senha"
-                ? "bg-background shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
 
-            <KeyRound className="size-4" />
+            <button
+              type="button"
+              onClick={() =>
+                setMethod(
+                  "senha",
+                )
+              }
+              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                method ===
+                "senha"
+                  ? "bg-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
 
-            Confirmar com senha atual
+              <KeyRound className="size-4" />
 
-          </button>
+              Confirmar com senha atual
+
+            </button>
 
 
-          <button
-            type="button"
-            onClick={() =>
-              setMethod(
-                "email",
-              )
-            }
-            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-              method === "email"
-                ? "bg-background shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
+            <button
+              type="button"
+              onClick={() =>
+                setMethod(
+                  "email",
+                )
+              }
+              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                method ===
+                "email"
+                  ? "bg-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
 
-            <Mail className="size-4" />
+              <Mail className="size-4" />
 
-            Receber link por e-mail
+              Receber link por e-mail
 
-          </button>
+            </button>
+
+          </div>
 
         </div>
 
 
-        {method === "senha" ? (
-
+        {method ===
+        "senha" ? (
           <form
             className="mt-5 space-y-5"
             onSubmit={(
@@ -498,7 +462,6 @@ function TrocarSenhaPage() {
                 Senha atual
               </Label>
 
-
               <Input
                 id="current-password"
                 type={
@@ -507,7 +470,9 @@ function TrocarSenhaPage() {
                     : "password"
                 }
                 className="h-11"
-                value={currentPassword}
+                value={
+                  currentPassword
+                }
                 onChange={(
                   event,
                 ) =>
@@ -541,7 +506,9 @@ function TrocarSenhaPage() {
                         : "password"
                     }
                     className="h-11 pr-11"
-                    value={newPassword}
+                    value={
+                      newPassword
+                    }
                     onChange={(
                       event,
                     ) =>
@@ -573,13 +540,9 @@ function TrocarSenhaPage() {
                   >
 
                     {showPassword ? (
-
                       <EyeOff className="size-4" />
-
                     ) : (
-
                       <Eye className="size-4" />
-
                     )}
 
                   </button>
@@ -595,7 +558,6 @@ function TrocarSenhaPage() {
                   Confirmar nova senha
                 </Label>
 
-
                 <Input
                   id="confirm-password"
                   type={
@@ -604,7 +566,9 @@ function TrocarSenhaPage() {
                       : "password"
                   }
                   className="h-11"
-                  value={confirmPassword}
+                  value={
+                    confirmPassword
+                  }
                   onChange={(
                     event,
                   ) =>
@@ -624,7 +588,9 @@ function TrocarSenhaPage() {
             <Button
               type="submit"
               className="h-11 w-full sm:w-auto"
-              disabled={saving}
+              disabled={
+                saving
+              }
             >
 
               <LockKeyhole className="size-4" />
@@ -636,31 +602,23 @@ function TrocarSenhaPage() {
             </Button>
 
           </form>
-
         ) : (
-
           <div className="mt-5 space-y-4">
 
             <p className="text-sm text-muted-foreground">
-
-              Enviaremos um link de redefinição para{" "}
-
-              <strong>
-
-                {authUser?.email ??
-                  "o e-mail da sua conta"}
-
-              </strong>
-
-              . Clique no link para escolher uma nova senha.
-
+              Enviaremos um link de redefinição para {
+                authUser?.email ??
+                "o e-mail da sua conta"
+              }. Clique no link para escolher uma nova senha.
             </p>
 
 
             <Button
               type="button"
               className="h-11 w-full sm:w-auto"
-              disabled={sendingLink}
+              disabled={
+                sendingLink
+              }
               onClick={() =>
                 void handleSendRecoveryLink()
               }
@@ -675,7 +633,6 @@ function TrocarSenhaPage() {
             </Button>
 
           </div>
-
         )}
 
       </section>
