@@ -1,309 +1,144 @@
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-} from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
-import {
-  useState,
-  type FormEvent,
-} from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-import {
-  Eye,
-  EyeOff,
-  KeyRound,
-} from "lucide-react";
+export const Route = createFileRoute("/nova-senha")({
+  head: () => ({
+    meta: [
+      { title: "Nova senha — FinanLook" },
+      {
+        name: "description",
+        content: "Defina uma nova senha para sua conta.",
+      },
+    ],
+  }),
+  component: NovaSenhaPage,
+});
 
-import {
-  toast,
-} from "sonner";
-
-import {
-  Button,
-} from "@/components/ui/button";
-
-import {
-  Input,
-} from "@/components/ui/input";
-
-import {
-  Label,
-} from "@/components/ui/label";
-
-import {
-  supabase,
-} from "@/integrations/supabase/client";
-
-
-export const Route =
-  createFileRoute("/nova-senha")({
-    head: () => ({
-      meta: [
-        {
-          title: "Nova senha — FinanLook",
-        },
-      ],
-    }),
-
-    component: NewPasswordPage,
-  });
-
-
-function NewPasswordPage() {
+function NovaSenhaPage() {
   const navigate = useNavigate();
 
-  const [
-    password,
-    setPassword,
-  ] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const [
-    confirmPassword,
-    setConfirmPassword,
-  ] = useState("");
-
-  const [
-    showPassword,
-    setShowPassword,
-  ] = useState(false);
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
-
-
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
-
-
+  async function handleSubmit() {
     if (!password) {
-      toast.error(
-        "Informe uma nova senha.",
-      );
-
+      toast.error("Informe uma nova senha.");
       return;
     }
-
 
     if (password.length < 6) {
-      toast.error(
-        "A senha precisa ter pelo menos 6 caracteres.",
-      );
-
+      toast.error("A senha precisa ter pelo menos 6 caracteres.");
       return;
     }
-
 
     if (password !== confirmPassword) {
-      toast.error(
-        "As senhas não coincidem.",
-      );
-
+      toast.error("As senhas não coincidem.");
       return;
     }
 
+    setSaving(true);
 
-    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
 
+    setSaving(false);
 
-    try {
-      const {
-        error,
-      } = await supabase.auth.updateUser({
-        password,
-      });
-
-
-      if (error) {
-        throw error;
-      }
-
-
-      toast.success(
-        "Senha alterada com sucesso.",
-      );
-
-
-      await navigate({
-        to: "/auth",
-
-        search: {
-          modo: "entrar",
-        },
-
-        replace: true,
-      });
-    } catch (error) {
-      console.error(error);
-
+    if (error) {
       toast.error(
-        "Não foi possível alterar sua senha. Solicite um novo link de recuperação.",
+        error.message.includes("session")
+          ? "Este link expirou. Peça um novo link de recuperação."
+          : "Não foi possível alterar sua senha.",
       );
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    toast.success("Senha alterada com sucesso!");
+
+    navigate({ to: "/auth", search: { modo: "entrar" } });
   }
 
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+    <div className="flex min-h-screen flex-col items-center justify-center px-5 py-10">
+      <div className="surface w-full max-w-sm p-6">
+        <div className="flex items-center gap-3">
+          <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+            <LockKeyhole className="size-5 text-primary" />
+          </span>
 
-      <div className="surface w-full max-w-md p-6 sm:p-8">
+          <div>
+            <h1 className="font-display text-xl font-semibold">
+              Definir nova senha
+            </h1>
 
-        <div className="flex justify-center">
-
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10">
-            <KeyRound className="size-6 text-primary" />
+            <p className="text-sm text-muted-foreground">
+              Escolha uma nova senha para sua conta.
+            </p>
           </div>
-
         </div>
-
-
-        <div className="mt-5 text-center">
-
-          <h1 className="font-display text-2xl font-semibold">
-            Criar nova senha
-          </h1>
-
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            Escolha uma nova senha para acessar sua conta FinanLook.
-          </p>
-
-        </div>
-
 
         <form
-          className="mt-6 space-y-5"
-          onSubmit={handleSubmit}
+          className="mt-6 space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSubmit();
+          }}
         >
-
-          <div className="space-y-2">
-
-            <Label htmlFor="password">
-              Nova senha
-            </Label>
-
+          <div className="space-y-1.5">
+            <Label htmlFor="new-password">Nova senha</Label>
 
             <div className="relative">
-
               <Input
-                id="password"
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
-                autoComplete="new-password"
+                id="new-password"
+                type={showPassword ? "text" : "password"}
                 className="h-11 pr-11"
                 value={password}
-                onChange={(event) =>
-                  setPassword(
-                    event.target.value,
-                  )
-                }
-                placeholder="Digite sua nova senha"
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="new-password"
+                maxLength={1000}
               />
-
 
               <button
                 type="button"
-                onClick={() =>
-                  setShowPassword(
-                    (current) =>
-                      !current,
-                  )
-                }
-                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground"
-                aria-label={
-                  showPassword
-                    ? "Ocultar senha"
-                    : "Mostrar senha"
-                }
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
-
                 {showPassword ? (
                   <EyeOff className="size-4" />
                 ) : (
                   <Eye className="size-4" />
                 )}
-
               </button>
-
             </div>
-
           </div>
 
-
-          <div className="space-y-2">
-
-            <Label htmlFor="confirm-password">
-              Confirmar nova senha
-            </Label>
-
+          <div className="space-y-1.5">
+            <Label htmlFor="confirm-password">Confirmar nova senha</Label>
 
             <Input
               id="confirm-password"
-              type={
-                showPassword
-                  ? "text"
-                  : "password"
-              }
-              autoComplete="new-password"
+              type={showPassword ? "text" : "password"}
               className="h-11"
               value={confirmPassword}
-              onChange={(event) =>
-                setConfirmPassword(
-                  event.target.value,
-                )
-              }
-              placeholder="Digite novamente"
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+              maxLength={1000}
             />
-
           </div>
 
-
-          <Button
-            type="submit"
-            className="h-11 w-full"
-            disabled={loading}
-          >
-
-            <KeyRound className="size-4" />
-
-
-            {loading
-              ? "Alterando senha..."
-              : "Salvar nova senha"}
-
+          <Button type="submit" className="h-11 w-full" disabled={saving}>
+            {saving ? "Salvando..." : "Salvar nova senha"}
           </Button>
-
         </form>
-
-
-        <Button
-          asChild
-          variant="ghost"
-          className="mt-3 w-full"
-        >
-
-          <Link
-            to="/auth"
-            search={{
-              modo: "entrar",
-            }}
-          >
-            Voltar para entrar
-          </Link>
-
-        </Button>
-
       </div>
-
     </div>
   );
 }
