@@ -84,6 +84,7 @@ function TrocarSenhaPage() {
   const navigate =
     useNavigate();
 
+
   const {
     data: authUser,
   } =
@@ -246,7 +247,7 @@ function TrocarSenhaPage() {
 
 
       const {
-        error,
+        error: updateError,
       } =
         await supabase.auth.updateUser({
           password:
@@ -254,8 +255,8 @@ function TrocarSenhaPage() {
         });
 
 
-      if (error) {
-        throw error;
+      if (updateError) {
+        throw updateError;
       }
 
 
@@ -358,7 +359,7 @@ function TrocarSenhaPage() {
 
         {
           publicKey:
-            "COLE_SUA_PUBLIC_KEY_AQUI",
+            "2TVDc9D7QgTpm0QCs",
         },
       );
 
@@ -397,9 +398,7 @@ function TrocarSenhaPage() {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={
-            goBack
-          }
+          onClick={goBack}
           aria-label="Voltar para conta"
         >
 
@@ -517,9 +516,7 @@ function TrocarSenhaPage() {
                     : "password"
                 }
                 className="h-11"
-                value={
-                  currentPassword
-                }
+                value={currentPassword}
                 onChange={(
                   event,
                 ) =>
@@ -553,9 +550,7 @@ function TrocarSenhaPage() {
                         : "password"
                     }
                     className="h-11 pr-11"
-                    value={
-                      newPassword
-                    }
+                    value={newPassword}
                     onChange={(
                       event,
                     ) =>
@@ -618,9 +613,7 @@ function TrocarSenhaPage() {
                       : "password"
                   }
                   className="h-11"
-                  value={
-                    confirmPassword
-                  }
+                  value={confirmPassword}
                   onChange={(
                     event,
                   ) =>
@@ -640,9 +633,7 @@ function TrocarSenhaPage() {
             <Button
               type="submit"
               className="h-11 w-full sm:w-auto"
-              disabled={
-                saving
-              }
+              disabled={saving}
             >
 
               <LockKeyhole className="size-4" />
@@ -678,9 +669,7 @@ function TrocarSenhaPage() {
             <Button
               type="button"
               className="h-11 w-full sm:w-auto"
-              disabled={
-                sendingLink
-              }
+              disabled={sendingLink}
               onClick={() =>
                 void handleSendRecoveryLink()
               }
