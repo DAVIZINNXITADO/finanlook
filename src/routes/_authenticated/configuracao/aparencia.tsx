@@ -184,7 +184,7 @@ function AppearancePage() {
           onClick={() =>
             navigate({
               to:
-                "/_authenticated/configuracoes",
+                "/configuracoes",
             })
           }
           aria-label="Voltar para configurações"
@@ -545,7 +545,7 @@ function AppearancePage() {
           onClick={() =>
             navigate({
               to:
-                "/_authenticated/configuracoes",
+                "/configuracoes",
             })
           }
         >
