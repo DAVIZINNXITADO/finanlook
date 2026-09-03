@@ -36,7 +36,7 @@ import {
 
 import {
   useTheme,
-  type Theme,
+  type ThemeMode,
   type ThemeStyle,
 } from "@/components/theme-provider";
 
@@ -87,8 +87,8 @@ function AppearancePage() {
     themeStyle,
     setThemeStyle,
 
-    themeColor,
-    setThemeColor,
+    color,
+    setColor,
 
     customColor,
     setCustomColor,
@@ -97,7 +97,7 @@ function AppearancePage() {
 
 
   function changeTheme(
-    value: Theme,
+    value: ThemeMode,
   ) {
     setTheme(
       value,
@@ -158,7 +158,7 @@ function AppearancePage() {
     }
 
 
-    setThemeColor(
+    setColor(
       value,
     );
 
@@ -390,7 +390,7 @@ function AppearancePage() {
               color,
             ) => {
               const active =
-                themeColor ===
+                color ===
                 color.key;
 
 
@@ -483,7 +483,7 @@ function AppearancePage() {
         </div>
 
 
-        {themeColor ===
+        {color ===
         "custom" ? (
 
           <div className="mt-5 rounded-xl border bg-muted/30 p-4">
