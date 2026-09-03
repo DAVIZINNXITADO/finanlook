@@ -11,29 +11,28 @@ import { createServerFn } from "@tanstack/react-start";
  * quando o e-mail existe de fato.
  */
 export const generateRecoveryLink = createServerFn({ method: "POST" })
-  .validator((email: string) => email)
-  .handler(async ({ data: email }) => {
+  .validator((data: { email: string; origin: string }) => data)
+  .handler(async ({ data }) => {
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
     );
 
-    const siteUrl = process.env["SITE_URL"] ?? "";
+    const { data: linkData, error } =
+      await supabaseAdmin.auth.admin.generateLink({
+        type: "recovery",
+        email: data.email,
+        options: {
+          redirectTo: `${data.origin}/nova-senha`,
+        },
+      });
 
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: `${siteUrl}/nova-senha`,
-      },
-    });
-
-    if (error || !data?.properties?.action_link) {
+    if (error || !linkData?.properties?.action_link) {
       // Não existe conta com esse e-mail (ou outro erro) — não vazamos isso.
       return { ok: true, link: null as string | null };
     }
 
     return {
       ok: true,
-      link: data.properties.action_link as string,
+      link: linkData.properties.action_link as string,
     };
   });
