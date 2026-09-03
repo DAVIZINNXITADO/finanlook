@@ -158,7 +158,7 @@ export const Route =
 
         {
           title:
-            "FinanLook — organize seu dinheiro de forma simples",
+            "FinanLook — organização financeira simples",
         },
 
         {
@@ -166,7 +166,7 @@ export const Route =
             "description",
 
           content:
-            "Controle entradas, gastos, reserva de emergência e metas em um app simples de organização financeira pessoal.",
+            "Organize suas finanças de forma simples e inteligente. Acompanhe contas, movimentações, metas, investimentos e planejamento financeiro em um só lugar com o FinanLook.",
         },
 
         /* ===============================================
@@ -194,13 +194,98 @@ export const Route =
         },
 
         {
+          property:
+            "og:site_name",
+
+          content:
+            "FinanLook",
+        },
+
+        {
+          property:
+            "og:locale",
+
+          content:
+            "pt_BR",
+        },
+
+        {
+          property:
+            "og:title",
+
+          content:
+            "FinanLook — organização financeira simples",
+        },
+
+        {
+          property:
+            "og:description",
+
+          content:
+            "Organize suas finanças de forma simples e inteligente. Acompanhe contas, movimentações, metas, investimentos e planejamento financeiro em um só lugar com o FinanLook.",
+        },
+
+        {
           name:
             "twitter:card",
 
           content:
             "summary_large_image",
         },
+
+        {
+          name:
+            "twitter:title",
+
+          content:
+            "FinanLook — organização financeira simples",
+        },
+
+        {
+          name:
+            "twitter:description",
+
+          content:
+            "Organize suas finanças de forma simples e inteligente. Acompanhe contas, movimentações, metas, investimentos e planejamento financeiro em um só lugar com o FinanLook.",
+        },
+
+        {
+          name:
+            "application-name",
+
+          content:
+            "FinanLook",
+        },
       ],
+
+      scripts: [
+        {
+          type:
+            "application/ld+json",
+
+          children:
+            JSON.stringify({
+              "@context":
+                "https://schema.org",
+
+              "@type":
+                "WebSite",
+
+              name:
+                "FinanLook",
+
+              url:
+                "https://finanlook.lovable.app/",
+
+              inLanguage:
+                "pt-BR",
+
+              description:
+                "Organize suas finanças de forma simples e inteligente. Acompanhe contas, movimentações, metas, investimentos e planejamento financeiro em um só lugar com o FinanLook.",
+            }),
+        },
+      ],
+
 
       links: [
         {
