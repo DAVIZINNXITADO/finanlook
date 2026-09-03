@@ -474,7 +474,8 @@ export function useSaveTransaction() {
           values.note,
 
         account_id:
-          values.account_id,
+          values.account_id ?? null,
+
       };
 
       /*
