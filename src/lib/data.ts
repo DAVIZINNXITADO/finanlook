@@ -381,7 +381,7 @@ export type TransactionInput = {
   note:
     string | null;
 
-  account_id:
+  account_id?:
     string | null;
 };
 
@@ -474,7 +474,8 @@ export function useSaveTransaction() {
           values.note,
 
         account_id:
-          values.account_id,
+          values.account_id ?? null,
+
       };
 
       /*
@@ -1843,3 +1844,4 @@ export function useDemoData() {
     remove,
   };
 }
+export type { Account } from "./finance";

@@ -52,7 +52,7 @@ type PasswordMethod =
 
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracoes/conta/senha",
+    "/_authenticated/configuracao/conta/email",
   )({
     head: () => ({
       meta: [

@@ -36,7 +36,7 @@ import {
 
 import {
   useTheme,
-  type Theme,
+  type ThemeMode,
   type ThemeStyle,
 } from "@/components/theme-provider";
 
@@ -53,7 +53,7 @@ import {
 
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracoes/aparencia",
+    "/_authenticated/configuracao/aparencia",
   )({
     head: () => ({
       meta: [
@@ -87,8 +87,8 @@ function AppearancePage() {
     themeStyle,
     setThemeStyle,
 
-    themeColor,
-    setThemeColor,
+    color,
+    setColor,
 
     customColor,
     setCustomColor,
@@ -97,7 +97,7 @@ function AppearancePage() {
 
 
   function changeTheme(
-    value: Theme,
+    value: ThemeMode,
   ) {
     setTheme(
       value,
@@ -158,7 +158,7 @@ function AppearancePage() {
     }
 
 
-    setThemeColor(
+    setColor(
       value,
     );
 
@@ -387,16 +387,17 @@ function AppearancePage() {
 
           {THEME_COLORS.map(
             (
-              color,
+              option,
             ) => {
               const active =
-                themeColor ===
-                color.key;
+                color ===
+                option.key;
+
 
 
               const swatch =
                 themeColorSwatch(
-                  color.key,
+                  option.key,
                   customColor,
                 );
 
@@ -404,12 +405,12 @@ function AppearancePage() {
               return (
                 <button
                   key={
-                    color.key
+                    option.key
                   }
                   type="button"
                   onClick={() =>
                     changeThemeColor(
-                      color.key,
+                      option.key,
                     )
                   }
                   className={cn(
@@ -436,12 +437,12 @@ function AppearancePage() {
 
                       <p className="font-medium">
                         {
-                          color.label
+                          option.label
                         }
                       </p>
 
 
-                      {color.premium ? (
+                      {option.premium ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
 
                           <Crown className="size-3" />
@@ -456,7 +457,7 @@ function AppearancePage() {
 
                     <p className="mt-1 text-sm text-muted-foreground">
                       {
-                        color.description
+                        option.description
                       }
                     </p>
 
@@ -469,7 +470,7 @@ function AppearancePage() {
                       <Check className="size-3.5" />
 
                     </span>
-                  ) : color.premium ? (
+                  ) : option.premium ? (
 
                     <Lock className="size-4 shrink-0 text-muted-foreground" />
 
@@ -483,7 +484,7 @@ function AppearancePage() {
         </div>
 
 
-        {themeColor ===
+        {color ===
         "custom" ? (
 
           <div className="mt-5 rounded-xl border bg-muted/30 p-4">

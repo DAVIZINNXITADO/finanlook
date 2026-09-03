@@ -32,7 +32,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Registre entradas e gastos, organize seu salário, monte sua reserva de emergência e acompanhe metas. Sem termos complicados.",
+          "Organize suas finanças de forma simples e inteligente. Acompanhe contas, movimentações, metas, investimentos e planejamento financeiro em um só lugar com o FinanLook.",
       },
       {
         property: "og:title",
@@ -41,10 +41,30 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Registre entradas e gastos, organize seu salário, monte sua reserva e acompanhe metas financeiras.",
+          "Organize suas finanças de forma simples e inteligente. Acompanhe contas, movimentações, metas, investimentos e planejamento financeiro em um só lugar com o FinanLook.",
+      },
+      {
+        property: "og:url",
+        content: "https://finanlook.lovable.app/",
+      },
+      {
+        name: "twitter:title",
+        content: "FinanLook — organização financeira simples",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Organize suas finanças de forma simples e inteligente. Acompanhe contas, movimentações, metas, investimentos e planejamento financeiro em um só lugar com o FinanLook.",
+      },
+    ],
+    links: [
+      {
+        rel: "canonical",
+        href: "https://finanlook.lovable.app/",
       },
     ],
   }),
+
 
   component: Landing,
 });
