@@ -48,7 +48,7 @@ import {
 
 import {
   generateRecoveryLink,
-} from "@/lib/password-reset.functions";
+} from "@/lib/password.recovery.functions";
 
 
 type PasswordMethod =
