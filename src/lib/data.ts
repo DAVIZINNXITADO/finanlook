@@ -381,7 +381,7 @@ export type TransactionInput = {
   note:
     string | null;
 
-  account_id:
+  account_id?:
     string | null;
 };
 
