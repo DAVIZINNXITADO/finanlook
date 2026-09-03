@@ -138,7 +138,6 @@ const signUpSchema =
           )
           .regex(
             /^[a-zA-Z0-9._-]+$/,
-
             "Use apenas letras, números, ponto, hífen ou underline",
           ),
 
@@ -175,12 +174,8 @@ const signUpSchema =
           ),
     })
     .refine(
-      (
-        value,
-      ) =>
-        value.password ===
-        value.confirm,
-
+      (value) =>
+        value.password === value.confirm,
       {
         message:
           "As senhas não são iguais",
@@ -205,8 +200,7 @@ function AuthPage() {
 
 
   const isSignUp =
-    modo ===
-    "cadastro";
+    modo === "cadastro";
 
 
   const [
@@ -286,21 +280,13 @@ function AuthPage() {
 
 
   function update(
-    key:
-      keyof typeof form,
-
-    value:
-      string,
+    key: keyof typeof form,
+    value: string,
   ) {
     setForm(
-      (
-        previous,
-      ) => ({
+      (previous) => ({
         ...previous,
-
-        [
-          key
-        ]:
+        [key]:
           value,
       }),
     );
@@ -549,7 +535,6 @@ function AuthPage() {
           data:
             {
               email,
-
               origin:
                 window.location.origin,
             },
@@ -586,9 +571,7 @@ function AuthPage() {
         false,
       );
 
-    } catch (
-      error,
-    ) {
+    } catch (error) {
       console.error(
         "Erro ao recuperar senha:",
         error,
@@ -617,16 +600,11 @@ function AuthPage() {
           to="/"
           className="mb-6 flex items-center gap-2 transition-opacity hover:opacity-80"
         >
-
           <SiteIcon className="size-10 rounded-xl object-contain" />
 
-
           <span className="font-display text-xl font-semibold">
-
             FinanLook
-
           </span>
-
         </Link>
 
 
@@ -635,25 +613,19 @@ function AuthPage() {
           <div className="flex items-center gap-3">
 
             <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
-
               <KeyRound className="size-5 text-primary" />
-
             </span>
 
 
             <div>
 
               <h1 className="font-display text-xl font-semibold">
-
                 Recuperar senha
-
               </h1>
 
 
               <p className="text-sm text-muted-foreground">
-
                 Enviaremos um link para você criar uma nova senha.
-
               </p>
 
             </div>
@@ -663,9 +635,7 @@ function AuthPage() {
 
           <form
             className="mt-6 space-y-4"
-            onSubmit={(
-              event,
-            ) => {
+            onSubmit={(event) => {
               event.preventDefault();
 
               void handlePasswordRecovery();
@@ -675,9 +645,7 @@ function AuthPage() {
             <div className="space-y-1.5">
 
               <Label htmlFor="recovery-email">
-
                 E-mail da conta
-
               </Label>
 
 
@@ -692,9 +660,7 @@ function AuthPage() {
                   value={
                     recoveryEmail
                   }
-                  onChange={(
-                    event,
-                  ) =>
+                  onChange={(event) =>
                     setRecoveryEmail(
                       event.target.value,
                     )
@@ -720,7 +686,6 @@ function AuthPage() {
 
               <Mail className="size-4" />
 
-
               {recoveryLoading
                 ? "Enviando..."
                 : "Enviar link de recuperação"}
@@ -741,9 +706,7 @@ function AuthPage() {
           }
           className="mt-6 text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
-
           Voltar para entrar
-
         </button>
 
       </div>
@@ -758,44 +721,33 @@ function AuthPage() {
         to="/"
         className="mb-6 flex items-center gap-2 transition-opacity hover:opacity-80"
       >
-
         <SiteIcon className="size-10 rounded-xl object-contain" />
 
-
         <span className="font-display text-xl font-semibold">
-
           FinanLook
-
         </span>
-
       </Link>
 
 
       <div className="surface w-full max-w-sm p-6">
 
         <h1 className="font-display text-xl font-semibold">
-
           {isSignUp
             ? "Criar conta"
             : "Entrar"}
-
         </h1>
 
 
         <p className="mt-1 text-sm text-muted-foreground">
-
           {isSignUp
             ? "Crie sua conta e comece a organizar sua vida financeira."
             : "Bem-vindo de volta! Acesse sua conta para continuar."}
-
         </p>
 
 
         <form
           className="mt-6 space-y-4"
-          onSubmit={(
-            event,
-          ) => {
+          onSubmit={(event) => {
             event.preventDefault();
 
             void (
@@ -815,9 +767,7 @@ function AuthPage() {
                 value={
                   form.name
                 }
-                onChange={(
-                  value,
-                ) =>
+                onChange={(value) =>
                   update(
                     "name",
                     value,
@@ -836,9 +786,7 @@ function AuthPage() {
                 value={
                   form.username
                 }
-                onChange={(
-                  value,
-                ) =>
+                onChange={(value) =>
                   update(
                     "username",
                     value,
@@ -861,9 +809,7 @@ function AuthPage() {
             value={
               form.email
             }
-            onChange={(
-              value,
-            ) =>
+            onChange={(value) =>
               update(
                 "email",
                 value,
@@ -882,9 +828,7 @@ function AuthPage() {
             value={
               form.password
             }
-            onChange={(
-              value,
-            ) =>
+            onChange={(value) =>
               update(
                 "password",
                 value,
@@ -906,9 +850,7 @@ function AuthPage() {
             }
             onToggleVisibility={() =>
               setShowPassword(
-                (
-                  previous,
-                ) =>
+                (previous) =>
                   !previous,
               )
             }
@@ -931,9 +873,7 @@ function AuthPage() {
                 }}
                 className="text-xs font-medium text-primary underline-offset-4 hover:underline"
               >
-
                 Esqueci minha senha
-
               </button>
 
             </div>
@@ -947,9 +887,7 @@ function AuthPage() {
               value={
                 form.confirm
               }
-              onChange={(
-                value,
-              ) =>
+              onChange={(value) =>
                 update(
                   "confirm",
                   value,
@@ -963,9 +901,7 @@ function AuthPage() {
               }
               onToggleVisibility={() =>
                 setShowConfirmPassword(
-                  (
-                    previous,
-                  ) =>
+                  (previous) =>
                     !previous,
                 )
               }
@@ -1036,35 +972,17 @@ function PasswordField({
   showPassword,
   onToggleVisibility,
 }: {
-  id:
-    string;
-
-  label:
-    string;
-
-  value:
-    string;
-
-  onChange:
-    (
-      value:
-        string,
-    ) => void;
-
-  placeholder?:
-    string;
-
-  helperText?:
-    string;
-
-  autoComplete?:
-    string;
-
-  showPassword:
-    boolean;
-
-  onToggleVisibility:
-    () => void;
+  id: string;
+  label: string;
+  value: string;
+  onChange: (
+    value: string,
+  ) => void;
+  placeholder?: string;
+  helperText?: string;
+  autoComplete?: string;
+  showPassword: boolean;
+  onToggleVisibility: () => void;
 }) {
   const maxLength =
     1000;
@@ -1076,17 +994,13 @@ function PasswordField({
       <div className="flex items-center justify-between gap-2">
 
         <Label htmlFor={id}>
-
           {label}
-
         </Label>
 
 
         {value.length > 0 ? (
           <span className="text-xs text-muted-foreground">
-
             {value.length}/{maxLength}
-
           </span>
         ) : null}
 
@@ -1106,9 +1020,7 @@ function PasswordField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           maxLength={maxLength}
-          onChange={(
-            event,
-          ) =>
+          onChange={(event) =>
             onChange(
               event.target.value,
             )
@@ -1143,9 +1055,7 @@ function PasswordField({
 
       {helperText ? (
         <p className="text-[11px] leading-relaxed text-muted-foreground">
-
           {helperText}
-
         </p>
       ) : null}
 
@@ -1166,35 +1076,17 @@ function Field({
   autoComplete,
   maxLength,
 }: {
-  id:
-    string;
-
-  label:
-    string;
-
-  value:
-    string;
-
-  onChange:
-    (
-      value:
-        string,
-    ) => void;
-
-  type?:
-    string;
-
-  placeholder?:
-    string;
-
-  helperText?:
-    string;
-
-  autoComplete?:
-    string;
-
-  maxLength?:
-    number;
+  id: string;
+  label: string;
+  value: string;
+  onChange: (
+    value: string,
+  ) => void;
+  type?: string;
+  placeholder?: string;
+  helperText?: string;
+  autoComplete?: string;
+  maxLength?: number;
 }) {
   return (
     <div className="space-y-1.5">
@@ -1202,18 +1094,14 @@ function Field({
       <div className="flex items-center justify-between gap-2">
 
         <Label htmlFor={id}>
-
           {label}
-
         </Label>
 
 
         {value.length > 0 &&
         maxLength ? (
           <span className="text-xs text-muted-foreground">
-
             {value.length}/{maxLength}
-
           </span>
         ) : null}
 
@@ -1227,9 +1115,7 @@ function Field({
         placeholder={placeholder}
         autoComplete={autoComplete}
         maxLength={maxLength}
-        onChange={(
-          event,
-        ) =>
+        onChange={(event) =>
           onChange(
             event.target.value,
           )
@@ -1240,9 +1126,7 @@ function Field({
 
       {helperText ? (
         <p className="text-[11px] leading-relaxed text-muted-foreground">
-
           {helperText}
-
         </p>
       ) : null}
 
