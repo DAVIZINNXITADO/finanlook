@@ -5,6 +5,7 @@ import {
 
 import {
   useState,
+  type ReactNode,
 } from "react";
 
 import {
@@ -269,9 +270,7 @@ function ContaPage() {
           }
           aria-label="Voltar para configurações"
         >
-
           <ArrowLeft className="size-5" />
-
         </Button>
 
 
@@ -288,9 +287,7 @@ function ContaPage() {
         <div className="mb-6 flex items-start gap-3">
 
           <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-
             <User className="size-5" />
-
           </div>
 
 
@@ -320,12 +317,8 @@ function ContaPage() {
             <Input
               id="account-name"
               className="h-11"
-              value={
-                name
-              }
-              onChange={(
-                event,
-              ) =>
+              value={name}
+              onChange={(event) =>
                 setName(
                   event.target.value,
                 )
@@ -347,12 +340,8 @@ function ContaPage() {
             <Input
               id="account-username"
               className="h-11"
-              value={
-                username
-              }
-              onChange={(
-                event,
-              ) =>
+              value={username}
+              onChange={(event) =>
                 setUsername(
                   event.target.value,
                 )
@@ -371,9 +360,7 @@ function ContaPage() {
 
           <Button
             type="button"
-            disabled={
-              savingProfile
-            }
+            disabled={savingProfile}
             onClick={() =>
               void saveProfile()
             }
@@ -410,7 +397,9 @@ function ContaPage() {
         <div className="divide-y">
 
           <NavRow
-            icon={<Mail className="size-5" />}
+            icon={
+              <Mail className="size-5" />
+            }
             title="Trocar e-mail"
             description={
               authUser?.email ??
@@ -419,20 +408,22 @@ function ContaPage() {
             onClick={() =>
               navigate({
                 to:
-                  "/configuracao/conta/email",
+                  "/configuracao/conta.email",
               })
             }
           />
 
 
           <NavRow
-            icon={<KeyRound className="size-5" />}
+            icon={
+              <KeyRound className="size-5" />
+            }
             title="Trocar senha"
             description="Altere a senha usada para entrar na sua conta"
             onClick={() =>
               navigate({
                 to:
-                  "/configuracao/conta/senha",
+                  "/configuracao/conta.senha",
               })
             }
           />
@@ -452,7 +443,7 @@ function NavRow({
   description,
   onClick,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
   onClick: () => void;
