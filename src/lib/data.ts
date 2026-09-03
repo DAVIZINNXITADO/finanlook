@@ -1843,3 +1843,4 @@ export function useDemoData() {
     remove,
   };
 }
+export type { Account } from "./finance";
