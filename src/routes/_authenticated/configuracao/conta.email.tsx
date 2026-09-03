@@ -132,7 +132,7 @@ function TrocarSenhaPage() {
   function goBack() {
     navigate({
       to:
-        "/_authenticated/configuracoes/conta",
+        "/configuracao/conta",
     });
   }
 

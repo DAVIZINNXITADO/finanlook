@@ -264,7 +264,7 @@ function ContaPage() {
           onClick={() =>
             navigate({
               to:
-                "/_authenticated/configuracoes",
+                "/configuracoes",
             })
           }
           aria-label="Voltar para configurações"
@@ -419,7 +419,7 @@ function ContaPage() {
             onClick={() =>
               navigate({
                 to:
-                  "/_authenticated/configuracoes/conta/email",
+                  "/configuracao/conta/email",
               })
             }
           />
@@ -432,7 +432,7 @@ function ContaPage() {
             onClick={() =>
               navigate({
                 to:
-                  "/_authenticated/configuracoes/conta/senha",
+                  "/configuracao/conta/senha",
               })
             }
           />
