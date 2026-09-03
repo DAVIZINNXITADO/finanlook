@@ -7,6 +7,8 @@ import {
   useState,
 } from "react";
 
+import emailjs from "@emailjs/browser";
+
 import {
   toast,
 } from "sonner";
@@ -39,6 +41,10 @@ import {
 import {
   supabase,
 } from "@/integrations/supabase/client";
+
+import {
+  generateRecoveryLink,
+} from "@/lib/password-reset.functions";
 
 import {
   useUser,
@@ -303,20 +309,65 @@ function TrocarSenhaPage() {
 
 
     try {
-      const {
-        error,
-      } =
-        await supabase.auth.resetPasswordForEmail(
-          accountEmail,
+      /*
+       * O servidor usa o Supabase Admin para gerar
+       * um link seguro sem enviar o e-mail automático.
+       */
+      const result =
+        await generateRecoveryLink({
+          data: {
+            email:
+              accountEmail,
+
+            origin:
+              window.location.origin,
+          },
+        });
+
+
+      /*
+       * Mantém a resposta genérica.
+       */
+      if (!result?.link) {
+        toast.success(
+          "Se houver uma conta associada a este e-mail, enviaremos um link de redefinição.",
+        );
+
+        return;
+      }
+
+
+      /*
+       * Envia o link gerado pelo Supabase usando EmailJS.
+       */
+      const response =
+        await emailjs.send(
+          "service_nx7898n",
+          "template_cxhuybn",
           {
-            redirectTo:
-              `${window.location.origin}/nova-senha`,
+            to_email:
+              accountEmail,
+
+            reset_link:
+              result.link,
+
+            app_name:
+              "FinanLook",
+          },
+          {
+            publicKey:
+              "2TVDc9D7QgTpm0QCs",
           },
         );
 
 
-      if (error) {
-        throw error;
+      if (
+        response.status !==
+        200
+      ) {
+        throw new Error(
+          "Não foi possível enviar o e-mail.",
+        );
       }
 
 
@@ -324,6 +375,12 @@ function TrocarSenhaPage() {
         "Enviamos um link para redefinir sua senha para o seu e-mail.",
       );
     } catch (error) {
+      console.error(
+        "Erro ao enviar recuperação de senha:",
+        error,
+      );
+
+
       toast.error(
         error instanceof Error
           ? error.message
