@@ -58,7 +58,7 @@ type PasswordMethod =
 
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracao/conta/conta.senha",
+    "/_authenticated/configuracao/conta.senha",
   )({
     head: () => ({
       meta: [
@@ -98,11 +98,13 @@ function TrocarSenhaPage() {
       "senha",
     );
 
+
   const [
     currentPassword,
     setCurrentPassword,
   ] =
     useState("");
+
 
   const [
     newPassword,
@@ -110,11 +112,13 @@ function TrocarSenhaPage() {
   ] =
     useState("");
 
+
   const [
     confirmPassword,
     setConfirmPassword,
   ] =
     useState("");
+
 
   const [
     showPassword,
@@ -122,11 +126,13 @@ function TrocarSenhaPage() {
   ] =
     useState(false);
 
+
   const [
     saving,
     setSaving,
   ] =
     useState(false);
+
 
   const [
     sendingLink,
@@ -272,12 +278,14 @@ function TrocarSenhaPage() {
 
 
       goBack();
+
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível alterar a senha.",
       );
+
     } finally {
       setSaving(
         false,
@@ -309,14 +317,6 @@ function TrocarSenhaPage() {
 
 
     try {
-      /*
-       * 1. Gera o link de recuperação no servidor usando
-       *    o Supabase Admin.
-       *
-       * 2. O Supabase NÃO envia o e-mail.
-       *
-       * 3. O EmailJS envia o link gerado para o usuário.
-       */
       const result =
         await generateRecoveryLink({
           data: {
@@ -329,11 +329,6 @@ function TrocarSenhaPage() {
         });
 
 
-      /*
-       * Por segurança a função retorna ok=true mesmo
-       * quando não existe uma conta. Nesse caso não há
-       * link para enviar.
-       */
       if (!result?.link) {
         toast.success(
           "Se existir uma conta com este e-mail, enviaremos um link de redefinição.",
@@ -343,19 +338,11 @@ function TrocarSenhaPage() {
       }
 
 
-      /*
-       * Envia o e-mail usando EmailJS.
-       *
-       * As variáveis abaixo precisam ter os mesmos nomes
-       * usados no template do EmailJS:
-       *
-       * {{to_email}}
-       * {{to_name}}
-       * {{reset_link}}
-       */
       await emailjs.send(
         "service_nx7898n",
+
         "template_cxhuybn",
+
         {
           to_email:
             accountEmail,
@@ -369,11 +356,6 @@ function TrocarSenhaPage() {
             result.link,
         },
 
-        /*
-         * TROQUE pelo seu Public Key do EmailJS.
-         *
-         * Não use Service ID ou Template ID aqui.
-         */
         {
           publicKey:
             "COLE_SUA_PUBLIC_KEY_AQUI",
@@ -384,17 +366,20 @@ function TrocarSenhaPage() {
       toast.success(
         "Enviamos um link para redefinir sua senha para o seu e-mail.",
       );
+
     } catch (error) {
       console.error(
         "Erro ao enviar link de recuperação:",
         error,
       );
 
+
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível enviar o e-mail de recuperação.",
       );
+
     } finally {
       setSendingLink(
         false,
@@ -448,6 +433,7 @@ function TrocarSenhaPage() {
               Senha
             </h2>
 
+
             <p className="mt-1 text-sm text-muted-foreground">
               Por segurança, confirme sua senha atual ou use um link enviado por e-mail.
             </p>
@@ -457,60 +443,54 @@ function TrocarSenhaPage() {
         </div>
 
 
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
 
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+          <button
+            type="button"
+            onClick={() =>
+              setMethod(
+                "senha",
+              )
+            }
+            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              method === "senha"
+                ? "bg-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
 
-            <button
-              type="button"
-              onClick={() =>
-                setMethod(
-                  "senha",
-                )
-              }
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                method ===
-                "senha"
-                  ? "bg-background shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
+            <KeyRound className="size-4" />
 
-              <KeyRound className="size-4" />
+            Confirmar com senha atual
 
-              Confirmar com senha atual
-
-            </button>
+          </button>
 
 
-            <button
-              type="button"
-              onClick={() =>
-                setMethod(
-                  "email",
-                )
-              }
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                method ===
-                "email"
-                  ? "bg-background shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
+          <button
+            type="button"
+            onClick={() =>
+              setMethod(
+                "email",
+              )
+            }
+            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              method === "email"
+                ? "bg-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
 
-              <Mail className="size-4" />
+            <Mail className="size-4" />
 
-              Receber link por e-mail
+            Receber link por e-mail
 
-            </button>
-
-          </div>
+          </button>
 
         </div>
 
 
-        {method ===
-        "senha" ? (
+        {method === "senha" ? (
+
           <form
             className="mt-5 space-y-5"
             onSubmit={(
@@ -527,6 +507,7 @@ function TrocarSenhaPage() {
               <Label htmlFor="current-password">
                 Senha atual
               </Label>
+
 
               <Input
                 id="current-password"
@@ -606,9 +587,13 @@ function TrocarSenhaPage() {
                   >
 
                     {showPassword ? (
+
                       <EyeOff className="size-4" />
+
                     ) : (
+
                       <Eye className="size-4" />
+
                     )}
 
                   </button>
@@ -623,6 +608,7 @@ function TrocarSenhaPage() {
                 <Label htmlFor="confirm-password">
                   Confirmar nova senha
                 </Label>
+
 
                 <Input
                   id="confirm-password"
@@ -668,16 +654,24 @@ function TrocarSenhaPage() {
             </Button>
 
           </form>
+
         ) : (
+
           <div className="mt-5 space-y-4">
 
             <p className="text-sm text-muted-foreground">
+
               Enviaremos um link de redefinição para{" "}
+
               <strong>
+
                 {authUser?.email ??
                   "o e-mail da sua conta"}
+
               </strong>
+
               . Clique no link para escolher uma nova senha.
+
             </p>
 
 
@@ -701,6 +695,7 @@ function TrocarSenhaPage() {
             </Button>
 
           </div>
+
         )}
 
       </section>
