@@ -5,7 +5,6 @@ import { CalendarRange, Save, Target } from "lucide-react";
 
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
-import { AdSlot } from "@/components/AdSlot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -291,11 +290,6 @@ function PlanningPage() {
           />
         </div>
       )}
-
-      <AdSlot
-        id="planejamento-topo"
-        size="banner"
-      />
 
       <section className="surface overflow-hidden">
         <div className="border-b p-5">

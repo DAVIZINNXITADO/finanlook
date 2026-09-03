@@ -22,7 +22,6 @@ import {
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { EmptyState } from "@/components/EmptyState";
-import { AdSlot } from "@/components/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -302,11 +301,6 @@ function ReportsPage() {
               }
             />
           </div>
-
-          <AdSlot
-            id="relatorios-topo"
-            size="banner"
-          />
 
           <section className="surface p-5">
             <h2 className="font-display text-lg font-semibold">

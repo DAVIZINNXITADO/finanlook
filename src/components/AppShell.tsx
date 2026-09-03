@@ -159,6 +159,8 @@ const AD_ENABLED_PATHS = new Set([
   "/reserva",
   "/metas",
   "/investimentos",
+  "/planejamento",
+  "/relatorios",
 ]);
 
 /* =========================================================
