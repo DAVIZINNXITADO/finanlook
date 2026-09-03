@@ -1,85 +1,530 @@
-import emailjs from "@emailjs/browser";
+import {
+  createFileRoute,
+  useNavigate,
+} from "@tanstack/react-router";
+
+import {
+  useState,
+} from "react";
+
+import {
+  toast,
+} from "sonner";
+
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  KeyRound,
+  LockKeyhole,
+  Mail,
+} from "lucide-react";
+
+import {
+  PageHeader,
+} from "@/components/PageHeader";
+
+import {
+  Button,
+} from "@/components/ui/button";
+
+import {
+  Input,
+} from "@/components/ui/input";
+
+import {
+  Label,
+} from "@/components/ui/label";
+
+import {
+  supabase,
+} from "@/integrations/supabase/client";
+
+import {
+  useUser,
+} from "@/lib/data";
+
+import {
+  generateRecoveryLink,
+} from "@/lib/password.recovery.functions";
+
+import {
+  sendPasswordRecoveryEmail,
+} from "@/lib/emailHolder";
 
 
-type SendEmailParams = {
-  toEmail: string;
-
-  templateParams: Record<
-    string,
-    unknown
-  >;
-};
+type PasswordMethod =
+  | "senha"
+  | "email";
 
 
-const EMAILJS_SERVICE_ID =
-  "service_nx7898n";
+export const Route =
+  createFileRoute(
+    "/_authenticated/configuracao/conta.senha",
+  )({
+    head: () => ({
+      meta: [
+        {
+          title:
+            "Trocar senha — FinanLook",
+        },
+        {
+          name:
+            "description",
+          content:
+            "Altere a senha da sua conta.",
+        },
+      ],
+    }),
+
+    component:
+      TrocarSenhaPage,
+  });
 
 
-const EMAILJS_PUBLIC_KEY =
-  "2TVDc9D7QgTpm0QCs";
+function TrocarSenhaPage() {
+  const navigate =
+    useNavigate();
 
 
-const EMAILJS_TEMPLATES = {
-  passwordRecovery:
-    "template_cxhuybn",
-} as const;
+  const {
+    data: authUser,
+  } =
+    useUser();
 
 
-export async function sendEmail({
-  toEmail,
-  templateParams,
-}: SendEmailParams) {
-  if (!toEmail) {
-    throw new Error(
-      "O e-mail do destinatário não foi informado.",
+  const [
+    method,
+    setMethod,
+  ] =
+    useState<PasswordMethod>(
+      "senha",
     );
+
+
+  const [
+    currentPassword,
+    setCurrentPassword,
+  ] =
+    useState("");
+
+
+  const [
+    newPassword,
+    setNewPassword,
+  ] =
+    useState("");
+
+
+  const [
+    confirmPassword,
+    setConfirmPassword,
+  ] =
+    useState("");
+
+
+  const [
+    showPassword,
+    setShowPassword,
+  ] =
+    useState(false);
+
+
+  const [
+    saving,
+    setSaving,
+  ] =
+    useState(false);
+
+
+  const [
+    sendingLink,
+    setSendingLink,
+  ] =
+    useState(false);
+
+
+  function goBack() {
+    navigate({
+      to:
+        "/configuracao/conta",
+    });
   }
 
 
-  const result =
-    await emailjs.send(
-      EMAILJS_SERVICE_ID,
+  async function handleChangeWithPassword() {
+    const accountEmail =
+      authUser?.email
+        ?.trim()
+        .toLowerCase() ??
+      "";
 
-      EMAILJS_TEMPLATES.passwordRecovery,
 
-      {
-        to_email:
-          toEmail,
+    if (!accountEmail) {
+      toast.error(
+        "Não foi possível identificar o e-mail da sua conta.",
+      );
 
-        ...templateParams,
-      },
+      return;
+    }
 
-      {
-        publicKey:
-          EMAILJS_PUBLIC_KEY,
-      },
+
+    if (!currentPassword) {
+      toast.error(
+        "Informe sua senha atual.",
+      );
+
+      return;
+    }
+
+
+    if (!newPassword) {
+      toast.error(
+        "Informe uma nova senha.",
+      );
+
+      return;
+    }
+
+
+    if (
+      newPassword.length <
+      6
+    ) {
+      toast.error(
+        "A senha precisa ter pelo menos 6 caracteres.",
+      );
+
+      return;
+    }
+
+
+    if (
+      newPassword !==
+      confirmPassword
+    ) {
+      toast.error(
+        "As senhas não coincidem.",
+      );
+
+      return;
+    }
+
+
+    if (
+      newPassword ===
+      currentPassword
+    ) {
+      toast.error(
+        "A nova senha precisa ser diferente da atual.",
+      );
+
+      return;
+    }
+
+
+    setSaving(
+      true,
     );
 
 
-  return result;
-}
+    try {
+      const {
+        error: signInError,
+      } =
+        await supabase.auth.signInWithPassword({
+          email:
+            accountEmail,
+
+          password:
+            currentPassword,
+        });
 
 
-export async function sendPasswordRecoveryEmail({
-  toEmail,
-  toName,
-  resetLink,
-}: {
-  toEmail: string;
+      if (signInError) {
+        throw new Error(
+          "Senha atual incorreta.",
+        );
+      }
 
-  toName: string;
 
-  resetLink: string;
-}) {
-  return sendEmail({
-    toEmail,
+      const {
+        error: updateError,
+      } =
+        await supabase.auth.updateUser({
+          password:
+            newPassword,
+        });
 
-    templateParams: {
-      to_name:
-        toName,
 
-      reset_link:
-        resetLink,
-    },
-  });
-}
+      if (updateError) {
+        throw updateError;
+      }
+
+
+      setCurrentPassword(
+        "",
+      );
+
+      setNewPassword(
+        "",
+      );
+
+      setConfirmPassword(
+        "",
+      );
+
+
+      toast.success(
+        "Senha alterada com sucesso.",
+      );
+
+
+      goBack();
+
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível alterar a senha.",
+      );
+
+    } finally {
+      setSaving(
+        false,
+      );
+    }
+  }
+
+
+  async function handleSendRecoveryLink() {
+    const accountEmail =
+      authUser?.email
+        ?.trim()
+        .toLowerCase() ??
+      "";
+
+
+    if (!accountEmail) {
+      toast.error(
+        "Não foi possível identificar o e-mail da sua conta.",
+      );
+
+      return;
+    }
+
+
+    setSendingLink(
+      true,
+    );
+
+
+    try {
+      const result =
+        await generateRecoveryLink({
+          data: {
+            email:
+              accountEmail,
+
+            origin:
+              window.location.origin,
+          },
+        });
+
+
+      if (!result?.link) {
+        toast.success(
+          "Se existir uma conta com este e-mail, enviaremos um link de redefinição.",
+        );
+
+        return;
+      }
+
+
+      await sendPasswordRecoveryEmail({
+        toEmail:
+          accountEmail,
+
+        toName:
+          authUser?.user_metadata?.name ??
+          authUser?.user_metadata?.full_name ??
+          "Usuário",
+
+        resetLink:
+          result.link,
+      });
+
+
+      toast.success(
+        "Enviamos um link para redefinir sua senha para o seu e-mail.",
+      );
+
+    } catch (error) {
+      console.error(
+        "Erro ao enviar link de recuperação:",
+        error,
+      );
+
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível enviar o e-mail de recuperação.",
+      );
+
+    } finally {
+      setSendingLink(
+        false,
+      );
+    }
+  }
+
+
+  return (
+    <div className="space-y-6">
+
+      <div className="flex items-center gap-3">
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={goBack}
+          aria-label="Voltar para conta"
+        >
+
+          <ArrowLeft className="size-5" />
+
+        </Button>
+
+
+        <PageHeader
+          title="Trocar senha"
+          subtitle="Escolha como você quer alterar sua senha."
+        />
+
+      </div>
+
+
+      <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
+
+        <div className="mb-6 flex items-start gap-3">
+
+          <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+
+            <LockKeyhole className="size-5" />
+
+          </div>
+
+
+          <div>
+
+            <h2 className="font-display text-lg font-semibold">
+              Senha
+            </h2>
+
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Por segurança, confirme sua senha atual ou use um link enviado por e-mail.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+
+          <button
+            type="button"
+            onClick={() =>
+              setMethod(
+                "senha",
+              )
+            }
+            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              method === "senha"
+                ? "bg-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+
+            <KeyRound className="size-4" />
+
+            Confirmar com senha atual
+
+          </button>
+
+
+          <button
+            type="button"
+            onClick={() =>
+              setMethod(
+                "email",
+              )
+            }
+            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              method === "email"
+                ? "bg-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+
+            <Mail className="size-4" />
+
+            Receber link por e-mail
+
+          </button>
+
+        </div>
+
+
+        {method === "senha" ? (
+
+          <form
+            className="mt-5 space-y-5"
+            onSubmit={(
+              event,
+            ) => {
+              event.preventDefault();
+
+              void handleChangeWithPassword();
+            }}
+          >
+
+            <div className="space-y-1.5">
+
+              <Label htmlFor="current-password">
+                Senha atual
+              </Label>
+
+
+              <Input
+                id="current-password"
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
+                className="h-11"
+                value={currentPassword}
+                onChange={(
+                  event,
+                ) =>
+                  setCurrentPassword(
+                    event.target.value,
+                  )
+                }
+                autoComplete="current-password"
+                maxLength={1000}
+              />
+
+            </div>
+
+
+            <div className="grid gap-4 md:grid-cols-2">
+
+              <div className="space-y-1.5">
+
+                <Label htmlFor="new-password">
+                  Nova
