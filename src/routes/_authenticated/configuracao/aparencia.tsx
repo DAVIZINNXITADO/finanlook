@@ -390,8 +390,9 @@ function AppearancePage() {
               option,
             ) => {
               const active =
-                option ===
+                color ===
                 option.key;
+
 
 
               const swatch =
