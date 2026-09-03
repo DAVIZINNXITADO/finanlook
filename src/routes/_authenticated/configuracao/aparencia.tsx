@@ -53,7 +53,7 @@ import {
 
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracoes/aparencia",
+    "/_authenticated/configuracao/aparencia",
   )({
     head: () => ({
       meta: [

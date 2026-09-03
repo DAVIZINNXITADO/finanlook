@@ -52,7 +52,7 @@ import {
 
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracoes/conta",
+    "/_authenticated/configuracao/conta",
   )({
     head: () => ({
       meta: [
