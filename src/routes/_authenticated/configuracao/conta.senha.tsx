@@ -11,8 +11,6 @@ import {
   toast,
 } from "sonner";
 
-import emailjs from "@emailjs/browser";
-
 import {
   ArrowLeft,
   Eye,
@@ -49,6 +47,10 @@ import {
 import {
   generateRecoveryLink,
 } from "@/lib/password.recovery.functions";
+
+import {
+  sendPasswordRecoveryEmail,
+} from "@/lib/emailHolder";
 
 
 type PasswordMethod =
@@ -339,29 +341,18 @@ function TrocarSenhaPage() {
       }
 
 
-      await emailjs.send(
-        "service_nx7898n",
+      await sendPasswordRecoveryEmail({
+        toEmail:
+          accountEmail,
 
-        "template_cxhuybn",
+        toName:
+          authUser?.user_metadata?.name ??
+          authUser?.user_metadata?.full_name ??
+          "Usuário",
 
-        {
-          to_email:
-            accountEmail,
-
-          to_name:
-            authUser?.user_metadata?.name ??
-            authUser?.user_metadata?.full_name ??
-            "Usuário",
-
-          reset_link:
-            result.link,
-        },
-
-        {
-          publicKey:
-            "2TVDc9D7QgTpm0QCs",
-        },
-      );
+        resetLink:
+          result.link,
+      });
 
 
       toast.success(
