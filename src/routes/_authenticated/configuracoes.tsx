@@ -1,13 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import emailjs from "@emailjs/browser";
 import {
   Check,
   ChevronRight,
-  Eye,
-  EyeOff,
-  KeyRound,
   LockKeyhole,
   LogOut,
   Mail,
@@ -35,7 +31,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { generateRecoveryLink } from "@/lib/password-recovery.functions";
 import { useProfile } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -59,12 +54,6 @@ export const Route = createFileRoute(
 });
 
 type Theme = "light" | "dark" | "system";
-type PasswordMethod = "senha" | "email";
-
-// Credenciais do EmailJS (a Public Key é feita para ficar no client, não é segredo)
-const EMAILJS_SERVICE_ID = "service_nx7898n";
-const EMAILJS_TEMPLATE_ID = "template_cxhuybn";
-const EMAILJS_PUBLIC_KEY = "2TVDc9D7QgTpm0QCs";
 
 function SettingsPage() {
   const navigate = useNavigate();
@@ -75,26 +64,9 @@ function SettingsPage() {
   const [theme, setTheme] = useState<Theme>("system");
 
   const [editProfileOpen, setEditProfileOpen] = useState(false);
-  const [editEmailOpen, setEditEmailOpen] = useState(false);
-  const [editPasswordOpen, setEditPasswordOpen] = useState(false);
-
   const [profileName, setProfileName] = useState("");
   const [profileUsername, setProfileUsername] = useState("");
-
-  const [newEmail, setNewEmail] = useState("");
-
-  const [passwordMethod, setPasswordMethod] =
-    useState<PasswordMethod>("senha");
-
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-
   const [savingProfile, setSavingProfile] = useState(false);
-  const [savingEmail, setSavingEmail] = useState(false);
-  const [savingPassword, setSavingPassword] = useState(false);
-  const [sendingRecoveryLink, setSendingRecoveryLink] = useState(false);
 
   /* =======================================================
      PERFIL
@@ -156,178 +128,11 @@ function SettingsPage() {
   }
 
   /* =======================================================
-     EMAIL
-     ======================================================= */
-
-  function openEmailDialog() {
-    setNewEmail(profile?.email ?? "");
-    setEditEmailOpen(true);
-  }
-
-  async function saveEmail() {
-    const email = newEmail.trim().toLowerCase();
-
-    if (!email) {
-      toast.error("Informe um email.");
-      return;
-    }
-
-    if (!email.includes("@")) {
-      toast.error("Informe um email válido.");
-      return;
-    }
-
-    setSavingEmail(true);
-
-    try {
-      const { error } = await supabase.auth.updateUser({ email });
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success("Enviamos uma confirmação para o novo email.");
-      setEditEmailOpen(false);
-    } catch {
-      toast.error("Não foi possível alterar seu email.");
-    } finally {
-      setSavingEmail(false);
-    }
-  }
-
-  /* =======================================================
-     SENHA
-     ======================================================= */
-
-  function openPasswordDialog() {
-    setPasswordMethod("senha");
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setShowPassword(false);
-    setEditPasswordOpen(true);
-  }
-
-  async function handleChangeWithCurrentPassword() {
-    const accountEmail = profile?.email?.trim().toLowerCase() ?? "";
-
-    if (!accountEmail) {
-      toast.error("Não foi possível identificar o e-mail da sua conta.");
-      return;
-    }
-
-    if (!currentPassword) {
-      toast.error("Informe sua senha atual.");
-      return;
-    }
-
-    if (!newPassword) {
-      toast.error("Informe uma nova senha.");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast.error("A senha precisa ter pelo menos 6 caracteres.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error("As senhas não coincidem.");
-      return;
-    }
-
-    if (newPassword === currentPassword) {
-      toast.error("A nova senha precisa ser diferente da atual.");
-      return;
-    }
-
-    setSavingPassword(true);
-
-    try {
-      const { error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email: accountEmail,
-          password: currentPassword,
-        });
-
-      if (signInError) {
-        throw new Error("Senha atual incorreta.");
-      }
-
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success("Senha alterada com sucesso.");
-
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setEditPasswordOpen(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível alterar sua senha.",
-      );
-    } finally {
-      setSavingPassword(false);
-    }
-  }
-
-  async function handleSendRecoveryLink() {
-    const accountEmail = profile?.email?.trim().toLowerCase() ?? "";
-
-    if (!accountEmail) {
-      toast.error("Não foi possível identificar o e-mail da sua conta.");
-      return;
-    }
-
-    setSendingRecoveryLink(true);
-
-    try {
-      const result = await generateRecoveryLink({
-        data: {
-          email: accountEmail,
-          origin: window.location.origin,
-        },
-      });
-
-      if (result.link) {
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID,
-          {
-            to_email: accountEmail,
-            reset_link: result.link,
-          },
-          { publicKey: EMAILJS_PUBLIC_KEY },
-        );
-      }
-
-      toast.success(
-        "Enviamos um link para redefinir sua senha para o seu e-mail.",
-      );
-
-      setEditPasswordOpen(false);
-    } catch {
-      toast.error("Não foi possível enviar o e-mail de recuperação.");
-    } finally {
-      setSendingRecoveryLink(false);
-    }
-  }
-
-  /* =======================================================
      TEMA
      ======================================================= */
 
   function changeTheme(value: Theme) {
     setTheme(value);
-
     toast.success("Preferência de aparência atualizada.");
   }
 
@@ -381,34 +186,22 @@ function SettingsPage() {
           </div>
         </div>
 
-        <div className="divide-y">
-          <SettingsRow
-            icon={<User className="size-5" />}
-            title="Nome e username"
-            description={
-              profile
-                ? `${profile.name || "Você"} • @${
-                    profile.username ?? ""
-                  }`
-                : "Configure seu nome e username"
-            }
-            action="Editar"
-            onClick={openProfileDialog}
-          />
-
-          <SettingsRow
-            icon={<Mail className="size-5" />}
-            title="Email"
-            description={
-              profile?.email ?? "Configure seu email"
-            }
-            action="Alterar"
-            onClick={openEmailDialog}
-          />
-        </div>
+        <SettingsRow
+          icon={<User className="size-5" />}
+          title="Nome e username"
+          description={
+            profile
+              ? `${profile.name || "Você"} • @${
+                  profile.username ?? ""
+                }`
+              : "Configure seu nome e username"
+          }
+          action="Editar"
+          onClick={openProfileDialog}
+        />
       </section>
 
-      {/* SEGURANÇA */}
+      {/* SEGURANÇA — agora navega para páginas separadas */}
       <section className="surface overflow-hidden">
         <div className="border-b p-5">
           <div className="flex items-center gap-3">
@@ -418,23 +211,41 @@ function SettingsPage() {
 
             <div>
               <h2 className="font-display text-lg font-semibold">
-                Segurança
+                Segurança e acesso
               </h2>
 
               <p className="text-sm text-muted-foreground">
-                Proteja sua conta e suas informações.
+                Altere seu e-mail ou sua senha.
               </p>
             </div>
           </div>
         </div>
 
-        <div>
+        <div className="divide-y">
+          <SettingsRow
+            icon={<Mail className="size-5" />}
+            title="Email"
+            description={
+              profile?.email ?? "Configure seu email"
+            }
+            action="Alterar"
+            onClick={() =>
+              navigate({
+                to: "/_authenticated/configuracoes/email",
+              })
+            }
+          />
+
           <SettingsRow
             icon={<LockKeyhole className="size-5" />}
             title="Senha"
             description="Altere sua senha de acesso."
             action="Alterar"
-            onClick={openPasswordDialog}
+            onClick={() =>
+              navigate({
+                to: "/_authenticated/configuracoes/senha",
+              })
+            }
           />
         </div>
       </section>
@@ -511,7 +322,7 @@ function SettingsPage() {
         />
       </section>
 
-      {/* DIALOG PERFIL */}
+      {/* DIALOG PERFIL (continua como diálogo, só email/senha viraram página) */}
       <Dialog open={editProfileOpen} onOpenChange={setEditProfileOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -568,184 +379,6 @@ function SettingsPage() {
               {savingProfile ? "Salvando..." : "Salvar alterações"}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* DIALOG EMAIL */}
-      <Dialog open={editEmailOpen} onOpenChange={setEditEmailOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Alterar email</DialogTitle>
-            <DialogDescription>
-              Você receberá uma confirmação no novo endereço de email.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Novo email</Label>
-
-            <Input
-              id="email"
-              type="email"
-              className="h-11"
-              value={newEmail}
-              onChange={(event) => setNewEmail(event.target.value)}
-              placeholder="voce@email.com"
-            />
-          </div>
-
-          <DialogFooter>
-            <Button
-              className="h-11 w-full"
-              disabled={savingEmail}
-              onClick={() => void saveEmail()}
-            >
-              <Mail className="size-4" />
-
-              {savingEmail ? "Alterando..." : "Alterar email"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* DIALOG SENHA — agora com 2 métodos */}
-      <Dialog open={editPasswordOpen} onOpenChange={setEditPasswordOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Alterar senha</DialogTitle>
-            <DialogDescription>
-              Por segurança, confirme sua senha atual ou use um link
-              enviado por e-mail.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
-            <button
-              type="button"
-              onClick={() => setPasswordMethod("senha")}
-              className={cn(
-                "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                passwordMethod === "senha"
-                  ? "bg-background shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <KeyRound className="size-4" />
-              Senha atual
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setPasswordMethod("email")}
-              className={cn(
-                "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                passwordMethod === "email"
-                  ? "bg-background shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Mail className="size-4" />
-              Link por e-mail
-            </button>
-          </div>
-
-          {passwordMethod === "senha" ? (
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="current-password">Senha atual</Label>
-
-                <Input
-                  id="current-password"
-                  type={showPassword ? "text" : "password"}
-                  className="h-11"
-                  value={currentPassword}
-                  onChange={(event) =>
-                    setCurrentPassword(event.target.value)
-                  }
-                  autoComplete="current-password"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="new-password">Nova senha</Label>
-
-                <div className="relative">
-                  <Input
-                    id="new-password"
-                    type={showPassword ? "text" : "password"}
-                    className="h-11 pr-11"
-                    value={newPassword}
-                    onChange={(event) =>
-                      setNewPassword(event.target.value)
-                    }
-                    autoComplete="new-password"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowPassword((current) => !current)
-                    }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    aria-label="Mostrar ou ocultar senha"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="size-4" />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="confirm-password">
-                  Confirmar nova senha
-                </Label>
-
-                <Input
-                  id="confirm-password"
-                  type={showPassword ? "text" : "password"}
-                  className="h-11"
-                  value={confirmPassword}
-                  onChange={(event) =>
-                    setConfirmPassword(event.target.value)
-                  }
-                  autoComplete="new-password"
-                />
-              </div>
-
-              <Button
-                className="h-11 w-full"
-                disabled={savingPassword}
-                onClick={() => void handleChangeWithCurrentPassword()}
-              >
-                <LockKeyhole className="size-4" />
-
-                {savingPassword ? "Alterando..." : "Alterar senha"}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Enviaremos um link de redefinição para{" "}
-                {profile?.email ?? "o e-mail da sua conta"}. Clique no
-                link para escolher uma nova senha.
-              </p>
-
-              <Button
-                className="h-11 w-full"
-                disabled={sendingRecoveryLink}
-                onClick={() => void handleSendRecoveryLink()}
-              >
-                <Mail className="size-4" />
-
-                {sendingRecoveryLink
-                  ? "Enviando..."
-                  : "Enviar link de redefinição"}
-              </Button>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </div>
