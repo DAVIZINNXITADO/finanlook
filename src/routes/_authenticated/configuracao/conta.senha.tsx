@@ -7,11 +7,11 @@ import {
   useState,
 } from "react";
 
-import emailjs from "@emailjs/browser";
-
 import {
   toast,
 } from "sonner";
+
+import emailjs from "@emailjs/browser";
 
 import {
   ArrowLeft,
@@ -43,12 +43,12 @@ import {
 } from "@/integrations/supabase/client";
 
 import {
-  generateRecoveryLink,
-} from "@/lib/password-reset.functions";
-
-import {
   useUser,
 } from "@/lib/data";
+
+import {
+  generateRecoveryLink,
+} from "@/lib/password-reset.functions";
 
 
 type PasswordMethod =
@@ -58,7 +58,7 @@ type PasswordMethod =
 
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracao/conta/senha",
+    "/_authenticated/configuracao/conta/conta.senha",
   )({
     head: () => ({
       meta: [
@@ -310,9 +310,12 @@ function TrocarSenhaPage() {
 
     try {
       /*
-       * Gera o link de recuperação pelo servidor.
+       * 1. Gera o link de recuperação no servidor usando
+       *    o Supabase Admin.
        *
-       * O Supabase NÃO envia o e-mail automático.
+       * 2. O Supabase NÃO envia o e-mail.
+       *
+       * 3. O EmailJS envia o link gerado para o usuário.
        */
       const result =
         await generateRecoveryLink({
@@ -327,11 +330,13 @@ function TrocarSenhaPage() {
 
 
       /*
-       * Resposta genérica por segurança.
+       * Por segurança a função retorna ok=true mesmo
+       * quando não existe uma conta. Nesse caso não há
+       * link para enviar.
        */
       if (!result?.link) {
         toast.success(
-          "Se houver uma conta associada a este e-mail, enviaremos um link de redefinição.",
+          "Se existir uma conta com este e-mail, enviaremos um link de redefinição.",
         );
 
         return;
@@ -339,37 +344,41 @@ function TrocarSenhaPage() {
 
 
       /*
-       * Envia o link pelo EmailJS.
+       * Envia o e-mail usando EmailJS.
+       *
+       * As variáveis abaixo precisam ter os mesmos nomes
+       * usados no template do EmailJS:
+       *
+       * {{to_email}}
+       * {{to_name}}
+       * {{reset_link}}
        */
-      const response =
-        await emailjs.send(
-          "service_nx7898n",
-          "template_cxhuybn",
-          {
-            to_email:
-              accountEmail,
+      await emailjs.send(
+        "service_nx7898n",
+        "template_cxhuybn",
+        {
+          to_email:
+            accountEmail,
 
-            reset_link:
-              result.link,
+          to_name:
+            authUser?.user_metadata?.name ??
+            authUser?.user_metadata?.full_name ??
+            "Usuário",
 
-            app_name:
-              "FinanLook",
-          },
-          {
-            publicKey:
-              "2TVDc9D7QgTpm0QCs",
-          },
-        );
+          reset_link:
+            result.link,
+        },
 
-
-      if (
-        response.status !==
-        200
-      ) {
-        throw new Error(
-          "Não foi possível enviar o e-mail.",
-        );
-      }
+        /*
+         * TROQUE pelo seu Public Key do EmailJS.
+         *
+         * Não use Service ID ou Template ID aqui.
+         */
+        {
+          publicKey:
+            "COLE_SUA_PUBLIC_KEY_AQUI",
+        },
+      );
 
 
       toast.success(
@@ -377,10 +386,9 @@ function TrocarSenhaPage() {
       );
     } catch (error) {
       console.error(
-        "Erro ao enviar recuperação:",
+        "Erro ao enviar link de recuperação:",
         error,
       );
-
 
       toast.error(
         error instanceof Error
@@ -664,11 +672,12 @@ function TrocarSenhaPage() {
           <div className="mt-5 space-y-4">
 
             <p className="text-sm text-muted-foreground">
-              Enviaremos um link de redefinição para {
-                authUser?.email ??
-                "o e-mail da sua conta"
-              }.
-              Clique no link para escolher uma nova senha.
+              Enviaremos um link de redefinição para{" "}
+              <strong>
+                {authUser?.email ??
+                  "o e-mail da sua conta"}
+              </strong>
+              . Clique no link para escolher uma nova senha.
             </p>
 
 
