@@ -1,9 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-const SUPABASE_URL = import.meta.env.VITE_BACKEND_URL;
+const SUPABASE_URL = import.meta.env.BACKEND_URL;
 const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_BACKEND_KEY;
+  import.meta.env.VBACKEND_KEY;
  
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   throw new Error(
