@@ -31,7 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/data";
+import { useProfile, useUser } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute(
@@ -60,6 +60,7 @@ function SettingsPage() {
   const queryClient = useQueryClient();
 
   const { data: profile } = useProfile();
+  const { data: authUser } = useUser();
 
   const [theme, setTheme] = useState<Theme>("system");
 
@@ -226,12 +227,12 @@ function SettingsPage() {
             icon={<Mail className="size-5" />}
             title="Email"
             description={
-              profile?.email ?? "Configure seu email"
+              authUser?.email ?? "Configure seu email"
             }
             action="Alterar"
             onClick={() =>
               navigate({
-                to: "/_authenticated/configuracoes/email",
+                to: "/configuracao/conta/email",
               })
             }
           />
@@ -243,7 +244,7 @@ function SettingsPage() {
             action="Alterar"
             onClick={() =>
               navigate({
-                to: "/_authenticated/configuracoes/senha",
+                to: "/configuracao/conta/senha",
               })
             }
           />

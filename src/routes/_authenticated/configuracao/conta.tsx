@@ -408,7 +408,7 @@ function ContaPage() {
             onClick={() =>
               navigate({
                 to:
-                  "/configuracao/conta.email",
+                  "/configuracao/conta/email",
               })
             }
           />
@@ -423,7 +423,7 @@ function ContaPage() {
             onClick={() =>
               navigate({
                 to:
-                  "/configuracao/conta.senha",
+                  "/configuracao/conta/senha",
               })
             }
           />
