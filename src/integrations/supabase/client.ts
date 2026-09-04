@@ -1,13 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-const SUPABASE_URL =
-  import.meta.env.VITE_SUPABASE_URL ||
-  "https://bckjxeryimhosbxqdplf.supabase.co";
-
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  "sb_publishable_l_cqyAMCdk--IF_2g_8U5w_hl6R3HYb";
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error(
+    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY",
+  );
+}
 
 export const supabase = createClient<Database>(
   SUPABASE_URL,
