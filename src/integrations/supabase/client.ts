@@ -2,12 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
 const SUPABASE_URL = import.meta.env.BACKEND_URL;
-const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VBACKEND_KEY;
- 
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.BACKEND_KEY;
+
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   throw new Error(
-    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY",
+    "Missing BACKEND_URL or BACKEND_KEY",
   );
 }
 
