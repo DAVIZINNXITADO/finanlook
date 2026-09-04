@@ -6,15 +6,21 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { nitro } from "nitro/vite";
 
 export default defineConfig({
+  envPrefix: ["VITE_", "BACKEND_"],
+
   plugins: [
     tsConfigPaths(),
+
     tanstackStart({
       server: {
         entry: "server",
       },
     }),
+
     nitro(),
+
     viteReact(),
+
     tailwindcss(),
   ],
 });
