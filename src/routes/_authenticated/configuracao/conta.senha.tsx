@@ -52,7 +52,7 @@ type PasswordMethod =
 
 export const Route =
   createFileRoute(
-    "/_authenticated/configuracoes/conta/senha",
+    "/_authenticated/configuracao/conta/senha",
   )({
     head: () => ({
       meta: [
@@ -132,7 +132,7 @@ function TrocarSenhaPage() {
   function goBack() {
     navigate({
       to:
-        "/_authenticated/configuracoes/conta",
+        "/configuracao/conta",
     });
   }
 
