@@ -138,6 +138,19 @@ function AuthPage() {
       return;
     }
 
+    // Cria o perfil manualmente (não há mais trigger em auth.users nesse
+    // Supabase). "upsert" evita erro caso o perfil já exista.
+    if (data.user) {
+      await supabase.from("profiles").upsert(
+        {
+          id: data.user.id,
+          name: parsed.data.name,
+          username: parsed.data.username.toLowerCase(),
+        },
+        { onConflict: "id" },
+      );
+    }
+
     if (!data.session) {
       toast.success("Conta criada! Confirme seu e-mail para entrar.");
 
